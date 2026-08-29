@@ -4,14 +4,22 @@ import { CROPS, TREES_BUSHES } from '../config/crops';
 import { BUILDINGS } from '../config/buildings';
 import { DECORATIONS } from '../config/decorations';
 import { sounds } from '../audio/SoundManager';
-import { RotateCw, Check, X, Trash2, Info, ArrowRight } from 'lucide-react';
+import { triggerTelegramHaptic } from '../utils/telegram';
+import { RotateCw, Check, X, Trash2, Info } from 'lucide-react';
 
-function fmtSec(s: number): string {
-  if (s <= 0) return '0с';
-  const m = Math.floor(s / 60);
-  const sec = s % 60;
-  return m > 0 ? `${m}м${sec > 0 ? `${sec}с` : ''}` : `${sec}с`;
-}
+const CoinSvg = () => (
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" className="shrink-0 inline-block">
+    <circle cx="12" cy="12" r="10" fill="url(#coin_f_g)" stroke="#92400E" strokeWidth="1.5" />
+    <circle cx="12" cy="12" r="7.5" stroke="#FEF08A" strokeWidth="1" strokeDasharray="2.5 1" />
+    <text x="12" y="16" fontSize="11" fontWeight="900" fill="#78350F" textAnchor="middle" fontFamily="sans-serif">🪙</text>
+    <defs>
+      <linearGradient id="coin_f_g" x1="0" y1="0" x2="24" y2="24">
+        <stop offset="0%" stopColor="#FDE047" />
+        <stop offset="100%" stopColor="#D97706" />
+      </linearGradient>
+    </defs>
+  </svg>
+);
 
 // Key Quick-Build Catalog Items
 const QUICK_BUILD_ITEMS = [
@@ -31,9 +39,10 @@ export const FloatingToolsOverlay: React.FC = () => {
     entities, selectedEntityId, placingBuildingConfigId,
     movingEntityId, movingRotation,
     level, coins, isActionStripOpen, toggleActionStrip, setActionStripOpen,
-    setPlacingBuilding, rotatePlacingBuilding, setSelectedEntity,
+    setPlacingBuilding, rotatePlacingBuilding,
     startMovingEntity, rotateMovingEntity, confirmMoveEntity, cancelMoveEntity, deleteEntity,
     harvestCrop, openModal, activeEvent,
+    isDesign2026,
   } = useGameStore();
 
   const selectedEntity = entities.find(e => e.id === selectedEntityId);
@@ -48,15 +57,19 @@ export const FloatingToolsOverlay: React.FC = () => {
 
     return (
       <div
-        className="fixed bottom-24 sm:bottom-28 left-1/2 -translate-x-1/2 z-40 flex items-center gap-2 sm:gap-3 px-4 py-2.5 rounded-2xl shadow-2xl hud-parchment animate-pop-in"
+        className={`fixed bottom-24 sm:bottom-28 left-1/2 -translate-x-1/2 z-40 flex items-center gap-2 sm:gap-3 px-4 py-2.5 rounded-2xl shadow-2xl animate-pop-in ${
+          isDesign2026
+            ? 'hud-ios26-dock bg-[#0F1115]/90 border border-white/20 text-white'
+            : 'hud-parchment'
+        }`}
       >
         <div className="flex items-center gap-2">
           <span className="text-2xl animate-bounce">{bConfig?.icon || '📦'}</span>
           <div>
-            <div className="text-xs sm:text-sm font-extrabold text-[#3B1F0D]">
+            <div className={`text-xs sm:text-sm font-extrabold ${isDesign2026 ? 'text-white' : 'text-[#3B1F0D]'}`}>
               {bConfig?.name || 'Перемещение'}
             </div>
-            <div className="text-[10px] text-[#78350F]">
+            <div className={`text-[10px] ${isDesign2026 ? 'text-zinc-300' : 'text-[#78350F]'}`}>
               Перетащите на зеленую клетку
             </div>
           </div>
@@ -66,9 +79,12 @@ export const FloatingToolsOverlay: React.FC = () => {
         <button
           onClick={() => {
             sounds.playClick();
+            triggerTelegramHaptic('light');
             rotateMovingEntity();
           }}
-          className="hud-tool-btn flex items-center gap-1 px-3 py-2 text-xs font-black shadow"
+          className={`flex items-center gap-1 px-3 py-2 text-xs font-black shadow rounded-xl ${
+            isDesign2026 ? 'bg-white/15 border border-white/20 text-white' : 'hud-tool-btn'
+          }`}
           title="Повернуть на 90 градусов"
         >
           <RotateCw size={14} />
@@ -80,6 +96,7 @@ export const FloatingToolsOverlay: React.FC = () => {
           <button
             onClick={() => {
               sounds.playClick();
+              triggerTelegramHaptic('warning');
               deleteEntity(movingEntityId);
             }}
             className="flex items-center gap-1 px-3 py-2 rounded-xl font-bold text-xs text-white shadow border border-red-700 bg-red-700 hover:bg-red-600 cursor-pointer"
@@ -94,6 +111,7 @@ export const FloatingToolsOverlay: React.FC = () => {
         <button
           onClick={() => {
             sounds.playClick();
+            triggerTelegramHaptic('success');
             confirmMoveEntity();
           }}
           className="flex items-center gap-1 px-4 py-2 rounded-xl font-black text-xs text-white shadow border-2 border-green-300 bg-green-600 hover:bg-green-500 cursor-pointer animate-pulse"
@@ -106,6 +124,7 @@ export const FloatingToolsOverlay: React.FC = () => {
         <button
           onClick={() => {
             sounds.playClick();
+            triggerTelegramHaptic('light');
             cancelMoveEntity();
           }}
           className="w-8 h-8 rounded-xl bg-amber-950/80 text-amber-200 flex items-center justify-center cursor-pointer active:scale-90"
@@ -124,15 +143,19 @@ export const FloatingToolsOverlay: React.FC = () => {
 
     return (
       <div
-        className="fixed bottom-24 sm:bottom-28 left-1/2 -translate-x-1/2 z-40 flex items-center gap-3 px-4 py-2.5 rounded-2xl shadow-2xl hud-parchment animate-pop-in"
+        className={`fixed bottom-24 sm:bottom-28 left-1/2 -translate-x-1/2 z-40 flex items-center gap-3 px-4 py-2.5 rounded-2xl shadow-2xl animate-pop-in ${
+          isDesign2026
+            ? 'hud-ios26-dock bg-[#0F1115]/90 border border-white/20 text-white'
+            : 'hud-parchment'
+        }`}
       >
         <div className="flex items-center gap-2">
           <span className="text-2xl animate-bounce">{bConfig?.icon || '🔨'}</span>
           <div>
-            <div className="text-xs sm:text-sm font-extrabold text-[#3B1F0D]">
+            <div className={`text-xs sm:text-sm font-extrabold ${isDesign2026 ? 'text-white' : 'text-[#3B1F0D]'}`}>
               {bConfig?.name || 'Строительство'}
             </div>
-            <div className="text-[10px] text-[#78350F]">
+            <div className={`text-[10px] ${isDesign2026 ? 'text-zinc-300' : 'text-[#78350F]'}`}>
               Кликните на газон
             </div>
           </div>
@@ -142,9 +165,12 @@ export const FloatingToolsOverlay: React.FC = () => {
         <button
           onClick={() => {
             sounds.playClick();
+            triggerTelegramHaptic('light');
             rotatePlacingBuilding();
           }}
-          className="hud-tool-btn flex items-center gap-1.5 px-3 py-2 text-xs font-black shadow border border-amber-600"
+          className={`flex items-center gap-1.5 px-3 py-2 text-xs font-black shadow rounded-xl ${
+            isDesign2026 ? 'bg-white/15 border border-white/20 text-white' : 'hud-tool-btn border border-amber-600'
+          }`}
           title="Повернуть объект на 90 градусов (Клавиша R)"
         >
           <RotateCw size={14} />
@@ -155,6 +181,7 @@ export const FloatingToolsOverlay: React.FC = () => {
         <button
           onClick={() => {
             sounds.playClick();
+            triggerTelegramHaptic('light');
             setPlacingBuilding(null);
           }}
           className="flex items-center gap-1 px-3.5 py-2 rounded-xl font-bold text-xs text-white shadow border border-red-700 bg-red-700 hover:bg-red-600 cursor-pointer"
@@ -196,11 +223,15 @@ export const FloatingToolsOverlay: React.FC = () => {
   }
 
   return (
-    <div className="fixed bottom-20 sm:bottom-22 left-0 right-0 z-30 pointer-events-none select-none flex flex-col items-center gap-2 p-2 max-w-lg mx-auto">
+    <div className="fixed bottom-22 sm:bottom-24 left-0 right-0 z-30 pointer-events-none select-none flex flex-col items-center gap-2 p-2 max-w-lg mx-auto">
       
       {/* ── 1. SELECTED ENTITY INFO CARD ── */}
       {selectedEntity && (
-        <div className="pointer-events-auto w-full hud-parchment p-2.5 sm:p-3 flex items-center justify-between gap-3 shadow-xl animate-pop-in">
+        <div className={`pointer-events-auto w-full p-2.5 sm:p-3 flex items-center justify-between gap-3 shadow-xl animate-pop-in ${
+          isDesign2026
+            ? 'hud-ios26-dock bg-[#0F1115]/90 border border-white/20 text-white rounded-2xl'
+            : 'hud-parchment'
+        }`}>
           
           {/* Crop / Entity Icon */}
           <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-xl bg-amber-100/90 border border-[#5C3718] flex items-center justify-center text-2xl sm:text-3xl shadow-inner shrink-0">
@@ -209,14 +240,14 @@ export const FloatingToolsOverlay: React.FC = () => {
 
           {/* Title and Dual Progress Bars (Рост & Вода) */}
           <div className="flex flex-col flex-1 gap-1">
-            <div className="font-black text-xs sm:text-sm text-[#3B1F0D]">
+            <div className={`font-black text-xs sm:text-sm ${isDesign2026 ? 'text-white' : 'text-[#3B1F0D]'}`}>
               {cropName}
             </div>
 
             <div className="flex items-center gap-3">
               {/* Growth Progress Bar (Green) */}
               <div className="flex flex-col gap-0.5 flex-1">
-                <span className="text-[10px] font-bold text-[#78350F]">
+                <span className={`text-[10px] font-bold ${isDesign2026 ? 'text-emerald-300' : 'text-[#78350F]'}`}>
                   рост {growthPercent}%
                 </span>
                 <div className="w-full h-2 bg-[#4A2810] rounded-full overflow-hidden border border-[#5C3718]">
@@ -229,7 +260,7 @@ export const FloatingToolsOverlay: React.FC = () => {
 
               {/* Water / Feed Progress Bar (Blue) */}
               <div className="flex flex-col gap-0.5 flex-1">
-                <span className="text-[10px] font-bold text-[#78350F]">
+                <span className={`text-[10px] font-bold ${isDesign2026 ? 'text-cyan-300' : 'text-[#78350F]'}`}>
                   вода {waterPercent}%
                 </span>
                 <div className="w-full h-2 bg-[#4A2810] rounded-full overflow-hidden border border-[#5C3718]">
@@ -246,6 +277,7 @@ export const FloatingToolsOverlay: React.FC = () => {
           <button
             onClick={() => {
               sounds.playClick();
+              triggerTelegramHaptic('light');
               if (selectedEntity.type === 'field' && selectedEntity.cropId && growthPercent >= 100) {
                 harvestCrop(selectedEntity.id);
               } else {
@@ -260,22 +292,41 @@ export const FloatingToolsOverlay: React.FC = () => {
         </div>
       )}
 
-      {/* ── 2. QUICK BUILD STRIP (Открывается прямо над кнопкой «СТРОИТЬ») ── */}
+      {/* ── 2. QUICK BUILD STRIP (Прозрачное парящее стекло в Дизайне 2026) ── */}
       {isActionStripOpen && (
-        <div className="pointer-events-auto w-full hud-parchment p-2.5 shadow-2xl flex flex-col gap-2 animate-pop-in">
+        <div
+          className={`pointer-events-auto w-full p-3 shadow-2xl flex flex-col gap-2.5 animate-pop-in ${
+            isDesign2026
+              ? 'hud-ios26-dock bg-[#0F1115]/88 backdrop-blur-2xl border border-white/20 text-white rounded-3xl'
+              : 'hud-parchment'
+          }`}
+        >
+          {/* Header */}
           <div className="flex items-center justify-between px-1">
-            <span className="text-xs font-black text-[#3B1F0D] uppercase tracking-wide">
-              🔨 Выберите, что построить:
+            <span className={`text-xs font-black uppercase tracking-wide flex items-center gap-1.5 ${
+              isDesign2026 ? 'text-yellow-300' : 'text-[#3B1F0D]'
+            }`}>
+              <span>🔨</span>
+              <span>ВЫБЕРИТЕ, ЧТО ПОСТРОИТЬ:</span>
             </span>
             <button
-              onClick={() => setActionStripOpen(false)}
-              className="w-6 h-6 rounded-full bg-amber-950 text-amber-200 flex items-center justify-center text-xs cursor-pointer active:scale-90"
+              onClick={() => {
+                sounds.playClick();
+                triggerTelegramHaptic('light');
+                setActionStripOpen(false);
+              }}
+              className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold cursor-pointer active:scale-90 transition-transform ${
+                isDesign2026
+                  ? 'bg-white/15 hover:bg-white/25 text-white border border-white/20'
+                  : 'bg-amber-950 text-amber-200'
+              }`}
             >
               ✕
             </button>
           </div>
 
-          <div className="flex items-center gap-2 overflow-x-auto pb-1 px-1">
+          {/* Horizontal Scrollable Building Cards */}
+          <div className="flex items-center gap-2 overflow-x-auto pb-1 px-0.5">
             {QUICK_BUILD_ITEMS.map(item => {
               const isUnlocked = level >= item.level;
               const canAfford = coins >= item.cost;
@@ -286,24 +337,37 @@ export const FloatingToolsOverlay: React.FC = () => {
                   onClick={() => {
                     if (isUnlocked && canAfford) {
                       sounds.playClick();
+                      triggerTelegramHaptic('medium');
                       setPlacingBuilding(item.id);
                       setActionStripOpen(false);
                     }
                   }}
                   disabled={!isUnlocked || !canAfford}
-                  className={`hud-tool-btn flex flex-col items-center justify-center gap-0.5 p-2 min-w-[70px] sm:min-w-[78px] shrink-0 relative ${
-                    !isUnlocked || !canAfford ? 'opacity-60 grayscale' : 'hover:scale-105'
-                  }`}
+                  className={`flex flex-col items-center justify-center gap-0.5 p-2 sm:p-2.5 min-w-[72px] sm:min-w-[80px] shrink-0 relative rounded-2xl transition-all cursor-pointer ${
+                    isDesign2026
+                      ? 'bg-white/10 border border-white/15 hover:bg-white/20 text-white shadow-lg'
+                      : 'hud-tool-btn text-[#3B1F0D]'
+                  } ${!isUnlocked || !canAfford ? 'opacity-50 grayscale' : 'hover:scale-105 active:scale-95'}`}
                 >
-                  <span className="text-2xl sm:text-3xl">{item.icon}</span>
-                  <span className="text-[10px] font-extrabold text-[#3B1F0D] truncate max-w-[65px]">
+                  <span className="text-2xl sm:text-3xl my-0.5">{item.icon}</span>
+                  <span className={`text-[10px] font-extrabold truncate max-w-[66px] ${
+                    isDesign2026 ? 'text-white' : 'text-[#3B1F0D]'
+                  }`}>
                     {item.name}
                   </span>
-                  <span className="text-[9px] font-bold text-amber-900">
-                    🪙 {item.cost}
-                  </span>
+                  
+                  {/* Price with crisp Vector Coin */}
+                  <div className="flex items-center gap-1 mt-0.5">
+                    <CoinSvg />
+                    <span className={`text-[10px] font-black ${
+                      isDesign2026 ? 'text-yellow-300' : 'text-amber-900'
+                    }`}>
+                      {item.cost}
+                    </span>
+                  </div>
+
                   {!isUnlocked && (
-                    <div className="absolute inset-0 bg-amber-950/60 rounded-xl flex items-center justify-center text-[10px] font-black text-yellow-300">
+                    <div className="absolute inset-0 bg-black/75 rounded-2xl flex items-center justify-center text-[10px] font-black text-yellow-300 backdrop-blur-sm">
                       Ур. {item.level}
                     </div>
                   )}
@@ -315,13 +379,18 @@ export const FloatingToolsOverlay: React.FC = () => {
             <button
               onClick={() => {
                 sounds.playClick();
+                triggerTelegramHaptic('light');
                 setActionStripOpen(false);
                 openModal('shop');
               }}
-              className="hud-tool-btn flex flex-col items-center justify-center gap-1 p-2 min-w-[70px] sm:min-w-[78px] shrink-0 bg-amber-200 hover:brightness-110"
+              className={`flex flex-col items-center justify-center gap-1 p-2 sm:p-2.5 min-w-[72px] sm:min-w-[80px] shrink-0 rounded-2xl transition-all cursor-pointer ${
+                isDesign2026
+                  ? 'bg-purple-900/60 border border-purple-400/50 hover:bg-purple-800/80 text-white shadow-lg'
+                  : 'hud-tool-btn bg-amber-200 hover:brightness-110 text-[#3B1F0D]'
+              }`}
             >
-              <span className="text-xl">📑</span>
-              <span className="text-[9px] font-extrabold text-[#3B1F0D] text-center leading-tight">
+              <span className="text-2xl">📑</span>
+              <span className="text-[9px] font-extrabold text-center leading-tight">
                 Все здания...
               </span>
             </button>

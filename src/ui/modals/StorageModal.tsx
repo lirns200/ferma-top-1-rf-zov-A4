@@ -1,18 +1,19 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import { useGameStore } from '../../game/gameState';
 import { PRODUCTS } from '../../config/products';
 import { sounds } from '../../audio/SoundManager';
-import { ArrowLeft, ArrowUpCircle, Hammer, Package } from 'lucide-react';
+import { triggerTelegramHaptic } from '../../utils/telegram';
+import { ArrowUpCircle, Hammer } from 'lucide-react';
 
 export const StorageModal: React.FC = () => {
   const {
     activeModal,
-    closeModal,
     siloCapacity,
     barnCapacity,
     inventory,
     getStorageUsed,
     upgradeStorage,
+    isDesign2026,
   } = useGameStore();
 
   const [activeTab, setActiveTab] = useState<'silo' | 'barn'>(
@@ -53,18 +54,27 @@ export const StorageModal: React.FC = () => {
   const canUpgrade = currentMats.every(m => m.have >= reqCount);
 
   return (
-    <div className="fixed inset-0 pt-14 sm:pt-16 pb-20 sm:pb-24 z-40 flex flex-col bg-[#2A1406] select-none animate-pop-in text-[#3B1F0D] overflow-hidden">
+    <div className={`fixed inset-0 pt-14 sm:pt-16 pb-20 sm:pb-24 z-40 flex flex-col select-none animate-pop-in overflow-hidden transition-colors ${
+      isDesign2026 ? 'bg-[#0F1115] text-white' : 'bg-[#2A1406] text-[#3B1F0D]'
+    }`}>
       
       {/* ── TABS SWITCHER ── */}
-      <div className="bg-[#3D2008] px-3 sm:px-6 py-2.5 flex items-center gap-2 border-b-2 border-[#5C3718] shrink-0">
+      <div className={`px-3 sm:px-6 py-2.5 flex items-center gap-2 border-b shrink-0 ${
+        isDesign2026 ? 'bg-[#181C24] border-[#242A35]' : 'bg-[#3D2008] border-[#5C3718]'
+      }`}>
         <button
           onClick={() => {
             sounds.playClick();
+            triggerTelegramHaptic('light');
             setActiveTab('silo');
           }}
           className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-extrabold transition-all cursor-pointer ${
             activeTab === 'silo'
-              ? 'hud-parchment shadow-lg border-2 border-yellow-400 scale-105'
+              ? isDesign2026
+                ? 'bg-purple-600 text-white shadow-lg border border-purple-400 scale-105'
+                : 'hud-parchment shadow-lg border-2 border-yellow-400 scale-105 text-[#3B1F0D]'
+              : isDesign2026
+              ? 'bg-[#242A35] text-[#8E939D] hover:text-white'
               : 'bg-[#2A1406]/80 text-amber-200 border border-amber-900 hover:bg-[#2A1406]'
           }`}
         >
@@ -75,11 +85,16 @@ export const StorageModal: React.FC = () => {
         <button
           onClick={() => {
             sounds.playClick();
+            triggerTelegramHaptic('light');
             setActiveTab('barn');
           }}
           className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-extrabold transition-all cursor-pointer ${
             activeTab === 'barn'
-              ? 'hud-parchment shadow-lg border-2 border-yellow-400 scale-105'
+              ? isDesign2026
+                ? 'bg-purple-600 text-white shadow-lg border border-purple-400 scale-105'
+                : 'hud-parchment shadow-lg border-2 border-yellow-400 scale-105 text-[#3B1F0D]'
+              : isDesign2026
+              ? 'bg-[#242A35] text-[#8E939D] hover:text-white'
               : 'bg-[#2A1406]/80 text-amber-200 border border-amber-900 hover:bg-[#2A1406]'
           }`}
         >
@@ -89,13 +104,15 @@ export const StorageModal: React.FC = () => {
       </div>
 
       {/* ── CAPACITY PROGRESS BAR ── */}
-      <div className="bg-[#241004] px-4 sm:px-6 py-2 border-b border-[#5C3718]/40">
+      <div className={`px-4 sm:px-6 py-2 border-b ${
+        isDesign2026 ? 'bg-[#141820] border-[#242A35]' : 'bg-[#241004] border-[#5C3718]/40'
+      }`}>
         <div className="max-w-4xl mx-auto flex items-center gap-3">
-          <span className="text-xs font-extrabold text-amber-200 shrink-0">Вместимость:</span>
-          <div className="w-full h-3 bg-[#4A2810] rounded-full overflow-hidden border border-[#5C3718]">
+          <span className="text-xs font-extrabold text-[#8E939D] shrink-0">Вместимость:</span>
+          <div className="w-full h-3 bg-black/50 rounded-full overflow-hidden border border-white/10">
             <div 
               className={`h-full rounded-full transition-all duration-300 ${
-                percent >= 90 ? 'bg-red-500' : percent >= 75 ? 'bg-amber-400' : 'bg-green-500'
+                percent >= 90 ? 'bg-red-500' : percent >= 75 ? 'bg-amber-400' : 'bg-emerald-500'
               }`}
               style={{ width: `${percent}%` }}
             />
@@ -110,28 +127,34 @@ export const StorageModal: React.FC = () => {
           
           {/* Stored Items Grid */}
           <div>
-            <h2 className="text-xs sm:text-sm font-extrabold text-amber-200 uppercase tracking-wide mb-3">
+            <h2 className="text-xs sm:text-sm font-extrabold text-[#8E939D] uppercase tracking-wide mb-3">
               Предметы в хранилище:
             </h2>
 
             {storedItems.length === 0 ? (
-              <div className="hud-parchment p-8 rounded-2xl text-center flex flex-col items-center justify-center gap-2">
+              <div className={`p-8 rounded-2xl text-center flex flex-col items-center justify-center gap-2 border ${
+                isDesign2026 ? 'bg-[#181C24] border-[#242A35] text-zinc-400' : 'hud-parchment text-[#5C3718]'
+              }`}>
                 <span className="text-4xl">🌾</span>
-                <span className="text-sm font-bold text-[#5C3718]">Хранилище пока пусто. Соберите урожай на ферме!</span>
+                <span className="text-sm font-bold">Хранилище пока пусто. Соберите урожай на ферме!</span>
               </div>
             ) : (
               <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
                 {storedItems.map(({ item, count }) => (
                   <div
                     key={item.id}
-                    className="hud-parchment flex items-center gap-2.5 p-3 rounded-2xl shadow border-2 border-amber-700/60"
+                    className={`flex items-center gap-2.5 p-3 rounded-2xl shadow border ${
+                      isDesign2026
+                        ? 'bg-[#181C24] border-[#242A35] text-white'
+                        : 'hud-parchment border-amber-700/60 text-[#3B1F0D]'
+                    }`}
                   >
                     <span className="text-3xl shrink-0">{item.icon}</span>
                     <div className="flex flex-col flex-1 min-w-0">
-                      <span className="font-extrabold text-xs text-[#3B1F0D] truncate">
+                      <span className="font-extrabold text-xs truncate">
                         {item.name}
                       </span>
-                      <span className="font-black text-sm text-green-800">
+                      <span className="font-black text-sm text-emerald-400">
                         ×{count}
                       </span>
                     </div>
@@ -142,16 +165,18 @@ export const StorageModal: React.FC = () => {
           </div>
 
           {/* Upgrade Storage Card */}
-          <div className="hud-parchment p-4 sm:p-5 rounded-2xl border-2 border-amber-500 shadow-xl flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4">
+          <div className={`p-4 sm:p-5 rounded-2xl border shadow-xl flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 ${
+            isDesign2026 ? 'bg-[#181C24] border-[#242A35] text-white' : 'hud-parchment border-amber-500 text-[#3B1F0D]'
+          }`}>
             <div className="flex flex-col gap-1">
               <div className="flex items-center gap-2">
-                <ArrowUpCircle size={20} className="text-green-700" />
-                <h3 className="font-black text-sm sm:text-base text-[#3B1F0D]">
+                <ArrowUpCircle size={20} className="text-emerald-400" />
+                <h3 className="font-black text-sm sm:text-base">
                   Увеличить склад на +25 мест
                 </h3>
               </div>
-              <p className="text-xs text-[#5C3718]">
-                Требуются строительные материалы (можно найти при сборе урожая или в бартере):
+              <p className={`text-xs ${isDesign2026 ? 'text-[#8E939D]' : 'text-[#5C3718]'}`}>
+                Требуются строительные материалы:
               </p>
 
               {/* Material Badges */}
@@ -163,8 +188,8 @@ export const StorageModal: React.FC = () => {
                       key={mat.id}
                       className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl border font-bold text-xs ${
                         hasEnough
-                          ? 'bg-green-100 border-green-500 text-green-900'
-                          : 'bg-amber-100 border-amber-700 text-amber-950'
+                          ? 'bg-emerald-950/60 border-emerald-500 text-emerald-300'
+                          : 'bg-[#242A35] border-[#353D4C] text-[#8E939D]'
                       }`}
                     >
                       <span className="text-base">{mat.icon}</span>
@@ -180,14 +205,15 @@ export const StorageModal: React.FC = () => {
               onClick={() => {
                 if (canUpgrade) {
                   sounds.playLevelUp();
+                  triggerTelegramHaptic('success');
                   upgradeStorage(currentType);
                 }
               }}
               disabled={!canUpgrade}
               className={`px-5 py-3 rounded-2xl font-black text-xs sm:text-sm shadow-xl flex items-center justify-center gap-2 transition-all active:scale-95 ${
                 canUpgrade
-                  ? 'bg-gradient-to-b from-green-500 to-green-700 border-2 border-green-300 text-white cursor-pointer hover:brightness-110 animate-pulse'
-                  : 'bg-stone-600 text-stone-300 border border-stone-500 cursor-not-allowed opacity-60'
+                  ? 'bg-gradient-to-b from-emerald-500 to-emerald-700 border-2 border-emerald-300 text-white cursor-pointer hover:brightness-110 animate-pulse'
+                  : 'bg-zinc-800 text-zinc-500 border border-zinc-700 cursor-not-allowed opacity-60'
               }`}
             >
               <Hammer size={16} />

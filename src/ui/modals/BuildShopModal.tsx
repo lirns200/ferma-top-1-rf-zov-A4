@@ -1,10 +1,25 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import { useGameStore } from '../../game/gameState';
 import { BUILDINGS } from '../../config/buildings';
 import { DECORATIONS } from '../../config/decorations';
 import { TREES_BUSHES } from '../../config/crops';
 import { sounds } from '../../audio/SoundManager';
-import { ArrowLeft, Search, Check } from 'lucide-react';
+import { triggerTelegramHaptic } from '../../utils/telegram';
+import { Search, Check } from 'lucide-react';
+
+const CoinSvg = () => (
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" className="shrink-0 inline-block">
+    <circle cx="12" cy="12" r="10" fill="url(#coin_b_g)" stroke="#92400E" strokeWidth="1.5" />
+    <circle cx="12" cy="12" r="7.5" stroke="#FEF08A" strokeWidth="1" strokeDasharray="2.5 1" />
+    <text x="12" y="16" fontSize="11" fontWeight="900" fill="#78350F" textAnchor="middle" fontFamily="sans-serif">🪙</text>
+    <defs>
+      <linearGradient id="coin_b_g" x1="0" y1="0" x2="24" y2="24">
+        <stop offset="0%" stopColor="#FDE047" />
+        <stop offset="100%" stopColor="#D97706" />
+      </linearGradient>
+    </defs>
+  </svg>
+);
 
 type ShopTab = 'farming' | 'factories' | 'trees' | 'decorations';
 
@@ -23,7 +38,8 @@ function fmtCost(n: number): string {
 
 export const BuildShopModal: React.FC = () => {
   const {
-    activeModal, closeModal, level, coins, gems, setPlacingBuilding,
+    activeModal, closeModal, level, coins, setPlacingBuilding,
+    isDesign2026,
   } = useGameStore();
 
   const [activeTab, setActiveTab] = useState<ShopTab>('farming');
@@ -58,15 +74,20 @@ export const BuildShopModal: React.FC = () => {
   const handleSelect = (id: string, unlocked: boolean, canAfford: boolean) => {
     if (!unlocked || !canAfford) return;
     sounds.playClick();
+    triggerTelegramHaptic('medium');
     setPlacingBuilding(id);
     closeModal();
   };
 
   return (
-    <div className="fixed inset-0 pt-14 sm:pt-16 pb-20 sm:pb-24 z-40 flex flex-col bg-[#2A1406] select-none animate-pop-in text-[#3B1F0D] overflow-hidden">
+    <div className={`fixed inset-0 pt-14 sm:pt-16 pb-20 sm:pb-24 z-40 flex flex-col select-none animate-pop-in overflow-hidden transition-colors ${
+      isDesign2026 ? 'bg-[#0F1115] text-white' : 'bg-[#2A1406] text-[#3B1F0D]'
+    }`}>
       
       {/* ── TOP TITLE & CATEGORY BAR ── */}
-      <div className="bg-[#3D2008] px-3 sm:px-6 py-2.5 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5 border-b-2 border-[#5C3718] shrink-0">
+      <div className={`px-3 sm:px-6 py-2.5 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5 border-b shrink-0 ${
+        isDesign2026 ? 'bg-[#181C24] border-[#242A35]' : 'bg-[#3D2008] border-[#5C3718]'
+      }`}>
         
         {/* Tabs */}
         <div className="flex items-center gap-1.5 sm:gap-2 overflow-x-auto pb-1 sm:pb-0">
@@ -77,11 +98,16 @@ export const BuildShopModal: React.FC = () => {
                 key={tab.id}
                 onClick={() => {
                   sounds.playClick();
+                  triggerTelegramHaptic('light');
                   setActiveTab(tab.id);
                 }}
                 className={`flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-extrabold transition-all cursor-pointer shrink-0 ${
                   isActive
-                    ? 'hud-parchment shadow-lg border-2 border-yellow-400 scale-105'
+                    ? isDesign2026
+                      ? 'bg-purple-600 text-white shadow-lg border border-purple-400 scale-105'
+                      : 'hud-parchment shadow-lg border-2 border-yellow-400 scale-105'
+                    : isDesign2026
+                    ? 'bg-[#242A35] text-[#8E939D] hover:text-white'
                     : 'bg-[#2A1406]/80 text-amber-200 border border-amber-900 hover:bg-[#2A1406]'
                 }`}
               >
@@ -99,11 +125,15 @@ export const BuildShopModal: React.FC = () => {
             placeholder="Поиск по названию..."
             value={search}
             onChange={e => setSearch(e.target.value)}
-            className="w-full sm:w-56 bg-[#2A1406] border border-amber-800 rounded-xl px-3 py-1.5 text-xs text-yellow-200 placeholder-amber-400/50 focus:outline-none focus:border-yellow-400 pl-8"
+            className={`w-full sm:w-56 border rounded-xl px-3 py-1.5 text-xs placeholder-zinc-500 focus:outline-none pl-8 ${
+              isDesign2026
+                ? 'bg-[#242A35] border-[#353D4C] text-white focus:border-purple-400'
+                : 'bg-[#2A1406] border-amber-800 text-yellow-200 focus:border-yellow-400'
+            }`}
           />
-          <Search size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-amber-400/60" />
+          <Search size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-zinc-400" />
           {search && (
-            <button onClick={() => setSearch('')} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-xs text-amber-400">
+            <button onClick={() => setSearch('')} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-xs text-zinc-400">
               ✕
             </button>
           )}
@@ -111,7 +141,7 @@ export const BuildShopModal: React.FC = () => {
 
       </div>
 
-      {/* ── CARDS GRID (2 КОЛОНКИ НА ТЕЛЕФОНЕ, 3-4 НА ПК) ── */}
+      {/* ── CARDS GRID ── */}
       <div className="flex-1 overflow-y-auto p-3 sm:p-6">
         <div className="max-w-6xl mx-auto grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4 pb-12">
           {sorted.map(item => {
@@ -124,53 +154,65 @@ export const BuildShopModal: React.FC = () => {
             return (
               <div
                 key={item.id}
-                className={`hud-parchment flex flex-col justify-between p-3.5 sm:p-4 rounded-2xl shadow-md border-2 transition-all relative ${
+                className={`flex flex-col justify-between p-3.5 sm:p-4 rounded-2xl shadow-md border transition-all relative ${
+                  isDesign2026
+                    ? 'bg-[#181C24] border-[#242A35] text-white'
+                    : 'hud-parchment text-[#3B1F0D] border-2'
+                } ${
                   !unlocked
-                    ? 'opacity-65 grayscale bg-amber-950/40'
+                    ? 'opacity-60 grayscale'
                     : canAfford
-                    ? 'hover:border-yellow-500 hover:scale-[1.02]'
-                    : 'border-amber-700/60'
+                    ? 'hover:scale-[1.02] hover:border-purple-400'
+                    : ''
                 }`}
               >
                 {/* Level Lock Badge */}
                 {!unlocked && (
-                  <div className="absolute top-3 right-3 px-2 py-0.5 rounded-lg bg-amber-950/90 border border-yellow-500/80 text-[10px] font-black text-yellow-300 flex items-center gap-1 shadow">
+                  <div className="absolute top-3 right-3 px-2 py-0.5 rounded-lg bg-black/80 border border-yellow-500/80 text-[10px] font-black text-yellow-300 flex items-center gap-1 shadow">
                     <span>🔒</span>
                     <span>Ур. {item.unlockLevel}</span>
                   </div>
                 )}
 
-                {/* Top Info: Icon + Title + Size */}
+                {/* Top Info */}
                 <div>
                   <div className="flex items-start gap-3 mb-2">
-                    <div className="w-12 h-12 rounded-xl bg-amber-100/90 border border-[#5C3718] flex items-center justify-center text-3xl shadow-inner shrink-0">
+                    <div className={`w-12 h-12 rounded-xl flex items-center justify-center text-3xl shadow-inner shrink-0 ${
+                      isDesign2026 ? 'bg-[#242A35] border border-[#353D4C]' : 'bg-amber-100/90 border border-[#5C3718]'
+                    }`}>
                       {item.icon}
                     </div>
                     <div className="flex flex-col flex-1 pr-12 sm:pr-0">
-                      <h3 className="font-extrabold text-xs sm:text-sm text-[#3B1F0D] leading-tight">
+                      <h3 className={`font-extrabold text-xs sm:text-sm leading-tight ${
+                        isDesign2026 ? 'text-white' : 'text-[#3B1F0D]'
+                      }`}>
                         {item.name}
                       </h3>
-                      <span className="text-[10px] text-[#78350F] font-bold mt-0.5">
+                      <span className={`text-[10px] font-bold mt-0.5 ${
+                        isDesign2026 ? 'text-zinc-400' : 'text-[#78350F]'
+                      }`}>
                         {w}×{d} кл.
                       </span>
                     </div>
                   </div>
 
-                  <p className="text-[11px] text-[#5C3718] leading-snug line-clamp-2 my-1.5 font-medium">
+                  <p className={`text-[11px] leading-snug line-clamp-2 my-1.5 font-medium ${
+                    isDesign2026 ? 'text-[#8E939D]' : 'text-[#5C3718]'
+                  }`}>
                     {(item as { description?: string }).description || 'Постройка для развития и процветания вашей фермы.'}
                   </p>
                 </div>
 
                 {/* Bottom Action: Price + Build Button */}
-                <div className="flex items-center justify-between pt-2.5 mt-2 border-t border-[#5C3718]/30">
+                <div className="flex items-center justify-between pt-2.5 mt-2 border-t border-white/10">
                   {/* Price */}
                   <div className="flex items-center gap-1 font-extrabold text-xs">
                     {cost === 0 ? (
-                      <span className="text-green-700">Бесплатно</span>
+                      <span className="text-emerald-400">Бесплатно</span>
                     ) : (
                       <>
-                        <span>🪙</span>
-                        <span className={canAfford ? 'text-[#3B1F0D]' : 'text-red-700'}>
+                        <CoinSvg />
+                        <span className={canAfford ? (isDesign2026 ? 'text-yellow-300' : 'text-[#3B1F0D]') : 'text-red-400'}>
                           {fmtCost(cost)}
                         </span>
                       </>
@@ -183,10 +225,10 @@ export const BuildShopModal: React.FC = () => {
                     disabled={!unlocked || !canAfford}
                     className={`px-3.5 py-2 rounded-xl font-extrabold text-xs shadow-md transition-transform active:scale-95 cursor-pointer flex items-center gap-1 ${
                       !unlocked
-                        ? 'bg-stone-500 text-stone-200 cursor-not-allowed'
+                        ? 'bg-zinc-700 text-zinc-400 cursor-not-allowed'
                         : !canAfford
-                        ? 'bg-amber-900/60 text-amber-400 border border-amber-700 cursor-not-allowed'
-                        : 'bg-gradient-to-b from-green-500 to-green-700 hover:from-green-400 hover:to-green-600 border border-green-300 text-white shadow-lg'
+                        ? 'bg-zinc-800 text-zinc-500 border border-zinc-700 cursor-not-allowed'
+                        : 'bg-gradient-to-b from-emerald-500 to-emerald-700 hover:from-emerald-400 hover:to-emerald-600 border border-emerald-300 text-white shadow-lg'
                     }`}
                   >
                     {unlocked ? (

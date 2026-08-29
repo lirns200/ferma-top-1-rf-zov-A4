@@ -1,24 +1,27 @@
-import React from 'react';
+﻿import React from 'react';
 import { useGameStore } from '../../game/gameState';
 import { PRODUCTS } from '../../config/products';
 import { sounds } from '../../audio/SoundManager';
-import { ArrowLeft, Trash2, Send, Clock, CheckCircle2 } from 'lucide-react';
+import { triggerTelegramHaptic } from '../../utils/telegram';
+import { Trash2, Send, Clock } from 'lucide-react';
 
 export const OrderBoardModal: React.FC = () => {
   const {
     activeModal,
-    closeModal,
     orders,
     inventory,
     truckState,
     fulfillOrder,
     trashOrder,
+    isDesign2026,
   } = useGameStore();
 
   if (activeModal !== 'orders') return null;
 
   return (
-    <div className="fixed inset-0 pt-14 sm:pt-16 pb-20 sm:pb-24 z-40 flex flex-col bg-[#2A1406] select-none animate-pop-in text-[#3B1F0D] overflow-hidden">
+    <div className={`fixed inset-0 pt-14 sm:pt-16 pb-20 sm:pb-24 z-40 flex flex-col select-none animate-pop-in overflow-hidden transition-colors ${
+      isDesign2026 ? 'bg-[#0F1115] text-white' : 'bg-[#2A1406] text-[#3B1F0D]'
+    }`}>
 
       {/* ── TRUCK DELIVERY STATUS BANNER ── */}
       {truckState.isDelivering && (
@@ -43,24 +46,29 @@ export const OrderBoardModal: React.FC = () => {
             return (
               <div
                 key={order.id}
-                className={`hud-parchment flex flex-col justify-between p-4 rounded-2xl shadow-lg border-2 transition-all ${
-                  allItemsAvailable
-                    ? 'border-green-600 bg-[#FDF7E7]'
-                    : 'border-[#5C3718]'
+                className={`flex flex-col justify-between p-4 rounded-2xl shadow-lg border transition-all ${
+                  isDesign2026
+                    ? allItemsAvailable
+                      ? 'bg-[#181C24] border-emerald-500 shadow-emerald-950/40 text-white'
+                      : 'bg-[#181C24] border-[#242A35] text-white'
+                    : allItemsAvailable
+                    ? 'hud-parchment border-green-600 bg-[#FDF7E7] text-[#3B1F0D]'
+                    : 'hud-parchment border-[#5C3718] text-[#3B1F0D]'
                 }`}
               >
                 {/* Customer header */}
-                <div className="flex items-center justify-between mb-3 border-b border-[#5C3718]/30 pb-2">
+                <div className="flex items-center justify-between mb-3 border-b border-white/10 pb-2">
                   <div className="flex items-center gap-2">
                     <span className="text-3xl">{order.customerAvatar}</span>
-                    <span className="font-extrabold text-sm text-[#3B1F0D]">{order.customerName}</span>
+                    <span className="font-extrabold text-sm">{order.customerName}</span>
                   </div>
                   <button
                     onClick={() => {
                       sounds.playClick();
+                      triggerTelegramHaptic('warning');
                       trashOrder(order.id);
                     }}
-                    className="text-amber-800/60 hover:text-red-700 p-1 rounded-lg transition-colors cursor-pointer"
+                    className="text-[#8E939D] hover:text-red-400 p-1 rounded-lg transition-colors cursor-pointer"
                     title="Удалить заказ"
                   >
                     <Trash2 size={16} />
@@ -79,7 +87,9 @@ export const OrderBoardModal: React.FC = () => {
                         key={req.itemId}
                         className={`flex items-center justify-between px-3 py-1.5 rounded-xl border ${
                           isEnough 
-                            ? 'bg-green-100/80 border-green-500 text-green-950 font-bold'
+                            ? 'bg-emerald-950/60 border-emerald-500 text-emerald-300 font-bold'
+                            : isDesign2026
+                            ? 'bg-[#242A35] border-[#353D4C] text-[#8E939D]'
                             : 'bg-amber-100/70 border-amber-300 text-amber-950 font-medium'
                         }`}
                       >
@@ -87,7 +97,7 @@ export const OrderBoardModal: React.FC = () => {
                           <span className="text-xl">{item?.icon || '📦'}</span>
                           <span className="text-xs">{item?.name || req.itemId}</span>
                         </div>
-                        <span className={`text-xs font-black ${isEnough ? 'text-green-800' : 'text-red-700'}`}>
+                        <span className={`text-xs font-black ${isEnough ? 'text-emerald-400' : 'text-red-400'}`}>
                           {countHave}/{req.count}
                         </span>
                       </div>
@@ -96,13 +106,13 @@ export const OrderBoardModal: React.FC = () => {
                 </div>
 
                 {/* Reward & Send Button */}
-                <div className="flex items-center justify-between pt-2.5 border-t border-[#5C3718]/30">
+                <div className="flex items-center justify-between pt-2.5 border-t border-white/10">
                   <div className="flex flex-col">
-                    <div className="flex items-center gap-1 text-xs font-extrabold text-amber-900">
-                      <span>💰</span>
+                    <div className="flex items-center gap-1 text-xs font-extrabold text-yellow-400">
+                      <span>🪙</span>
                       <span>+{order.coinReward}</span>
                     </div>
-                    <div className="flex items-center gap-1 text-[11px] font-extrabold text-blue-900">
+                    <div className="flex items-center gap-1 text-[11px] font-extrabold text-blue-400">
                       <span>✨</span>
                       <span>+{order.xpReward} XP</span>
                     </div>
@@ -112,14 +122,15 @@ export const OrderBoardModal: React.FC = () => {
                     onClick={() => {
                       if (allItemsAvailable && !truckState.isDelivering) {
                         sounds.playLevelUp();
+                        triggerTelegramHaptic('success');
                         fulfillOrder(order.id);
                       }
                     }}
                     disabled={!allItemsAvailable || truckState.isDelivering}
                     className={`px-4 py-2 rounded-xl text-xs font-extrabold flex items-center gap-1.5 shadow transition-all active:scale-95 ${
                       allItemsAvailable && !truckState.isDelivering
-                        ? 'bg-gradient-to-b from-green-500 to-green-700 hover:from-green-400 hover:to-green-600 border border-green-300 text-white cursor-pointer shadow-lg animate-pulse'
-                        : 'bg-amber-900/30 text-amber-800/60 border border-amber-900/20 cursor-not-allowed'
+                        ? 'bg-gradient-to-b from-emerald-500 to-emerald-700 hover:from-emerald-400 hover:to-emerald-600 border border-emerald-300 text-white cursor-pointer shadow-lg animate-pulse'
+                        : 'bg-zinc-800 text-zinc-500 border border-zinc-700 cursor-not-allowed'
                     }`}
                   >
                     <Send size={14} />
