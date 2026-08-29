@@ -2422,6 +2422,18 @@ export const GameScene: React.FC = () => {
     }
   };
 
+  const onTouchStart = (e: React.TouchEvent) => {
+    if (e.touches.length === 2) {
+      const t1 = e.touches[0];
+      const t2 = e.touches[1];
+      touchDistanceRef.current = Math.hypot(t2.clientX - t1.clientX, t2.clientY - t1.clientY);
+    }
+  };
+
+  const onTouchEnd = () => {
+    touchDistanceRef.current = null;
+  };
+
   return (
     <div 
       ref={containerRef}
@@ -2431,7 +2443,10 @@ export const GameScene: React.FC = () => {
       onPointerUp={onPointerUp}
       onPointerCancel={onPointerUp}
       onWheel={onWheel}
+      onTouchStart={onTouchStart}
       onTouchMove={onTouchMove}
+      onTouchEnd={onTouchEnd}
+      onTouchCancel={onTouchEnd}
     >
       <canvas ref={canvasRef} className="w-full h-full block cursor-grab active:cursor-grabbing" />
     </div>

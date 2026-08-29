@@ -1,185 +1,124 @@
-import React, { useEffect, useRef, useState } from 'react';
+﻿import React, { useEffect, useRef, useState } from 'react';
 import { useGameStore } from '../game/gameState';
 import { LEVELS } from '../config/levels';
-import { SEASONS_INFO, getRealCalendarMonthName } from '../config/events';
+import { SEASONS_INFO } from '../config/events';
+import { Settings, Volume2, VolumeX, Plus } from 'lucide-react';
+import { sounds } from '../audio/SoundManager';
 
 function fmtNumber(n: number): string {
   if (n >= 1_000_000) return (n / 1_000_000).toFixed(1) + 'M';
-  if (n >= 10_000)    return (n / 1_000).toFixed(1) + 'K';
+  if (n >= 10_000) return (n / 1_000).toFixed(1) + 'K';
   return n.toLocaleString('ru-RU');
-}
-
-function useBump(value: number) {
-  const [bumping, setBumping] = useState(false);
-  const prev = useRef(value);
-  useEffect(() => {
-    if (prev.current !== value) {
-      prev.current = value;
-      setBumping(true);
-      const t = setTimeout(() => setBumping(false), 500);
-      return () => clearTimeout(t);
-    }
-  }, [value]);
-  return bumping;
-}
-
-/** Chunked pixel progress bar — fills in discrete blocks */
-const PixelBar: React.FC<{ pct: number; color: string; width?: number }> = ({ pct, color, width = 10 }) => {
-  const filled = Math.round((pct / 100) * width);
-  return (
-    <div className="px-bar-wrap flex gap-[2px]" style={{ height: 10 }}>
-      {Array.from({ length: width }).map((_, i) => (
-        <div
-          key={i}
-          style={{
-            flex: 1,
-            height: '100%',
-            background: i < filled ? color : '#1a0800',
-            imageRendering: 'pixelated',
-          }}
-        />
-      ))}
-    </div>
-  );
-};
-
-function getLocalTimeFormatted(): { timeStr: string; timeLabel: string; timeIcon: string } {
-  const d = new Date();
-  const h = d.getHours();
-  const m = d.getMinutes();
-  const timeStr = `${h < 10 ? '0' + h : h}:${m < 10 ? '0' + m : m}`;
-  const hourVal = h + m / 60;
-  if (hourVal >= 5.0 && hourVal < 8.5) return { timeStr, timeLabel: 'Рассвет', timeIcon: '🌅' };
-  if (hourVal >= 8.5 && hourVal < 18.0) return { timeStr, timeLabel: 'День', timeIcon: '☀️' };
-  if (hourVal >= 18.0 && hourVal < 21.5) return { timeStr, timeLabel: 'Закат', timeIcon: '🌇' };
-  return { timeStr, timeLabel: 'Ночь', timeIcon: '🌙' };
 }
 
 export const TopBar: React.FC = () => {
   const {
     level, xp, coins, gems,
-    activeSeason, activeEvent, eventEndsAt,
+    activeSeason, activeEvent,
     soundMuted, setSoundMuted, openModal,
   } = useGameStore();
 
-  const [timeInfo, setTimeInfo] = useState(getLocalTimeFormatted());
-  useEffect(() => {
-    const timer = setInterval(() => setTimeInfo(getLocalTimeFormatted()), 5000);
-    return () => clearInterval(timer);
-  }, []);
-
   const currentLevelConfig = LEVELS[level - 1];
-  const xpNeeded  = currentLevelConfig ? currentLevelConfig.xpRequired : 1000;
+  const xpNeeded = currentLevelConfig ? currentLevelConfig.xpRequired : 1000;
   const xpPercent = Math.min(100, Math.round((xp / xpNeeded) * 100));
   const seasonInfo = SEASONS_INFO[activeSeason];
 
-  const timeLeftSec = Math.max(0, Math.floor((eventEndsAt - Date.now()) / 1000));
-  const timeMin = Math.floor(timeLeftSec / 60);
-  const timeSec = timeLeftSec % 60;
-
-  const coinsBump = useBump(coins);
-  const gemsBump  = useBump(gems);
-  const xpBump    = useBump(xp);
-
   return (
-    <header className="absolute top-0 left-0 right-0 p-2 sm:p-3 flex items-start justify-between pointer-events-none z-30">
+    <header className="fixed top-0 left-0 right-0 z-30 pointer-events-none p-2.5 sm:p-4 select-none">
+      <div className="max-w-7xl mx-auto flex items-center justify-between gap-2">
+        
+        {/* ── LEFT: Level & XP Bar ── */}
+        <div 
+          onClick={() => {
+            sounds.playClick();
+            openModal('levelup');
+          }}
+          className="pointer-events-auto cursor-pointer flex items-center gap-2 farm-pill px-3 py-1.5 active:scale-95 transition-transform"
+        >
+          {/* Level Star Badge */}
+          <div className="relative flex items-center justify-center w-8 h-8 sm:w-9 sm:h-9 bg-gradient-to-tr from-amber-500 to-yellow-300 rounded-full border-2 border-yellow-100 shadow-md font-black text-amber-950 text-sm sm:text-base">
+            <span>{level}</span>
+          </div>
 
-      {/* ── LEFT: Level + XP ── */}
-      <div className="pointer-events-auto px-panel flex flex-col gap-1.5 px-2 py-2" style={{ minWidth: 160 }}>
-        {/* Level row */}
-        <div className="flex items-center gap-2">
-          <button
-            id="btn-level-badge"
-            onClick={() => openModal('levelup')}
-            className="px-btn px-btn-blue flex items-center justify-center"
-            style={{ width: 36, height: 36, fontSize: 13, fontFamily: "'Press Start 2P', monospace" }}
-            title={`Уровень ${level}`}
-          >
-            {level}
-          </button>
-          <div className="flex flex-col gap-1 flex-1">
-            <div className="flex justify-between items-center">
-              <span className="px-font text-[6px] text-amber-400 uppercase tracking-wider">EXP</span>
-              <span className={`px-font text-[6px] transition-colors ${xpBump ? 'text-yellow-300' : 'text-amber-300/70'}`}>
-                {xp}/{xpNeeded}
-              </span>
+          {/* XP Bar */}
+          <div className="flex flex-col gap-0.5 min-w-[70px] sm:min-w-[110px]">
+            <div className="flex justify-between items-center text-[10px] sm:text-xs font-bold text-amber-200">
+              <span className="hidden sm:inline">ОПЫТ</span>
+              <span>{xp}/{xpNeeded}</span>
             </div>
-            <PixelBar pct={xpPercent} color={xpBump ? '#60a5fa' : '#3b82f6'} width={8} />
+            <div className="w-full h-2 sm:h-2.5 bg-amber-950/80 rounded-full overflow-hidden border border-amber-600/60">
+              <div 
+                className="h-full bg-gradient-to-r from-blue-500 to-cyan-300 transition-all duration-500 rounded-full"
+                style={{ width: `${xpPercent}%` }}
+              />
+            </div>
           </div>
         </div>
 
-        {/* Season & Weather & Real Time of Day row */}
-        <button
-          onClick={() => openModal('events')}
-          className="px-btn px-btn-amber flex items-center gap-1.5 w-full text-left"
-          style={{ padding: '4px 6px' }}
-          title="Нажмите для выбора сезона и погоды"
-        >
-          <span style={{ fontSize: 14 }}>{timeInfo.timeIcon}</span>
-          <div className="flex flex-col flex-1 overflow-hidden">
-            <div className="flex items-center gap-1">
-              <span className="px-font text-[6px] text-yellow-300 font-bold">
-                {timeInfo.timeStr} • {timeInfo.timeLabel}
-              </span>
-            </div>
-            <span className="px-font text-[5px] text-amber-400/90 truncate">
-              {activeEvent?.icon || seasonInfo.icon} {activeEvent?.name || seasonInfo.name} ({seasonInfo.name})
+        {/* ── CENTER: Coins & Gems Currency Badges ── */}
+        <div className="flex items-center gap-1.5 sm:gap-3">
+          {/* Coins */}
+          <div className="pointer-events-auto flex items-center gap-1.5 farm-pill px-2.5 sm:px-3 py-1 sm:py-1.5">
+            <span className="text-base sm:text-lg animate-bounce" style={{ animationDuration: '3s' }}>🪙</span>
+            <span className="font-extrabold text-xs sm:text-sm text-yellow-300 tracking-wide min-w-[36px] sm:min-w-[48px]">
+              {fmtNumber(coins)}
             </span>
+            <button 
+              onClick={() => {
+                sounds.playClick();
+                openModal('orders');
+              }}
+              className="w-5 h-5 rounded-full bg-green-500 hover:bg-green-400 border border-green-200 text-white flex items-center justify-center text-xs font-black shadow active:scale-90 transition-transform cursor-pointer"
+            >
+              +
+            </button>
           </div>
-          {activeEvent && (
-            <span className="px-font text-[5px] text-amber-400 ml-auto">
-              {timeMin}:{timeSec < 10 ? `0${timeSec}` : timeSec}
+
+          {/* Gems */}
+          <div className="pointer-events-auto flex items-center gap-1.5 farm-pill px-2.5 sm:px-3 py-1 sm:py-1.5">
+            <span className="text-base sm:text-lg animate-pulse">💎</span>
+            <span className="font-extrabold text-xs sm:text-sm text-cyan-300 tracking-wide min-w-[24px] sm:min-w-[32px]">
+              {fmtNumber(gems)}
             </span>
-          )}
-        </button>
-      </div>
-
-      {/* ── RIGHT: Currencies + Controls ── */}
-      <div className="pointer-events-auto flex flex-col gap-1.5 items-end">
-
-        {/* Coins */}
-        <div
-          className={`px-panel flex items-center gap-2 px-2 py-1.5 transition-all ${coinsBump ? 'brightness-125' : ''}`}
-          style={{ minWidth: 110 }}
-        >
-          <span style={{ fontSize: 16, imageRendering: 'pixelated' }}>💰</span>
-          <span className={`px-font text-[9px] tabular-nums ${coinsBump ? 'text-yellow-300' : 'text-amber-300'}`}>
-            {fmtNumber(coins)}
-          </span>
+            <button 
+              onClick={() => {
+                sounds.playClick();
+                openModal('events');
+              }}
+              className="w-5 h-5 rounded-full bg-cyan-500 hover:bg-cyan-400 border border-cyan-200 text-white flex items-center justify-center text-xs font-black shadow active:scale-90 transition-transform cursor-pointer"
+            >
+              +
+            </button>
+          </div>
         </div>
 
-        {/* Gems */}
-        <div
-          className={`px-panel flex items-center gap-2 px-2 py-1.5 transition-all ${gemsBump ? 'brightness-125' : ''}`}
-          style={{ minWidth: 110 }}
-        >
-          <span style={{ fontSize: 16, imageRendering: 'pixelated' }}>💎</span>
-          <span className={`px-font text-[9px] tabular-nums ${gemsBump ? 'text-cyan-300' : 'text-cyan-400'}`}>
-            {fmtNumber(gems)}
-          </span>
-        </div>
-
-        {/* Controls row */}
-        <div className="flex gap-1.5">
+        {/* ── RIGHT: Season & Settings ── */}
+        <div className="flex items-center gap-1.5 sm:gap-2">
+          {/* Season Badge */}
           <button
-            id="btn-sound-toggle"
-            onClick={() => setSoundMuted(!soundMuted)}
-            className="px-btn px-btn-amber"
-            style={{ width: 34, height: 30, fontSize: 14 }}
-            title={soundMuted ? 'Включить звук' : 'Выключить звук'}
+            onClick={() => {
+              sounds.playClick();
+              openModal('events');
+            }}
+            className="pointer-events-auto hidden sm:flex items-center gap-1.5 farm-pill px-3 py-1.5 hover:brightness-110 active:scale-95 transition-all cursor-pointer"
           >
-            {soundMuted ? '🔇' : '🔊'}
+            <span className="text-base">{seasonInfo.icon}</span>
+            <span className="text-xs font-bold text-amber-200">{seasonInfo.name}</span>
           </button>
+
+          {/* Settings Button */}
           <button
-            id="btn-settings-modal"
-            onClick={() => openModal('settings')}
-            className="px-btn px-btn-amber"
-            style={{ width: 34, height: 30, fontSize: 14 }}
-            title="Настройки"
+            onClick={() => {
+              sounds.playClick();
+              openModal('settings');
+            }}
+            className="pointer-events-auto w-9 h-9 sm:w-10 sm:h-10 rounded-full farm-pill flex items-center justify-center text-amber-200 hover:text-white hover:brightness-110 active:scale-90 transition-transform cursor-pointer"
+            title="Настройки фермы"
           >
-            ⚙️
+            <Settings size={18} className="sm:w-5 sm:h-5" />
           </button>
         </div>
+
       </div>
     </header>
   );
