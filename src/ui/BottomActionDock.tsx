@@ -18,11 +18,11 @@ export const BottomActionDock: React.FC = () => {
   return (
     <footer className="fixed bottom-0 left-0 right-0 z-50 pointer-events-none select-none p-2 sm:p-3">
       
-      {/* ── Dynamic Bottom Dock: 5 Equal Columns with Perfectly Centered Center Button ── */}
+      {/* ── Dynamic Bottom Dock: 5 Identical Columns with Rounded Square Buttons ── */}
       <div
         className={`pointer-events-auto w-full max-w-lg mx-auto grid grid-cols-5 items-center justify-items-center relative transition-all duration-300 ${
           isDesign2026
-            ? 'hud-ios26-dock px-3 py-2 shadow-2xl rounded-full'
+            ? 'hud-ios26-dock px-2 sm:px-4 py-2.5 shadow-2xl rounded-full'
             : 'hud-wood-dock px-2 sm:px-4 py-2 rounded-t-3xl shadow-2xl'
         }`}
       >
@@ -40,16 +40,16 @@ export const BottomActionDock: React.FC = () => {
           }`}
         >
           {hasSoldItems && (
-            <span className="absolute -top-1 right-3 w-4 h-4 bg-green-500 border border-white rounded-full text-white text-[9px] font-black flex items-center justify-center shadow-lg animate-bounce">
+            <span className="absolute -top-1 right-2 sm:right-3 w-4 h-4 bg-green-500 border border-white rounded-full text-white text-[9px] font-black flex items-center justify-center shadow-lg animate-bounce">
               🪙
             </span>
           )}
           <div className={`w-11 h-11 sm:w-12 sm:h-12 rounded-2xl flex items-center justify-center text-2xl transition-all shadow-inner ${
             activeModal === 'shop'
-              ? 'bg-yellow-400/90 border border-yellow-200 shadow-lg text-[#3B1F0D]'
+              ? 'bg-yellow-400 border-2 border-yellow-200 shadow-lg text-[#3B1F0D]'
               : isDesign2026
               ? 'bg-white/10 border border-white/15 hover:bg-white/15'
-              : 'bg-amber-950/70 border-amber-700/80'
+              : 'bg-amber-950/70 border border-amber-700/80'
           }`}>
             🎪
           </div>
@@ -74,10 +74,10 @@ export const BottomActionDock: React.FC = () => {
         >
           <div className={`w-11 h-11 sm:w-12 sm:h-12 rounded-2xl flex items-center justify-center text-2xl transition-all shadow-inner ${
             activeModal === 'barn' || activeModal === 'silo'
-              ? 'bg-yellow-400/90 border border-yellow-200 shadow-lg text-[#3B1F0D]'
+              ? 'bg-yellow-400 border-2 border-yellow-200 shadow-lg text-[#3B1F0D]'
               : isDesign2026
               ? 'bg-white/10 border border-white/15 hover:bg-white/15'
-              : 'bg-amber-950/70 border-amber-700/80'
+              : 'bg-amber-950/70 border border-amber-700/80'
           }`}>
             📦
           </div>
@@ -88,48 +88,50 @@ export const BottomActionDock: React.FC = () => {
           </span>
         </button>
 
-        {/* 3. 🏡 СТРОИТЬ / 🌾 ФЕРМА (Центральная кнопка — ТОЧНО ПО ЦЕНТРУ!) */}
-        <div className="flex items-center justify-center w-full">
+        {/* 3. 🏡 СТРОИТЬ / 🌾 ФЕРМА (Квадратная с закругленными углами как и все остальные!) */}
+        <button
+          id={isInsideTab ? 'btn-return-farm' : 'btn-build-action'}
+          onClick={() => {
+            if (isInsideTab) {
+              sounds.playClick();
+              triggerTelegramHaptic('medium');
+              closeModal();
+            } else {
+              sounds.playClick();
+              triggerTelegramHaptic('light');
+              toggleActionStrip();
+            }
+          }}
+          className="flex flex-col items-center justify-center gap-0.5 group active:scale-95 transition-transform cursor-pointer w-full"
+        >
           {isInsideTab ? (
-            /* Inside Tab Mode: Center button becomes «ФЕРМА» */
-            <button
-              id="btn-return-farm"
-              onClick={() => {
-                sounds.playClick();
-                triggerTelegramHaptic('medium');
-                closeModal();
-              }}
-              className={`w-12 h-12 sm:w-14 sm:h-14 flex flex-col items-center justify-center gap-0.5 shadow-2xl active:scale-90 transition-all duration-150 cursor-pointer animate-pulse ${
-                isDesign2026 ? 'hud-ios26-btn-farm rounded-full' : 'hud-build-btn rounded-2xl'
-              }`}
-            >
-              <span className="text-xl sm:text-2xl filter drop-shadow">🌾</span>
-              <span className="text-[9px] sm:text-[10px] font-black uppercase tracking-tight text-white leading-none">
+            /* Inside Tab: 🌾 Ферма */
+            <>
+              <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-2xl flex items-center justify-center text-2xl transition-all shadow-lg border-2 border-green-300 bg-gradient-to-tr from-green-600 via-emerald-500 to-green-400 text-white animate-pulse">
+                🌾
+              </div>
+              <span className="text-[10px] sm:text-xs font-black tracking-tight text-emerald-400 uppercase">
                 Ферма
               </span>
-            </button>
+            </>
           ) : (
-            /* On Farm Mode: Center button is «СТРОИТЬ» */
-            <button
-              id="btn-build-action"
-              onClick={() => {
-                sounds.playClick();
-                triggerTelegramHaptic('light');
-                toggleActionStrip();
-              }}
-              className={`w-12 h-12 sm:w-14 sm:h-14 flex flex-col items-center justify-center gap-0.5 shadow-2xl active:scale-90 transition-all duration-150 cursor-pointer ${
-                isDesign2026 ? 'hud-ios26-btn-center rounded-full' : 'hud-build-btn rounded-2xl'
-              } ${isActionStripOpen ? 'ring-4 ring-yellow-300 brightness-110 scale-105' : ''}`}
-            >
-              <span className="text-xl sm:text-2xl filter drop-shadow animate-bounce" style={{ animationDuration: '2.5s' }}>
+            /* On Farm: 🏡 Строить */
+            <>
+              <div className={`w-11 h-11 sm:w-12 sm:h-12 rounded-2xl flex items-center justify-center text-2xl transition-all shadow-lg border-2 ${
+                isActionStripOpen
+                  ? 'border-yellow-200 ring-4 ring-yellow-400/50 scale-105 bg-gradient-to-tr from-amber-500 via-yellow-400 to-amber-300 text-amber-950'
+                  : isDesign2026
+                  ? 'bg-gradient-to-tr from-amber-500 via-yellow-400 to-yellow-300 border-yellow-200 shadow-yellow-500/40 text-amber-950'
+                  : 'bg-gradient-to-tr from-amber-500 via-yellow-400 to-yellow-300 border-yellow-200 shadow-amber-900/60 text-amber-950'
+              }`}>
                 🏡
-              </span>
-              <span className="text-[9px] sm:text-[10px] font-black text-[#3B1F0D] uppercase tracking-tight text-center leading-none">
+              </div>
+              <span className="text-[10px] sm:text-xs font-black tracking-tight text-yellow-300 uppercase">
                 Строить
               </span>
-            </button>
+            </>
           )}
-        </div>
+        </button>
 
         {/* 4. 📜 Задания */}
         <button
@@ -144,16 +146,16 @@ export const BottomActionDock: React.FC = () => {
           }`}
         >
           {!truckState.isDelivering && readyOrders > 0 && (
-            <span className="absolute -top-1 right-3 min-w-[18px] h-4 px-1 bg-red-600 border border-white rounded-full text-white text-[9px] font-black flex items-center justify-center shadow-lg animate-bounce">
+            <span className="absolute -top-1 right-2 sm:right-3 min-w-[18px] h-4 px-1 bg-red-600 border border-white rounded-full text-white text-[9px] font-black flex items-center justify-center shadow-lg animate-bounce">
               {readyOrders}
             </span>
           )}
           <div className={`w-11 h-11 sm:w-12 sm:h-12 rounded-2xl flex items-center justify-center text-2xl transition-all shadow-inner ${
             activeModal === 'orders'
-              ? 'bg-yellow-400/90 border border-yellow-200 shadow-lg text-[#3B1F0D]'
+              ? 'bg-yellow-400 border-2 border-yellow-200 shadow-lg text-[#3B1F0D]'
               : isDesign2026
               ? 'bg-white/10 border border-white/15 hover:bg-white/15'
-              : 'bg-amber-950/70 border-amber-700/80'
+              : 'bg-amber-950/70 border border-amber-700/80'
           }`}>
             📜
           </div>
@@ -178,10 +180,10 @@ export const BottomActionDock: React.FC = () => {
         >
           <div className={`w-11 h-11 sm:w-12 sm:h-12 rounded-2xl flex items-center justify-center text-2xl transition-all shadow-inner ${
             activeModal === 'settings'
-              ? 'bg-yellow-400/90 border border-yellow-200 shadow-lg text-[#3B1F0D]'
+              ? 'bg-yellow-400 border-2 border-yellow-200 shadow-lg text-[#3B1F0D]'
               : isDesign2026
               ? 'bg-white/10 border border-white/15 hover:bg-white/15'
-              : 'bg-amber-950/70 border-amber-700/80'
+              : 'bg-amber-950/70 border border-amber-700/80'
           }`}>
             ⚙️
           </div>
