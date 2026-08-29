@@ -285,6 +285,44 @@ class SoundManager {
     osc.stop(this.ctx.currentTime + 0.25);
   }
 
+  public playThunder() {
+    if (this.isMuted) return;
+    this.initContext();
+    if (!this.ctx) return;
+
+    const t = this.ctx.currentTime;
+
+    // 1. Initial sharp crack
+    const oscCrack = this.ctx.createOscillator();
+    const gainCrack = this.ctx.createGain();
+    oscCrack.type = 'sawtooth';
+    oscCrack.frequency.setValueAtTime(140, t);
+    oscCrack.frequency.exponentialRampToValueAtTime(35, t + 0.12);
+    gainCrack.gain.setValueAtTime(0.35 * this.sfxVolume, t);
+    gainCrack.gain.exponentialRampToValueAtTime(0.01, t + 0.15);
+    oscCrack.connect(gainCrack);
+    gainCrack.connect(this.ctx.destination);
+    oscCrack.start(t);
+    oscCrack.stop(t + 0.15);
+
+    // 2. Deep rolling rumble (sub-bass 45Hz -> 25Hz)
+    const oscRumble = this.ctx.createOscillator();
+    const gainRumble = this.ctx.createGain();
+    oscRumble.type = 'triangle';
+    oscRumble.frequency.setValueAtTime(65, t + 0.05);
+    oscRumble.frequency.linearRampToValueAtTime(40, t + 0.8);
+    oscRumble.frequency.linearRampToValueAtTime(25, t + 1.8);
+
+    gainRumble.gain.setValueAtTime(0.01, t);
+    gainRumble.gain.linearRampToValueAtTime(0.4 * this.sfxVolume, t + 0.08);
+    gainRumble.gain.exponentialRampToValueAtTime(0.001, t + 2.0);
+
+    oscRumble.connect(gainRumble);
+    gainRumble.connect(this.ctx.destination);
+    oscRumble.start(t);
+    oscRumble.stop(t + 2.0);
+  }
+
   public startMusic() {
     if (this.isMusicPlaying || this.isMuted) return;
     this.initContext();

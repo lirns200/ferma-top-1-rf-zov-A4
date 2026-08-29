@@ -26,6 +26,7 @@ import {
   getCachedColorMaterial
 } from './ModelGenerators';
 import { createLandscapeDetailGroup } from './LandscapeDetails';
+import { sounds } from '../audio/SoundManager';
 
 export const GameScene: React.FC = () => {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -203,60 +204,146 @@ export const GameScene: React.FC = () => {
     terrainGroupRef.current = terrainGroup;
     scene.add(terrainGroup);
 
-    // 6. Cloud Shadows
+    // 6. Volumetric 3D Sky Clouds & Synchronized Ground Shadows
+    const skyCloudsGroup = new THREE.Group();
+    skyCloudsGroup.name = 'sky_clouds_group';
+    scene.add(skyCloudsGroup);
+
     const cloudShadowsGroup = new THREE.Group();
     const shadowMat = new THREE.MeshBasicMaterial({
       color: 0x0F172A,
       transparent: true,
-      opacity: 0.14,
+      opacity: 0.16,
       depthWrite: false,
     });
-    const cloudShadowsData = [
-      { x: -28, z: -15, scaleX: 7.5, scaleZ: 5.0, speed: 0.75 },
-      { x: -10, z: 8, scaleX: 9.0, scaleZ: 6.0, speed: 0.85 },
-      { x: 12, z: -18, scaleX: 6.5, scaleZ: 4.5, speed: 0.7 },
-      { x: 25, z: 12, scaleX: 8.0, scaleZ: 5.5, speed: 0.8 },
-      { x: -35, z: 18, scaleX: 7.0, scaleZ: 4.8, speed: 0.65 },
-    ];
-    const shadowMeshes: Array<{ mesh: THREE.Group; speed: number }> = [];
-    cloudShadowsData.forEach((cs) => {
+    scene.add(cloudShadowsGroup);
+
+    const cloudMat = new THREE.MeshStandardMaterial({
+      color: 0xFFFFFF,
+      roughness: 0.85,
+      metalness: 0.05,
+      transparent: true,
+      opacity: 0.94,
+    });
+
+    const create3DPuffyCloudMesh = (scaleX: number, scaleY: number, scaleZ: number) => {
       const cGroup = new THREE.Group();
-      cGroup.position.set(cs.x, 0.035, cs.z);
-      const cGeo1 = new THREE.CircleGeometry(cs.scaleX * 0.4, 16);
-      const cGeo2 = new THREE.CircleGeometry(cs.scaleX * 0.32, 16);
-      const cGeo3 = new THREE.CircleGeometry(cs.scaleX * 0.28, 16);
+      cGroup.name = 'sky_cloud';
+      const puffGeo = new THREE.DodecahedronGeometry(1.0, 1);
+      const puffs = [
+        { x: 0, y: 0, z: 0, s: 1.1 },
+        { x: 0.95, y: -0.15, z: 0.2, s: 0.85 },
+        { x: -0.95, y: -0.2, z: -0.15, s: 0.8 },
+        { x: 0.45, y: 0.45, z: -0.25, s: 0.75 },
+        { x: -0.45, y: 0.4, z: 0.25, s: 0.7 },
+        { x: 1.5, y: -0.3, z: 0, s: 0.6 },
+        { x: -1.45, y: -0.35, z: 0.1, s: 0.6 },
+      ];
+      puffs.forEach(p => {
+        const mesh = new THREE.Mesh(puffGeo, cloudMat);
+        mesh.position.set(p.x * scaleX * 0.45, p.y * scaleY * 0.45, p.z * scaleZ * 0.45);
+        mesh.scale.set(p.s * scaleX * 0.45, p.s * scaleY * 0.45, p.s * scaleZ * 0.45);
+        mesh.castShadow = true;
+        cGroup.add(mesh);
+      });
+      return cGroup;
+    };
+
+    const cloudsConfigData = [
+      { x: -36, y: 22, z: -18, scaleX: 7.5, scaleY: 2.4, scaleZ: 5.0, speed: 0.75 },
+      { x: -18, y: 25, z: 6, scaleX: 9.0, scaleY: 2.8, scaleZ: 6.0, speed: 0.85 },
+      { x: 4, y: 23, z: -20, scaleX: 6.5, scaleY: 2.2, scaleZ: 4.5, speed: 0.7 },
+      { x: 22, y: 26, z: -4, scaleX: 8.5, scaleY: 2.7, scaleZ: 5.5, speed: 0.8 },
+      { x: 38, y: 24, z: 14, scaleX: 7.2, scaleY: 2.4, scaleZ: 5.0, speed: 0.75 },
+      { x: -8, y: 27, z: 24, scaleX: 8.0, scaleY: 2.5, scaleZ: 5.2, speed: 0.7 },
+      { x: -45, y: 23, z: 10, scaleX: 7.0, scaleY: 2.3, scaleZ: 4.8, speed: 0.8 },
+    ];
+
+    const activeCloudPairs: Array<{
+      cloud3D: THREE.Group;
+      shadow: THREE.Group;
+      speed: number;
+      initialY: number;
+    }> = [];
+
+    cloudsConfigData.forEach((cs) => {
+      // 3D Puffy Sky Cloud
+      const cloud3D = create3DPuffyCloudMesh(cs.scaleX, cs.scaleY, cs.scaleZ);
+      cloud3D.position.set(cs.x, cs.y, cs.z);
+      skyCloudsGroup.add(cloud3D);
+
+      // Ground Soft Shadow
+      const shadowGroup = new THREE.Group();
+      shadowGroup.position.set(cs.x, 0.035, cs.z);
+      const cGeo1 = new THREE.CircleGeometry(cs.scaleX * 0.45, 16);
+      const cGeo2 = new THREE.CircleGeometry(cs.scaleX * 0.35, 16);
+      const cGeo3 = new THREE.CircleGeometry(cs.scaleX * 0.30, 16);
       const m1 = new THREE.Mesh(cGeo1, shadowMat);
       m1.rotation.x = -Math.PI / 2;
       const m2 = new THREE.Mesh(cGeo2, shadowMat);
       m2.rotation.x = -Math.PI / 2;
-      m2.position.set(cs.scaleX * 0.25, 0, cs.scaleZ * 0.15);
+      m2.position.set(cs.scaleX * 0.28, 0, cs.scaleZ * 0.15);
       const m3 = new THREE.Mesh(cGeo3, shadowMat);
       m3.rotation.x = -Math.PI / 2;
-      m3.position.set(-cs.scaleX * 0.22, 0, -cs.scaleZ * 0.1);
-      cGroup.add(m1, m2, m3);
-      cloudShadowsGroup.add(cGroup);
-      shadowMeshes.push({ mesh: cGroup, speed: cs.speed });
-    });
-    scene.add(cloudShadowsGroup);
+      m3.position.set(-cs.scaleX * 0.25, 0, -cs.scaleZ * 0.12);
+      shadowGroup.add(m1, m2, m3);
+      cloudShadowsGroup.add(shadowGroup);
 
-    // 7. Entities Group
+      activeCloudPairs.push({
+        cloud3D,
+        shadow: shadowGroup,
+        speed: cs.speed,
+        initialY: cs.y,
+      });
+    });
+
+    // 7. Lightning Bolt & Ground Impact Container
+    const lightningGroup = new THREE.Group();
+    lightningGroup.name = 'lightning_bolts_group';
+    scene.add(lightningGroup);
+
+    // 8. Ground Splash Ripples for Rain
+    const splashRipplesGroup = new THREE.Group();
+    splashRipplesGroup.name = 'rain_splash_ripples';
+    scene.add(splashRipplesGroup);
+
+    const splashRingGeo = new THREE.RingGeometry(0.08, 0.35, 10);
+    splashRingGeo.rotateX(-Math.PI / 2);
+    const splashRingMat = new THREE.MeshBasicMaterial({
+      color: 0x93C5FD,
+      transparent: true,
+      opacity: 0.65,
+      side: THREE.DoubleSide,
+      depthWrite: false,
+    });
+    const splashRingsCount = 24;
+    const splashRings: Array<{ mesh: THREE.Mesh; life: number; maxLife: number }> = [];
+    for (let r = 0; r < splashRingsCount; r++) {
+      const ring = new THREE.Mesh(splashRingGeo, splashRingMat.clone());
+      ring.position.set((Math.random() - 0.5) * 55, 0.04, (Math.random() - 0.5) * 55);
+      ring.visible = false;
+      splashRipplesGroup.add(ring);
+      splashRings.push({ mesh: ring, life: 0, maxLife: 0.4 + Math.random() * 0.3 });
+    }
+
+    // 9. Entities Group
     const entitiesGroup = new THREE.Group();
     entitiesGroupRef.current = entitiesGroup;
     scene.add(entitiesGroup);
 
-    // 8. Preview Grid Group
+    // 10. Preview Grid Group
     const previewGridGroup = new THREE.Group();
     previewGridGroupRef.current = previewGridGroup;
     scene.add(previewGridGroup);
 
-    // 9. Stylized Farm Delivery Truck (Vintage red pickup with wooden bed, cargo & chrome details)
+    // 11. Stylized Farm Delivery Truck
     const truckGroup = createStylizedDeliveryTruck();
     truckGroupRef.current = truckGroup;
     truckGroup.position.set(2.5, 0.05, -9.0);
     scene.add(truckGroup);
 
-    // Weather Particles
-    const particleCount = 180;
+    // 12. High-Density Atmospheric & Rain Particle System
+    const particleCount = 360;
     const particleGeo = new THREE.BufferGeometry();
     const particlePositions = new Float32Array(particleCount * 3);
     for (let i = 0; i < particleCount; i++) {
@@ -267,9 +354,9 @@ export const GameScene: React.FC = () => {
     particleGeo.setAttribute('position', new THREE.BufferAttribute(particlePositions, 3));
     const particleMat = new THREE.PointsMaterial({
       color: 0x93C5FD,
-      size: 0.25,
+      size: 0.32,
       transparent: true,
-      opacity: 0.75,
+      opacity: 0.85,
     });
     const particleSystem = new THREE.Points(particleGeo, particleMat);
     scene.add(particleSystem);
@@ -297,6 +384,119 @@ export const GameScene: React.FC = () => {
       new THREE.Vector3(1.0, 0.05, -8.8),     // 5. Slowing down near shop
       new THREE.Vector3(2.5, 0.05, -9.0),     // 6. Parked smoothly at farm stand
     ]);
+
+    // ── 3D Procedural Branching Lightning Bolt Generator ─────────────────
+    let lightningTimer = 2.5; // First strike in 2.5s when thunderstorm is active
+    let isFlashing = false;
+    let flashStartTime = 0;
+
+    const triggerLightningStrike = (strikePos?: THREE.Vector3) => {
+      // Pick random ground location (e.g. mountain peaks, river edges, or farm fields)
+      const target = strikePos || new THREE.Vector3(
+        (Math.random() - 0.5) * 44,
+        0.1,
+        (Math.random() - 0.5) * 40
+      );
+
+      const startPos = new THREE.Vector3(
+        target.x + (Math.random() - 0.5) * 12,
+        24 + Math.random() * 3,
+        target.z + (Math.random() - 0.5) * 12
+      );
+
+      const boltSegments = 16;
+      const points: THREE.Vector3[] = [startPos.clone()];
+      const branchPoints: THREE.Vector3[][] = [];
+
+      for (let s = 1; s <= boltSegments; s++) {
+        const t = s / boltSegments;
+        const ideal = startPos.clone().lerp(target, t);
+        const jitter = (1 - t) * 2.4 + 0.6;
+        const next = new THREE.Vector3(
+          ideal.x + (Math.random() - 0.5) * jitter,
+          ideal.y,
+          ideal.z + (Math.random() - 0.5) * jitter
+        );
+        if (s === boltSegments) {
+          next.copy(target);
+        }
+        points.push(next);
+
+        // Branch fork chance at 35% and 65% height
+        if ((s === 5 || s === 11) && Math.random() > 0.25) {
+          const branch: THREE.Vector3[] = [next.clone()];
+          let bCur = next.clone();
+          const branchDir = new THREE.Vector3(
+            (Math.random() - 0.5) * 5.0,
+            -3.0 - Math.random() * 2.5,
+            (Math.random() - 0.5) * 5.0
+          );
+          for (let bs = 1; bs <= 5; bs++) {
+            bCur = bCur.clone().add(branchDir.clone().multiplyScalar(0.2)).add(
+              new THREE.Vector3((Math.random() - 0.5) * 0.9, -0.7, (Math.random() - 0.5) * 0.9)
+            );
+            branch.push(bCur);
+          }
+          branchPoints.push(branch);
+        }
+      }
+
+      // Build 3D glowing lines
+      const boltGeo = new THREE.BufferGeometry().setFromPoints(points);
+      const boltMat = new THREE.LineBasicMaterial({
+        color: 0xF0F9FF,
+        linewidth: 3,
+        transparent: true,
+        opacity: 1.0,
+      });
+      const mainLine = new THREE.Line(boltGeo, boltMat);
+      lightningGroup.add(mainLine);
+
+      // Add branches
+      const branchLines: THREE.Line[] = [];
+      branchPoints.forEach(bp => {
+        const bGeo = new THREE.BufferGeometry().setFromPoints(bp);
+        const bMat = new THREE.LineBasicMaterial({
+          color: 0x93C5FD,
+          linewidth: 2,
+          transparent: true,
+          opacity: 0.9,
+        });
+        const bLine = new THREE.Line(bGeo, bMat);
+        lightningGroup.add(bLine);
+        branchLines.push(bLine);
+      });
+
+      // Ground Impact Flash Ring
+      const impactRingGeo = new THREE.RingGeometry(0.3, 2.2, 16);
+      impactRingGeo.rotateX(-Math.PI / 2);
+      const impactRingMat = new THREE.MeshBasicMaterial({
+        color: 0x60A5FA,
+        transparent: true,
+        opacity: 0.95,
+        side: THREE.DoubleSide,
+        depthWrite: false,
+      });
+      const impactMesh = new THREE.Mesh(impactRingGeo, impactRingMat);
+      impactMesh.position.set(target.x, target.y + 0.05, target.z);
+      lightningGroup.add(impactMesh);
+
+      // Play Sound
+      sounds.playThunder();
+
+      // Trigger Flash state
+      isFlashing = true;
+      flashStartTime = clock.getElapsedTime();
+
+      // Remove bolt after 250ms
+      setTimeout(() => {
+        lightningGroup.remove(mainLine);
+        branchLines.forEach(b => lightningGroup.remove(b));
+        lightningGroup.remove(impactMesh);
+        boltGeo.dispose();
+        boltMat.dispose();
+      }, 260);
+    };
 
     // 10. ANIMATION LOOP (Smooth 60/120 FPS)
     let animFrameId: number;
@@ -410,21 +610,60 @@ export const GameScene: React.FC = () => {
       }
 
       // Cloud Shadows Drift
-      shadowMeshes.forEach(({ mesh, speed }) => {
-        mesh.position.x += delta * speed * 2.2;
-        mesh.position.z += delta * speed * 0.8;
-        if (mesh.position.x > 38) {
-          mesh.position.x = -38;
-          mesh.position.z = (Math.random() - 0.5) * 40;
-        }
-      });
-
-      // ── Tree, Bush & Foliage Harmonic Wind Sway ───────────────────────
+      // ── Volumetric 3D Sky Clouds & Ground Shadows Drift ─────────────
       const curWeather = activeEventRef.current?.type || 'sunny';
       const curSeason = activeSeasonRef.current || 'summer';
       const isStrongWind = curWeather === 'windy' || curWeather === 'thunderstorm';
+      const isRain = curWeather === 'rain' || curWeather === 'thunderstorm';
+      const isSnow = curWeather === 'snow' || curSeason === 'winter';
+      const isWind = curWeather === 'windy' || curSeason === 'autumn';
+      const isFog = curWeather === 'fog';
+
+      const cloudDriftSpeed = isStrongWind ? 3.4 : isRain ? 2.0 : 1.4;
+
+      activeCloudPairs.forEach(({ cloud3D, shadow, speed, initialY }, i) => {
+        cloud3D.position.x += delta * speed * cloudDriftSpeed;
+        cloud3D.position.z += delta * speed * (cloudDriftSpeed * 0.35);
+        cloud3D.position.y = initialY + Math.sin(elapsed * 0.8 + i * 1.2) * 0.35;
+
+        shadow.position.x = cloud3D.position.x;
+        shadow.position.z = cloud3D.position.z;
+
+        if (cloud3D.position.x > 45) {
+          cloud3D.position.x = -45;
+          cloud3D.position.z = (Math.random() - 0.5) * 44;
+          shadow.position.x = cloud3D.position.x;
+          shadow.position.z = cloud3D.position.z;
+        }
+      });
+
+      // Dynamic Cloud Material Color & Mood
+      if (cloudMat) {
+        if (curWeather === 'thunderstorm') {
+          cloudMat.color.setHex(0x1E293B); // Dark storm thunderheads
+          cloudMat.opacity = 0.98;
+          shadowMat.opacity = 0.32;
+        } else if (curWeather === 'rain') {
+          cloudMat.color.setHex(0x64748B); // Overcast gray-blue
+          cloudMat.opacity = 0.95;
+          shadowMat.opacity = 0.24;
+        } else if (curWeather === 'snow') {
+          cloudMat.color.setHex(0xE2E8F0); // Pale winter clouds
+          cloudMat.opacity = 0.92;
+          shadowMat.opacity = 0.12;
+        } else if (curWeather === 'fog') {
+          cloudMat.color.setHex(0xCBD5E1);
+          cloudMat.opacity = 0.80;
+          shadowMat.opacity = 0.08;
+        } else {
+          cloudMat.color.setHex(0xFFFFFF); // Fluffy bright summer clouds
+          cloudMat.opacity = 0.94;
+          shadowMat.opacity = 0.16;
+        }
+      }
+
+      // ── Tree, Bush & Foliage Harmonic Wind Sway ───────────────────────
       const windSpeed = isStrongWind ? 5.2 : curWeather === 'rain' ? 3.4 : 2.2;
-      // Highly visible, juicy, natural wind sway (9° in wind, 4.5° in calm breeze)
       const windIntensity = isStrongWind ? 0.16 : curWeather === 'rain' ? 0.10 : 0.07;
 
       scene.traverse(obj => {
@@ -444,20 +683,71 @@ export const GameScene: React.FC = () => {
         }
       });
 
+      // ── Rain Splash Ripples on Ground ─────────────────────────────────
+      splashRings.forEach((sr) => {
+        if (isRain) {
+          sr.mesh.visible = true;
+          sr.life += delta;
+          const progress = sr.life / sr.maxLife;
+          const sc = 0.3 + progress * 2.2;
+          sr.mesh.scale.set(sc, sc, 1);
+          const mat = sr.mesh.material as THREE.MeshBasicMaterial;
+          if (mat) {
+            mat.opacity = 0.65 * (1 - progress);
+          }
+          if (progress >= 1.0) {
+            sr.life = 0;
+            sr.maxLife = 0.25 + Math.random() * 0.35;
+            sr.mesh.position.set((Math.random() - 0.5) * 52, 0.04, (Math.random() - 0.5) * 52);
+          }
+        } else {
+          sr.mesh.visible = false;
+        }
+      });
+
+      // ── Lightning Bolts & Thunder Generator ───────────────────────────
+      lightningTimer -= delta;
+      if (curWeather === 'thunderstorm' && lightningTimer <= 0) {
+        triggerLightningStrike();
+        lightningTimer = 4.2 + Math.random() * 4.5;
+      }
+
+      // Multi-Pulse Lightning Ambient & Sun Flash
+      if (isFlashing) {
+        const flashElapsed = clock.getElapsedTime() - flashStartTime;
+        if (flashElapsed < 0.05) {
+          ambientLight.intensity = 2.8;
+          sunLight.intensity = 3.6;
+          sunLight.color.setHex(0xE0F2FE);
+        } else if (flashElapsed < 0.09) {
+          ambientLight.intensity = 1.3;
+          sunLight.intensity = 1.8;
+        } else if (flashElapsed < 0.17) {
+          ambientLight.intensity = 2.4;
+          sunLight.intensity = 3.2;
+          sunLight.color.setHex(0x93C5FD);
+        } else if (flashElapsed < 0.35) {
+          const t = (flashElapsed - 0.17) / 0.18;
+          ambientLight.intensity = 0.95 + (2.4 - 0.95) * (1 - t);
+          sunLight.intensity = 1.35 + (3.2 - 1.35) * (1 - t);
+        } else {
+          isFlashing = false;
+          ambientLight.intensity = 0.95;
+          sunLight.intensity = 1.35;
+          sunLight.color.setHex(0xFFFBEB);
+        }
+      }
+
       // ── Dynamic Weather Particles (Rain, Snow, Falling Leaves, Pollen, Fog) ──
       const positions = particleGeo.attributes.position.array as Float32Array;
-      const isRain = curWeather === 'rain' || curWeather === 'thunderstorm';
-      const isSnow = curWeather === 'snow' || curSeason === 'winter';
-      const isWind = curWeather === 'windy' || curSeason === 'autumn';
-      const isFog = curWeather === 'fog';
 
       for (let i = 0; i < particleCount; i++) {
         const idx = i * 3;
         if (isRain) {
           // Rapid angled rain streaks
-          positions[idx + 1] -= delta * 25;
-          positions[idx] += delta * 4.5;
-          positions[idx + 2] += delta * 2.0;
+          positions[idx + 1] -= delta * 28;
+          positions[idx] += delta * 5.2;
+          positions[idx + 2] += delta * 2.2;
           if (positions[idx + 1] < 0) {
             positions[idx + 1] = 26;
             positions[idx] = (Math.random() - 0.5) * 65;
@@ -505,13 +795,13 @@ export const GameScene: React.FC = () => {
       // Adjust particle material styling dynamically
       if (particleMat) {
         if (isRain) {
-          particleMat.color.setHex(0x7DD3FC);
-          particleMat.size = 0.35;
-          particleMat.opacity = 0.85;
+          particleMat.color.setHex(curWeather === 'thunderstorm' ? 0x93C5FD : 0x7DD3FC);
+          particleMat.size = 0.38;
+          particleMat.opacity = 0.90;
         } else if (isSnow) {
           particleMat.color.setHex(0xFFFFFF);
-          particleMat.size = 0.4;
-          particleMat.opacity = 0.9;
+          particleMat.size = 0.42;
+          particleMat.opacity = 0.92;
         } else if (isWind) {
           particleMat.color.setHex(curSeason === 'autumn' ? 0xEA580C : 0x34D399);
           particleMat.size = 0.42;
