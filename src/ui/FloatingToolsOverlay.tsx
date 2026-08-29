@@ -1,10 +1,10 @@
-import React from 'react';
+﻿import React from 'react';
 import { useGameStore } from '../game/gameState';
 import { CROPS, TREES_BUSHES } from '../config/crops';
 import { BUILDINGS } from '../config/buildings';
 import { DECORATIONS } from '../config/decorations';
 import { sounds } from '../audio/SoundManager';
-import { RotateCw, Check, X, Trash2, Info } from 'lucide-react';
+import { RotateCw, Check, X, Trash2, Info, ArrowRight } from 'lucide-react';
 
 function fmtSec(s: number): string {
   if (s <= 0) return '0с';
@@ -13,21 +13,31 @@ function fmtSec(s: number): string {
   return m > 0 ? `${m}м${sec > 0 ? `${sec}с` : ''}` : `${sec}с`;
 }
 
+// Key Quick-Build Catalog Items
+const QUICK_BUILD_ITEMS = [
+  { id: 'field_plot', name: 'Грядка', icon: '🌾', cost: 1, level: 1 },
+  { id: 'chicken_coop', name: 'Курятник', icon: '🐔', cost: 20, level: 1 },
+  { id: 'cow_pasture', name: 'Коровник', icon: '🐄', cost: 50, level: 2 },
+  { id: 'silo', name: 'Силос', icon: '🥖', cost: 100, level: 1 },
+  { id: 'barn', name: 'Амбар', icon: '🏚️', cost: 120, level: 1 },
+  { id: 'bakery', name: 'Пекарня', icon: '🍞', cost: 250, level: 2 },
+  { id: 'feed_mill', name: 'Мельница', icon: '🌽', cost: 150, level: 1 },
+  { id: 'apple_tree', name: 'Яблоня', icon: '🍎', cost: 80, level: 2 },
+  { id: 'fountain', name: 'Фонтан', icon: '⛲', cost: 120, level: 3 },
+];
+
 export const FloatingToolsOverlay: React.FC = () => {
   const {
-    entities, selectedEntityId, activeTool, placingBuildingConfigId,
+    entities, selectedEntityId, placingBuildingConfigId,
     movingEntityId, movingRotation,
-    inventory, isActionStripOpen, toggleActionStrip, setActionStripOpen,
-    setActiveTool, setPlacingBuilding, rotatePlacingBuilding, setSelectedEntity,
+    level, coins, isActionStripOpen, toggleActionStrip, setActionStripOpen,
+    setPlacingBuilding, rotatePlacingBuilding, setSelectedEntity,
     startMovingEntity, rotateMovingEntity, confirmMoveEntity, cancelMoveEntity, deleteEntity,
-    harvestCrop, plantCrop, openModal, activeEvent,
+    harvestCrop, openModal, activeEvent,
   } = useGameStore();
 
   const selectedEntity = entities.find(e => e.id === selectedEntityId);
   const movingEntity = entities.find(e => e.id === movingEntityId);
-
-  // Total seeds count
-  const totalSeeds = Object.keys(CROPS).reduce((acc, k) => acc + (inventory[k] || 0), 0);
 
   /* ── 1. Moving / Relocating Entity Toolbar ── */
   if (movingEntityId && movingEntity) {
@@ -185,9 +195,6 @@ export const FloatingToolsOverlay: React.FC = () => {
     growthPercent = 100;
   }
 
-  // Show toolbar if either user clicked "Использовать", or active tool is set, or entity is selected
-  const shouldShowActionStrip = isActionStripOpen || !!activeTool || !!selectedEntity;
-
   return (
     <div className="fixed bottom-20 sm:bottom-22 left-0 right-0 z-30 pointer-events-none select-none flex flex-col items-center gap-2 p-2 max-w-lg mx-auto">
       
@@ -241,7 +248,6 @@ export const FloatingToolsOverlay: React.FC = () => {
               sounds.playClick();
               if (selectedEntity.type === 'field' && selectedEntity.cropId && growthPercent >= 100) {
                 harvestCrop(selectedEntity.id);
-                setActiveTool({ type: 'harvest' });
               } else {
                 startMovingEntity(selectedEntity.id);
               }
@@ -254,73 +260,72 @@ export const FloatingToolsOverlay: React.FC = () => {
         </div>
       )}
 
-      {/* ── 2. ACTION STRIP (Появляется выше по кнопке «Использовать»: Рука, Посадить, Передвинуть, Строить, Вода, Топор) ── */}
-      {shouldShowActionStrip && (
-        <div className="pointer-events-auto w-full flex items-center justify-between gap-1 sm:gap-1.5 animate-pop-in">
-          
-          {/* ✋ 1. Рука */}
-          <button
-            onClick={() => {
-              sounds.playClick();
-              setActiveTool(null);
-            }}
-            className={`hud-tool-btn flex-1 py-1.5 sm:py-2 flex flex-col items-center justify-center gap-0.5 ${
-              !activeTool ? 'hud-tool-btn-active' : ''
-            }`}
-          >
-            <span className="text-xl sm:text-2xl">✋</span>
-            <span className="text-[9px] sm:text-[10px] font-extrabold tracking-tight">Рука</span>
-          </button>
-
-          {/* 🌱 2. Посадить */}
-          <button
-            onClick={() => {
-              sounds.playClick();
-              const firstCropId = Object.keys(CROPS)[0] || 'wheat';
-              setActiveTool({ type: 'plant', configId: firstCropId });
-            }}
-            className={`hud-tool-btn flex-1 py-1.5 sm:py-2 flex flex-col items-center justify-center gap-0.5 relative ${
-              activeTool?.type === 'plant' ? 'hud-tool-btn-active' : ''
-            }`}
-          >
-            <span className="absolute -top-1.5 right-0.5 px-1 py-0.2 bg-[#4A2810] border border-amber-400 rounded-full text-yellow-300 text-[8px] sm:text-[9px] font-black shadow">
-              {totalSeeds || 12}
+      {/* ── 2. QUICK BUILD STRIP (Открывается прямо над кнопкой «СТРОИТЬ») ── */}
+      {isActionStripOpen && (
+        <div className="pointer-events-auto w-full hud-parchment p-2.5 shadow-2xl flex flex-col gap-2 animate-pop-in">
+          <div className="flex items-center justify-between px-1">
+            <span className="text-xs font-black text-[#3B1F0D] uppercase tracking-wide">
+              🔨 Выберите, что построить:
             </span>
-            <span className="text-xl sm:text-2xl">🌱</span>
-            <span className="text-[9px] sm:text-[10px] font-extrabold tracking-tight">Посадить</span>
-          </button>
+            <button
+              onClick={() => setActionStripOpen(false)}
+              className="w-6 h-6 rounded-full bg-amber-950 text-amber-200 flex items-center justify-center text-xs cursor-pointer active:scale-90"
+            >
+              ✕
+            </button>
+          </div>
 
-          {/* 🚜 3. Передвинуть */}
-          <button
-            onClick={() => {
-              sounds.playClick();
-              if (selectedEntity) {
-                startMovingEntity(selectedEntity.id);
-              } else {
-                const firstMovable = entities.find(e => e.type !== 'obstacle');
-                if (firstMovable) {
-                  startMovingEntity(firstMovable.id);
-                }
-              }
-            }}
-            className="hud-tool-btn flex-1 py-1.5 sm:py-2 flex flex-col items-center justify-center gap-0.5"
-          >
-            <span className="text-xl sm:text-2xl">🚜</span>
-            <span className="text-[9px] sm:text-[10px] font-extrabold tracking-tight">Двигать</span>
-          </button>
+          <div className="flex items-center gap-2 overflow-x-auto pb-1 px-1">
+            {QUICK_BUILD_ITEMS.map(item => {
+              const isUnlocked = level >= item.level;
+              const canAfford = coins >= item.cost;
 
-          {/* 🔨 4. Строить */}
-          <button
-            onClick={() => {
-              sounds.playClick();
-              openModal('shop');
-            }}
-            className="hud-tool-btn flex-1 py-1.5 sm:py-2 flex flex-col items-center justify-center gap-0.5"
-          >
-            <span className="text-xl sm:text-2xl">🔨</span>
-            <span className="text-[9px] sm:text-[10px] font-extrabold tracking-tight">Строить</span>
-          </button>
+              return (
+                <button
+                  key={item.id}
+                  onClick={() => {
+                    if (isUnlocked && canAfford) {
+                      sounds.playClick();
+                      setPlacingBuilding(item.id);
+                      setActionStripOpen(false);
+                    }
+                  }}
+                  disabled={!isUnlocked || !canAfford}
+                  className={`hud-tool-btn flex flex-col items-center justify-center gap-0.5 p-2 min-w-[70px] sm:min-w-[78px] shrink-0 relative ${
+                    !isUnlocked || !canAfford ? 'opacity-60 grayscale' : 'hover:scale-105'
+                  }`}
+                >
+                  <span className="text-2xl sm:text-3xl">{item.icon}</span>
+                  <span className="text-[10px] font-extrabold text-[#3B1F0D] truncate max-w-[65px]">
+                    {item.name}
+                  </span>
+                  <span className="text-[9px] font-bold text-amber-900">
+                    🪙 {item.cost}
+                  </span>
+                  {!isUnlocked && (
+                    <div className="absolute inset-0 bg-amber-950/60 rounded-xl flex items-center justify-center text-[10px] font-black text-yellow-300">
+                      Ур. {item.level}
+                    </div>
+                  )}
+                </button>
+              );
+            })}
 
+            {/* View Full Catalog Button */}
+            <button
+              onClick={() => {
+                sounds.playClick();
+                setActionStripOpen(false);
+                openModal('shop');
+              }}
+              className="hud-tool-btn flex flex-col items-center justify-center gap-1 p-2 min-w-[70px] sm:min-w-[78px] shrink-0 bg-amber-200 hover:brightness-110"
+            >
+              <span className="text-xl">📑</span>
+              <span className="text-[9px] font-extrabold text-[#3B1F0D] text-center leading-tight">
+                Все здания...
+              </span>
+            </button>
+          </div>
         </div>
       )}
 

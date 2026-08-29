@@ -55,10 +55,10 @@ export const BottomActionDock: React.FC = () => {
           </span>
         </button>
 
-        {/* 3. ⚡ ИСПОЛЬЗОВАТЬ (Большая выступающая желтая кнопка по центру!) */}
+        {/* 3. 🏡 СТРОИТЬ (Большая выступающая желтая кнопка по центру!) */}
         <div className="relative -top-4 sm:-top-5 z-30">
           <button
-            id="btn-use-action"
+            id="btn-build-action"
             onClick={() => {
               sounds.playClick();
               toggleActionStrip();
@@ -68,10 +68,10 @@ export const BottomActionDock: React.FC = () => {
             }`}
           >
             <span className="text-2xl sm:text-3xl filter drop-shadow animate-bounce" style={{ animationDuration: '2.5s' }}>
-              ⚡
+              🏡
             </span>
             <span className="text-[9px] sm:text-[10px] font-black text-[#3B1F0D] uppercase tracking-tight text-center leading-tight">
-              {isActionStripOpen ? 'Закрыть' : 'Использовать'}
+              Строить
             </span>
           </button>
         </div>
