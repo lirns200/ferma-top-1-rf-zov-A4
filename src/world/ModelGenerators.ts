@@ -1054,16 +1054,18 @@ export function createStylizedCargoSemiTruck(): THREE.Group {
   const stripe = new THREE.Mesh(new THREE.BoxGeometry(2.32, 0.16, 1.22), trailerStripe);
   stripe.position.set(-0.95, 1.05, 0);
 
-  truck.add(trailerBody, stripe);
+  // Sleek Aerodynamic Container Roof Cap
+  const roofCapGeo = new THREE.BoxGeometry(2.32, 0.06, 1.22);
+  const trailerRoof = new THREE.Mesh(roofCapGeo, darkSteel);
+  trailerRoof.position.set(-0.95, 1.88, 0);
 
-  // Cargo crates and parcel boxes on top/inside
-  const c1 = new THREE.Mesh(new THREE.BoxGeometry(0.48, 0.35, 0.48), crateMat);
-  c1.position.set(-0.8, 1.95, -0.2);
-  c1.castShadow = true;
-  const p1 = new THREE.Mesh(new THREE.BoxGeometry(0.38, 0.28, 0.38), parcelMat);
-  p1.position.set(-1.3, 1.92, 0.2);
-  p1.castShadow = true;
-  truck.add(c1, p1);
+  // Front Reefer Cooling Unit on trailer bulkhead
+  const reeferGeo = new THREE.BoxGeometry(0.18, 0.45, 0.85);
+  const reefer = new THREE.Mesh(reeferGeo, darkSteel);
+  reefer.position.set(0.24, 1.48, 0);
+  reefer.castShadow = true;
+
+  truck.add(trailerBody, stripe, trailerRoof, reefer);
 
   // ── 3. Headlights & PointLight ─────────────────────────────────────────
   const hlGeo = new THREE.CylinderGeometry(0.1, 0.1, 0.04, 10);
