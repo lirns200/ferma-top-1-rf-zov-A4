@@ -2,7 +2,8 @@
 import { useGameStore } from '../../game/gameState';
 import { sounds } from '../../audio/SoundManager';
 import { triggerTelegramHaptic, getTelegramUserProfile } from '../../utils/telegram';
-import { Zap, Coins, Gift, Crown, Check, Star, Sparkles, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Building3DThumbnail } from '../Building3DThumbnail';
+import { Zap, Gift, Crown, Check, Star, Sparkles, ChevronLeft, ChevronRight } from 'lucide-react';
 
 const CoinSvg = () => (
   <svg width="15" height="15" viewBox="0 0 24 24" fill="none" className="shrink-0 inline-block">
@@ -31,10 +32,10 @@ const WoodSvg = () => (
 const PROMO_DEALS = [
   {
     id: 'starter_pack',
+    modelId: 'starter_pack',
     title: 'Набор Первопроходца',
     badge: 'СКИДКА -70%',
     badgeColor: 'bg-red-600',
-    icon: '🚀',
     desc: 'Быстрый старт для новой фермы с монетами, энергией и редкими стройматериалами!',
     perks: [
       { text: '+15,000 Монет', type: 'coins' },
@@ -48,10 +49,10 @@ const PROMO_DEALS = [
   },
   {
     id: 'architect_chest',
+    modelId: 'architect_chest',
     title: 'Сундук Архитектора',
     badge: 'ХИТ ПРОДАЖ',
     badgeColor: 'bg-purple-600',
-    icon: '🏰',
     desc: 'Огромный запас материалов для моментального расширения амбара и силоса!',
     perks: [
       { text: '+35,000 Монет', type: 'coins' },
@@ -65,10 +66,10 @@ const PROMO_DEALS = [
   },
   {
     id: 'magnate_vault',
+    modelId: 'magnate_vault',
     title: 'Казна Магната',
     badge: 'МАКСИМУМ',
     badgeColor: 'bg-emerald-600',
-    icon: '👑',
     desc: 'Беспредельный достаток на месяцы вперед! Покупайте любые заводы и украшения.',
     perks: [
       { text: '+150,000 Монет', type: 'coins' },
@@ -82,10 +83,10 @@ const PROMO_DEALS = [
   },
   {
     id: 'vip_club_pass',
+    modelId: 'vip_club_pass',
     title: 'VIP Золотой Статус',
     badge: 'ПРЕМИУМ',
     badgeColor: 'bg-amber-500 text-black',
-    icon: '🌟',
     desc: 'Удвоенная скорость созревания всех грядок, мгновенная доставка грузовиком и золотая рамка!',
     perks: [
       { text: '+50,000 Монет бонусом', type: 'coins' },
@@ -183,7 +184,7 @@ export const BuildShopModal: React.FC = () => {
         <div className="max-w-lg mx-auto flex flex-col gap-4 pb-12">
           
           {/* ════════════════════════════════════════════════════════════
-              1. TOP: ЦИКЛИЧЕСКАЯ КАРУСЕЛЬ АКЦИЙ (ОДНА БОЛЬШАЯ КАРТОЧКА)
+              1. TOP: ЦИКЛИЧЕСКАЯ КАРУСЕЛЬ АКЦИЙ (С 3D МОДЕЛЬЮ)
               ════════════════════════════════════════════════════════════ */}
           <div className="relative">
             <div
@@ -199,30 +200,34 @@ export const BuildShopModal: React.FC = () => {
                 {currentPromo.badge}
               </div>
 
-              {/* Title & Icon */}
-              <div>
-                <div className="text-4xl my-1">{currentPromo.icon}</div>
-                <h3 className="font-black text-base sm:text-lg mb-1 leading-tight">{currentPromo.title}</h3>
-                <p className={`text-xs mb-3 leading-relaxed ${isDesign2026 ? 'text-[#8E939D]' : 'text-[#5C3718]'}`}>
-                  {currentPromo.desc}
-                </p>
-
-                {/* Perks with Vector Icons (НИКАКИХ КВАДРАТИКОВ []) */}
-                <div className="flex flex-col gap-1.5 mb-4 bg-black/25 p-3 rounded-xl text-xs font-bold border border-white/5">
-                  {currentPromo.perks.map((perk, i) => (
-                    <div key={i} className="flex items-center gap-2">
-                      {perk.type === 'coins' && <CoinSvg />}
-                      {perk.type === 'energy' && <Zap size={14} className="text-sky-400" />}
-                      {perk.type === 'wood' && <WoodSvg />}
-                      {perk.type === 'vip' && <Crown size={14} className="text-amber-400" />}
-                      <span className={
-                        perk.type === 'coins' ? 'text-amber-300' : perk.type === 'energy' ? 'text-sky-300' : 'text-emerald-300'
-                      }>
-                        {perk.text}
-                      </span>
-                    </div>
-                  ))}
+              {/* 3D Model Rendered Thumbnail */}
+              <div className="flex items-center gap-4 my-1">
+                <div className="w-20 h-20 sm:w-24 sm:h-24 shrink-0 flex items-center justify-center filter drop-shadow-xl">
+                  <Building3DThumbnail buildingId={currentPromo.modelId} size={88} />
                 </div>
+                <div className="flex flex-col">
+                  <h3 className="font-black text-base sm:text-lg mb-0.5 leading-tight">{currentPromo.title}</h3>
+                  <p className={`text-xs leading-relaxed ${isDesign2026 ? 'text-[#8E939D]' : 'text-[#5C3718]'}`}>
+                    {currentPromo.desc}
+                  </p>
+                </div>
+              </div>
+
+              {/* Perks with Vector Icons */}
+              <div className="flex flex-col gap-1.5 my-3 bg-black/25 p-3 rounded-xl text-xs font-bold border border-white/5">
+                {currentPromo.perks.map((perk, i) => (
+                  <div key={i} className="flex items-center gap-2">
+                    {perk.type === 'coins' && <CoinSvg />}
+                    {perk.type === 'energy' && <Zap size={14} className="text-sky-400" />}
+                    {perk.type === 'wood' && <WoodSvg />}
+                    {perk.type === 'vip' && <Crown size={14} className="text-amber-400" />}
+                    <span className={
+                      perk.type === 'coins' ? 'text-amber-300' : perk.type === 'energy' ? 'text-sky-300' : 'text-emerald-300'
+                    }>
+                      {perk.text}
+                    </span>
+                  </div>
+                ))}
               </div>
 
               {/* Buy Action Button */}
@@ -310,31 +315,39 @@ export const BuildShopModal: React.FC = () => {
           </div>
 
           {/* ════════════════════════════════════════════════════════════
-              2. BOTTOM: КАРТОЧКИ ПОКУПКИ СТРОГО ПО 2 В РЯД
+              2. BOTTOM: КАРТОЧКИ ПОКУПКИ С 3D МОДЕЛЯМИ (2 В РЯД)
               ════════════════════════════════════════════════════════════ */}
           
-          {/* SECTION A: 🪙 ПАКЕТЫ МОНЕТ (2 В РЯД) */}
+          {/* SECTION A: 🪙 ПАКЕТЫ МОНЕТ (2 В РЯД С 3D МОДЕЛЯМИ) */}
           <div className="flex flex-col gap-2">
-            <span className="text-xs font-extrabold text-[#8E939D] uppercase tracking-wider px-1">
-              Пакеты монет 🪙
-            </span>
+            <div className="flex items-center gap-1.5 px-1">
+              <CoinSvg />
+              <span className="text-xs font-extrabold text-[#8E939D] uppercase tracking-wider">
+                Пакеты монет
+              </span>
+            </div>
 
             <div className="grid grid-cols-2 gap-3">
               {[
-                { name: 'Горсть монет', icon: '🪙', coins: 3000, stars: 29, price: '49 ₽' },
-                { name: 'Кошель золота', icon: '💰', coins: 12000, stars: 99, price: '149 ₽' },
-                { name: 'Сундук золота', icon: '📦', coins: 50000, stars: 299, price: '399 ₽' },
-                { name: 'Сейф банкира', icon: '🏦', coins: 200000, stars: 899, price: '1,190 ₽' },
+                { name: 'Горсть монет', modelId: 'coins_handful', coins: 3000, stars: 29, price: '49 ₽' },
+                { name: 'Кошель золота', modelId: 'coins_pouch', coins: 12000, stars: 99, price: '149 ₽' },
+                { name: 'Сундук золота', modelId: 'coins_chest', coins: 50000, stars: 299, price: '399 ₽' },
+                { name: 'Сейф банкира', modelId: 'coins_vault', coins: 200000, stars: 899, price: '1,190 ₽' },
               ].map(item => (
                 <div
                   key={item.name}
-                  className={`p-3.5 rounded-2xl border shadow flex flex-col items-center justify-between text-center gap-2 ${
+                  className={`p-3 rounded-2xl border shadow flex flex-col items-center justify-between text-center gap-1.5 ${
                     isDesign2026 ? 'bg-[#181C24] border-[#242A35] text-white' : 'hud-parchment border-amber-700/60 text-[#3B1F0D]'
                   }`}
                 >
-                  <span className="text-3xl my-0.5">{item.icon}</span>
+                  <div className="w-16 h-16 sm:w-18 sm:h-18 flex items-center justify-center my-0.5 filter drop-shadow-md">
+                    <Building3DThumbnail buildingId={item.modelId} size={64} />
+                  </div>
                   <span className="font-bold text-xs">{item.name}</span>
-                  <span className="font-black text-sm text-amber-400">+{item.coins.toLocaleString('ru-RU')} 🪙</span>
+                  <div className="flex items-center gap-1">
+                    <CoinSvg />
+                    <span className="font-black text-sm text-amber-400">+{item.coins.toLocaleString('ru-RU')}</span>
+                  </div>
                   <button
                     onClick={() => handlePurchase(item.name, item.coins, 0, item.stars)}
                     className="w-full mt-1 py-2 rounded-xl bg-gradient-to-r from-amber-500 to-yellow-400 text-amber-950 font-black text-xs shadow transition-transform active:scale-95 cursor-pointer"
@@ -346,28 +359,36 @@ export const BuildShopModal: React.FC = () => {
             </div>
           </div>
 
-          {/* SECTION B: ⚡ ПАКЕТЫ ЭНЕРГИИ (2 В РЯД) */}
+          {/* SECTION B: ⚡ ПАКЕТЫ ЭНЕРГИИ (2 В РЯД С 3D МОДЕЛЯМИ) */}
           <div className="flex flex-col gap-2">
-            <span className="text-xs font-extrabold text-[#8E939D] uppercase tracking-wider px-1">
-              Пакеты энергии ⚡
-            </span>
+            <div className="flex items-center gap-1.5 px-1">
+              <Zap size={14} className="text-sky-400" />
+              <span className="text-xs font-extrabold text-[#8E939D] uppercase tracking-wider">
+                Пакеты энергии
+              </span>
+            </div>
 
             <div className="grid grid-cols-2 gap-3">
               {[
-                { name: 'Зелье бодрости', icon: '🧪', energy: 10, stars: 19, price: '29 ₽' },
-                { name: 'Бочка энергии', icon: '⚡', energy: 30, stars: 49, price: '79 ₽' },
-                { name: 'Генератор энергии', icon: '🔋', energy: 60, stars: 99, price: '149 ₽' },
-                { name: 'Вечный двигатель', icon: '🔮', energy: 150, stars: 199, price: '299 ₽' },
+                { name: 'Зелье бодрости', modelId: 'energy_potion', energy: 10, stars: 19, price: '29 ₽' },
+                { name: 'Бочка энергии', modelId: 'energy_barrel', energy: 30, stars: 49, price: '79 ₽' },
+                { name: 'Генератор энергии', modelId: 'energy_generator', energy: 60, stars: 99, price: '149 ₽' },
+                { name: 'Вечный двигатель', modelId: 'energy_perpetual', energy: 150, stars: 199, price: '299 ₽' },
               ].map(item => (
                 <div
                   key={item.name}
-                  className={`p-3.5 rounded-2xl border shadow flex flex-col items-center justify-between text-center gap-2 ${
+                  className={`p-3 rounded-2xl border shadow flex flex-col items-center justify-between text-center gap-1.5 ${
                     isDesign2026 ? 'bg-[#181C24] border-[#242A35] text-white' : 'hud-parchment border-amber-700/60 text-[#3B1F0D]'
                   }`}
                 >
-                  <span className="text-3xl my-0.5">{item.icon}</span>
+                  <div className="w-16 h-16 sm:w-18 sm:h-18 flex items-center justify-center my-0.5 filter drop-shadow-md">
+                    <Building3DThumbnail buildingId={item.modelId} size={64} />
+                  </div>
                   <span className="font-bold text-xs">{item.name}</span>
-                  <span className="font-black text-sm text-sky-400">+{item.energy} ⚡</span>
+                  <div className="flex items-center gap-1">
+                    <Zap size={13} className="text-sky-400" />
+                    <span className="font-black text-sm text-sky-400">+{item.energy} ⚡</span>
+                  </div>
                   <button
                     onClick={() => handlePurchase(item.name, 0, item.energy, item.stars)}
                     className="w-full mt-1 py-2 rounded-xl bg-gradient-to-r from-sky-500 to-blue-600 text-white font-black text-xs shadow transition-transform active:scale-95 cursor-pointer"
