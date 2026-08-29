@@ -135,12 +135,12 @@ function createRoadNetwork() {
   const paths: Point2[][] = [
     [[-33.5, -10.0], [-23, -10.4], [-15, -9.4], [-7, -9.1], [1, -8.8], [9.6, -9]],
     [[22.4, -9], [26, -8.5], [30, -7.2], [35.5, -4.8]],
-    [[-7, -9.1], [-7.7, -6.8], [-7.4, -4.8], [-6.2, -2.7], [-4.2, -0.5]],
-    [[1, -8.8], [2.2, -7.1], [3.2, -5.1], [4.1, -2.8], [5.7, -0.8]],
+    [[-7.8, -9.1], [-7.5, -6.8], [-7.2, -4.5], [-6.8, -1.8]],
+    [[1.0, -8.8], [2.2, -6.8], [3.2, -4.5], [4.0, -1.8]],
   ];
   paths.forEach((points, index) => {
-    group.add(createRibbon(points, index < 2 ? 3.25 : 2.15, 0.045, edgeMaterial, `road_edge_${index}`));
-    group.add(createRibbon(points, index < 2 ? 2.72 : 1.72, 0.09, roadMaterial, `road_surface_${index}`));
+    group.add(createRibbon(points, index < 2 ? 3.25 : 2.6, 0.045, edgeMaterial, `road_edge_${index}`));
+    group.add(createRibbon(points, index < 2 ? 2.72 : 2.1, 0.09, roadMaterial, `road_surface_${index}`));
     if (index < 2) {
       const shiftedA = points.map(([x, z]) => [x, z - 0.62] as Point2);
       const shiftedB = points.map(([x, z]) => [x, z + 0.62] as Point2);
@@ -190,9 +190,9 @@ function createShorelineDetails(random: () => number) {
     setInstance(rocks, i, x, 0.05, z, new THREE.Vector3(0.65 + random() * 0.8, 0.55 + random() * 0.5, 0.7 + random() * 0.65), random() * Math.PI);
   }
 
-  const reedGeometry = new THREE.ConeGeometry(0.055, 1.15, 5);
-  const reeds = new THREE.InstancedMesh(reedGeometry, makeMaterial(0x668b2e, 0.9), 42);
-  reeds.name = 'shore_reed_clusters';
+  const reedGeometry = new THREE.ConeGeometry(0.04, 1.25, 4);
+  const reeds = new THREE.InstancedMesh(reedGeometry, makeMaterial(0x365314, 0.92), 48);
+  reeds.name = 'shore_reeds';
   for (let i = 0; i < reeds.count; i++) {
     const t = i / reeds.count;
     const pIdx = Math.min(leftShore.length - 2, Math.floor(t * (leftShore.length - 1)));
@@ -278,16 +278,16 @@ function isRoadOrBridgeOrWater(x: number, z: number): boolean {
   if (z >= -11.8 && z <= -6.8) {
     return true;
   }
-  // Farmhouse entrance path (from -7.8 to -3.2, z from -7.2 to 0.5)
-  if (x >= -7.8 && x <= -3.2 && z >= -7.2 && z <= 0.5) {
+  // Driveway 1 (Фура corridor) (from -9.5 to -5.5, z from -9.2 to 0.0)
+  if (x >= -9.5 && x <= -5.5 && z >= -9.2 && z <= 0.0) {
     return true;
   }
-  // Roadside shop entrance path (from 0.5 to 6.5, z from -7.2 to 0.5)
-  if (x >= 0.5 && x <= 6.5 && z >= -7.2 && z <= 0.5) {
+  // Driveway 2 (Pickup truck corridor) (from -0.2 to 5.8, z from -9.2 to 0.0)
+  if (x >= -0.2 && x <= 5.8 && z >= -9.2 && z <= 0.0) {
     return true;
   }
-  // River water channel (from 10.2 to 21.8)
-  if (x >= 10.2 && x <= 21.8) {
+  // River water channel (from 10.0 to 22.0)
+  if (x >= 10.0 && x <= 22.0) {
     return true;
   }
   return false;
@@ -318,7 +318,9 @@ function createMeadowDetails(season: SeasonType, random: () => number) {
       let x = baseX + (random() - 0.5) * 1.6;
       let z = baseZ + (random() - 0.5) * 1.6;
       if (isRoadOrBridgeOrWater(x, z)) {
-        z = z > -9.3 ? -5.5 : -13.0;
+        if (x >= -9.5 && x <= -5.5) x = -13.0 - random() * 3.0;
+        else if (x >= -0.2 && x <= 5.8) x = 7.5 + random() * 2.0;
+        else z = z > -9.3 ? -5.0 : -13.5;
       }
       const height = 0.7 + random() * 0.55;
       const rotY = random() * Math.PI * 2;
@@ -368,12 +370,18 @@ function createMeadowDetails(season: SeasonType, random: () => number) {
 
     // Strictly ensure grass NEVER spawns on the road, bridge, farmhouse/shop paths, or inside water
     let safetyTries = 0;
-    while (isRoadOrBridgeOrWater(x, z) && safetyTries < 10) {
-      if (z >= -11.8 && z <= -6.8) {
-        z = (random() > 0.5) ? (-5.5 - random() * 2.0) : (-13.0 - random() * 2.0);
+    while (isRoadOrBridgeOrWater(x, z) && safetyTries < 20) {
+      if (z >= -12.2 && z <= -6.5) {
+        z = (random() > 0.5) ? (-5.0 - random() * 2.5) : (-13.5 - random() * 2.5);
       }
-      if (x >= 10.2 && x <= 21.8) {
-        x = (i % 2 === 0) ? (8.5 - random() * 2.5) : (23.2 + random() * 2.5);
+      if (x >= -9.5 && x <= -5.5 && z >= -9.2 && z <= 0.0) {
+        x = -13.0 - random() * 4.0; // move to west pasture
+      }
+      if (x >= -0.2 && x <= 5.8 && z >= -9.2 && z <= 0.0) {
+        x = 7.5 + random() * 2.0; // move to east yard
+      }
+      if (x >= 10.0 && x <= 22.0) {
+        x = (i % 2 === 0) ? (7.5 - random() * 2.5) : (24.0 + random() * 2.5);
       }
       safetyTries++;
     }

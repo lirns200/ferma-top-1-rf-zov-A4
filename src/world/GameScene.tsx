@@ -388,15 +388,15 @@ export const GameScene: React.FC = () => {
     // 11. Stylized Farm Delivery Truck (Наша машинка - паркуется в Заезде 2)
     const truckGroup = createStylizedDeliveryTruck();
     truckGroupRef.current = truckGroup;
-    truckGroup.position.set(4.2, 0.05, -2.8);
-    truckGroup.rotation.y = -2.2;
+    truckGroup.position.set(3.2, 0.05, -4.5);
+    truckGroup.rotation.y = -1.16;
     scene.add(truckGroup);
 
     // 12. Stylized Heavy Cargo Semi-Truck (Фура для бартера/обмена/посылок - паркуется в Заезде 1)
     const cargoTruckGroup = createStylizedCargoSemiTruck();
     cargoTruckGroupRef.current = cargoTruckGroup;
-    cargoTruckGroup.position.set(-4.6, 0.05, -2.2);
-    cargoTruckGroup.rotation.y = 2.4;
+    cargoTruckGroup.position.set(-7.0, 0.05, -3.2);
+    cargoTruckGroup.rotation.y = -1.35;
     cargoTruckGroup.visible = false;
     scene.add(cargoTruckGroup);
 
@@ -422,9 +422,9 @@ export const GameScene: React.FC = () => {
     // ── Delivery Circuit Curves (Pickup Truck - Driveway 2) ───────────────
     // Reversing Out: backs up along Driveway 2 and swings rear left onto road
     const pickupReverseCurve = new THREE.CatmullRomCurve3([
-      new THREE.Vector3(4.2, 0.05, -2.8),   // 0. Parked in Driveway 2
-      new THREE.Vector3(2.8, 0.05, -5.5),   // 1. Reversing up Driveway 2 curve
-      new THREE.Vector3(1.2, 0.05, -8.6),   // 2. Reversing onto road
+      new THREE.Vector3(3.2, 0.05, -4.5),   // 0. Parked in Driveway 2
+      new THREE.Vector3(2.2, 0.05, -6.8),   // 1. Reversing up Driveway 2 curve
+      new THREE.Vector3(1.0, 0.05, -8.8),   // 2. Reversing onto road
       new THREE.Vector3(-0.6, 0.05, -8.8),  // 3. Swung rear left onto road
     ]);
 
@@ -449,8 +449,8 @@ export const GameScene: React.FC = () => {
       new THREE.Vector3(-15.0, 0.05, -9.4),   // 3. Approaching farm road
       new THREE.Vector3(-7.0, 0.05, -9.1),    // 4. Passing mailbox & Driveway 1
       new THREE.Vector3(0.5, 0.05, -8.7),     // 5. Slowing down near Driveway 2
-      new THREE.Vector3(2.5, 0.05, -6.0),     // 6. Turning into Driveway 2
-      new THREE.Vector3(4.2, 0.05, -2.8),     // 7. Parked smoothly at home in Driveway 2
+      new THREE.Vector3(2.2, 0.05, -6.8),     // 6. Turning into Driveway 2
+      new THREE.Vector3(3.2, 0.05, -4.5),     // 7. Parked smoothly at home in Driveway 2
     ]);
 
     // ── Cargo Semi-Truck Circuit Curves (Фура - Driveway 1) ──────────────
@@ -459,16 +459,16 @@ export const GameScene: React.FC = () => {
       new THREE.Vector3(-33.5, 0.05, -10.0),  // 0. Emerging from West Tunnel
       new THREE.Vector3(-26.0, 0.05, -10.3),  // 1. Approaching farm along road
       new THREE.Vector3(-14.0, 0.05, -9.4),   // 2. Slowing down near mailbox
-      new THREE.Vector3(-7.5, 0.05, -8.8),    // 3. Turning into Driveway 1
-      new THREE.Vector3(-6.6, 0.05, -5.5),    // 4. Along Driveway 1 curve
-      new THREE.Vector3(-4.6, 0.05, -2.2),    // 5. Parked in Driveway 1 unloading bay
+      new THREE.Vector3(-7.8, 0.05, -9.1),    // 3. Turning into Driveway 1
+      new THREE.Vector3(-7.5, 0.05, -6.8),    // 4. Along Driveway 1 curve
+      new THREE.Vector3(-7.0, 0.05, -3.2),    // 5. Parked in Driveway 1 unloading bay
     ]);
 
     // Reversing Out: backs up along Driveway 1 and swings rear left onto road
     const cargoReverseCurve = new THREE.CatmullRomCurve3([
-      new THREE.Vector3(-4.6, 0.05, -2.2),   // 0. Unloading bay
-      new THREE.Vector3(-6.6, 0.05, -5.5),   // 1. Reversing up Driveway 1
-      new THREE.Vector3(-8.2, 0.05, -8.8),   // 2. Reversing onto road
+      new THREE.Vector3(-7.0, 0.05, -3.2),   // 0. Unloading bay
+      new THREE.Vector3(-7.5, 0.05, -6.8),   // 1. Reversing up Driveway 1
+      new THREE.Vector3(-7.8, 0.05, -9.1),   // 2. Reversing onto road
       new THREE.Vector3(-11.0, 0.05, -9.0),  // 3. Swung rear left onto road
     ]);
 
@@ -1195,9 +1195,9 @@ export const GameScene: React.FC = () => {
           });
         }
       } else {
-        // Parked comfortably at home in Driveway 2 (facing into farm, no sudden jumps!)
-        truckGroup.position.set(4.2, 0.05, -2.8);
-        truckGroup.rotation.y = -2.2;
+        // Parked comfortably at home in Driveway 2 (aligned along the driveway curve)
+        truckGroup.position.set(3.2, 0.05, -4.5);
+        truckGroup.rotation.y = -1.16;
         truckGroup.visible = true;
       }
 
@@ -1223,8 +1223,8 @@ export const GameScene: React.FC = () => {
         });
       } else if (cState.isParkedWaiting) {
         cargoTruckGroup.visible = true;
-        cargoTruckGroup.position.set(-4.6, 0.05, -2.2);
-        cargoTruckGroup.rotation.y = 2.4;
+        cargoTruckGroup.position.set(-7.0, 0.05, -3.2);
+        cargoTruckGroup.rotation.y = -1.35;
         if (lootBadge) {
           lootBadge.visible = true;
           lootBadge.position.y = 2.6 + Math.sin(elapsed * 4) * 0.12;
@@ -2373,7 +2373,7 @@ export const GameScene: React.FC = () => {
             collectProduct(clickedEntity.id, 0);
           }
         }
-      } else if (tile && Math.abs(tile.x - (-4.6)) <= 2.2 && Math.abs(tile.z - (-2.2)) <= 2.2 && cargoTruckStateRef.current.isParkedWaiting) {
+      } else if (tile && Math.abs(tile.x - (-7.0)) <= 2.2 && Math.abs(tile.z - (-3.2)) <= 2.2 && cargoTruckStateRef.current.isParkedWaiting) {
         // Direct click on parked Cargo Semi-Truck (Фура) in Driveway 1 to unload goods!
         claimCargoTruckUnload();
       } else if (tile && Math.abs(tile.x - (-4)) <= 1.2 && Math.abs(tile.z - (-8)) <= 1.2) {
