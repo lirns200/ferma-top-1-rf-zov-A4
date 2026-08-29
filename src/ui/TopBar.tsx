@@ -1,4 +1,4 @@
-﻿import React from 'react';
+import React from 'react';
 import { useGameStore } from '../game/gameState';
 import { LEVELS } from '../config/levels';
 import { sounds } from '../audio/SoundManager';
@@ -67,7 +67,7 @@ export const TopBar: React.FC = () => {
         <div 
           onClick={() => {
             sounds.playClick();
-            openModal('levelup');
+            openModal('settings');
           }}
           className="pointer-events-auto cursor-pointer hud-parchment flex items-center gap-2 px-2.5 py-1.5 active:scale-95 transition-transform"
         >
