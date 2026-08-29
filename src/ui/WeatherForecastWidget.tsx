@@ -124,24 +124,24 @@ export const WeatherForecastWidget: React.FC = () => {
         </div>
       </button>
 
-      {/* ── BEAUTIFUL TRANSPARENT RIGHT-SIDE GLASS POPOVER ── */}
+      {/* ── BEAUTIFUL TRANSPARENT RIGHT-SIDE GLASS POPOVER (MOBILE ADAPTED) ── */}
       {isPopoverOpen && (
-        <div className="absolute top-12 sm:top-14 right-0 w-[310px] sm:w-[350px] p-4 rounded-3xl bg-[#10141D]/92 backdrop-blur-2xl border border-white/20 shadow-2xl shadow-black/80 text-white flex flex-col gap-3.5 animate-pop-in z-50">
+        <div className="fixed top-13 sm:top-16 right-2 sm:right-3 w-[calc(100vw-16px)] max-w-[330px] sm:max-w-[350px] p-3.5 sm:p-4 rounded-3xl bg-[#10141D]/95 backdrop-blur-2xl border border-white/20 shadow-2xl shadow-black/90 text-white flex flex-col gap-3 animate-pop-in z-50">
           
           {/* Popover Header */}
-          <div className="flex items-center justify-between border-b border-white/10 pb-2.5">
-            <div className="flex items-center gap-2">
-              <div className="w-7 h-7 rounded-lg bg-sky-500/20 border border-sky-400/40 flex items-center justify-center text-sm">
+          <div className="flex items-center justify-between border-b border-white/10 pb-2">
+            <div className="flex items-center gap-2 min-w-0">
+              <div className="w-7 h-7 rounded-lg bg-sky-500/20 border border-sky-400/40 flex items-center justify-center text-sm shrink-0">
                 🌤️
               </div>
-              <div className="flex flex-col">
-                <span className="font-black text-xs text-white flex items-center gap-1.5">
-                  <span>Прогноз погоды в Долине</span>
+              <div className="flex flex-col min-w-0">
+                <span className="font-black text-xs text-white flex items-center gap-1.5 truncate">
+                  <span>Прогноз погоды</span>
                   <span className="text-[8px] px-1 py-0.2 rounded bg-emerald-500/20 text-emerald-300 font-bold">
                     Live
                   </span>
                 </span>
-                <span className="text-[10px] text-[#8E939D]">
+                <span className="text-[10px] text-[#8E939D] truncate">
                   {dayPhase.icon} {dayPhase.label}, {timeStr}
                 </span>
               </div>

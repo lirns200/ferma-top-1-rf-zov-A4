@@ -40,34 +40,34 @@ export const DailyBonusModal: React.FC = () => {
   return (
     <div
       onClick={closeModal}
-      className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/75 backdrop-blur-md select-none animate-pop-in"
+      className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-black/75 backdrop-blur-md select-none animate-pop-in"
     >
       {/* ── CENTERED 30-DAY MODAL DIALOG ── */}
       <div
         onClick={(e) => e.stopPropagation()}
-        className={`w-full max-w-2xl max-h-[90vh] rounded-3xl border shadow-2xl flex flex-col overflow-hidden transition-all ${
+        className={`w-full max-w-2xl max-h-[92vh] rounded-3xl border shadow-2xl flex flex-col overflow-hidden transition-all ${
           isDesign2026
             ? 'bg-[#12161F]/95 border-[#283244] text-white shadow-black/80'
             : 'bg-[#2A1406]/95 border-amber-500/50 text-[#FDE68A] shadow-amber-950/90'
         }`}
       >
         {/* Top Header */}
-        <div className="px-4 sm:px-6 py-3 sm:py-3.5 border-b border-white/10 flex items-center justify-between bg-black/30 shrink-0">
-          <div className="flex items-center gap-2.5">
-            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-2xl bg-gradient-to-tr from-amber-500 to-yellow-400 flex items-center justify-center text-xl text-amber-950 shadow-md border border-amber-300">
+        <div className="px-3 sm:px-6 py-2.5 sm:py-3.5 border-b border-white/10 flex items-center justify-between bg-black/30 shrink-0">
+          <div className="flex items-center gap-2 sm:gap-2.5 min-w-0">
+            <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-2xl bg-gradient-to-tr from-amber-500 to-yellow-400 flex items-center justify-center text-lg sm:text-xl text-amber-950 shadow-md border border-amber-300 shrink-0">
               🎁
             </div>
-            <div className="flex flex-col">
-              <div className="flex items-center gap-2">
-                <h2 className="font-black text-sm sm:text-base text-white tracking-wide">
-                  30-Дневный Календарь Наград
+            <div className="flex flex-col min-w-0">
+              <div className="flex items-center gap-1.5">
+                <h2 className="font-black text-xs sm:text-base text-white tracking-wide truncate">
+                  30-Дневный Календарь
                 </h2>
-                <span className="text-[10px] font-extrabold px-1.5 py-0.2 rounded-md bg-amber-500/20 text-yellow-300 border border-amber-400/30">
+                <span className="text-[9px] sm:text-[10px] font-extrabold px-1.5 py-0.2 rounded-md bg-amber-500/20 text-yellow-300 border border-amber-400/30 shrink-0">
                   {currentActiveDay} / 30
                 </span>
               </div>
-              <span className="text-[11px] text-[#8E939D] font-medium">
-                Заходите каждый день — награды увеличиваются!
+              <span className="text-[10px] sm:text-[11px] text-[#8E939D] font-medium truncate">
+                Заходите каждый день — награды растут!
               </span>
             </div>
           </div>
@@ -77,15 +77,15 @@ export const DailyBonusModal: React.FC = () => {
               sounds.playClick();
               closeModal();
             }}
-            className="w-8 h-8 rounded-xl bg-white/10 hover:bg-white/20 text-white flex items-center justify-center text-xs font-bold transition-transform active:scale-90 cursor-pointer"
+            className="w-7 h-7 sm:w-8 sm:h-8 rounded-xl bg-white/10 hover:bg-white/20 text-white flex items-center justify-center text-xs font-bold transition-transform active:scale-90 cursor-pointer shrink-0"
           >
             ✕
           </button>
         </div>
 
         {/* 30-Day Scrollable Grid */}
-        <div className="flex-1 overflow-y-auto p-3 sm:p-5 scrollbar-thin scrollbar-thumb-amber-500/20">
-          <div className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 gap-2 sm:gap-2.5">
+        <div className="flex-1 overflow-y-auto p-2.5 sm:p-5 scrollbar-thin scrollbar-thumb-amber-500/20">
+          <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-1.5 sm:gap-2.5">
             {DAILY_REWARDS_SCHEDULE.map((reward) => {
               const isPastClaimed = reward.day < currentActiveDay;
               const isToday = reward.day === currentActiveDay;
