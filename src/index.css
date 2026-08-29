@@ -17,46 +17,71 @@ body, html {
 }
 
 /* ═══════════════════════════════════════════════
-   COZY FARM & MOBILE-FIRST HUD STYLES
+   WARM PARCHMENT & CARVED WOOD HUD STYLES
    ═══════════════════════════════════════════════ */
 
-/* ── Farm Glossy Pill Container ───────────────── */
-.farm-pill {
-  background: linear-gradient(180deg, rgba(50, 26, 8, 0.94) 0%, rgba(26, 12, 4, 0.98) 100%);
-  border: 2px solid #F59E0B;
-  border-radius: 9999px;
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.45), inset 0 1px 2px rgba(255, 255, 255, 0.25);
-  backdrop-filter: blur(8px);
+/* ── Parchment Panel ──────────────────────────── */
+.hud-parchment {
+  background: linear-gradient(180deg, #FBF3DC 0%, #EBD4B0 100%);
+  border: 2px solid #5C3718;
+  border-radius: 14px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.4), inset 0 1px 1px rgba(255, 255, 255, 0.6);
+  color: #3B1F0D;
 }
 
-/* ── Farm Action FAB Button ───────────────────── */
-.farm-fab {
-  border-radius: 9999px;
-  border: 2.5px solid #FDE047;
-  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.5), inset 0 2px 3px rgba(255, 255, 255, 0.4);
+/* ── Dark Carved Wood Dock ────────────────────── */
+.hud-wood-dock {
+  background: linear-gradient(180deg, #4A2810 0%, #2A1406 100%);
+  border-top: 3px solid #6E3F1A;
+  border-bottom: 3px solid #1E0D04;
+  box-shadow: 0 -6px 20px rgba(0, 0, 0, 0.65), inset 0 2px 0 rgba(255, 255, 255, 0.15);
+}
+
+/* ── Parchment Tool Button ────────────────────── */
+.hud-tool-btn {
+  background: linear-gradient(180deg, #FBF3DC 0%, #E2C79E 100%);
+  border: 2px solid #5C3718;
+  border-radius: 14px;
+  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.35), inset 0 1px 1px rgba(255, 255, 255, 0.5);
+  color: #3B1F0D;
+  transition: all 0.1s ease;
+  cursor: pointer;
+}
+.hud-tool-btn:hover {
+  filter: brightness(1.05);
+}
+.hud-tool-btn:active {
+  transform: translateY(2px);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+}
+.hud-tool-btn-active {
+  border-color: #EAB308 !important;
+  box-shadow: 0 0 0 2px #FEF08A, 0 4px 12px rgba(234, 179, 8, 0.5), inset 0 1px 2px rgba(255, 255, 255, 0.8) !important;
+}
+
+/* ── Center Big Build Button ──────────────────── */
+.hud-build-btn {
+  background: linear-gradient(180deg, #FACC15 0%, #EAB308 50%, #CA8A04 100%);
+  border: 3px solid #FEF08A;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.55), inset 0 2px 3px rgba(255, 255, 255, 0.6);
   transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
   cursor: pointer;
 }
-.farm-fab:hover {
+.hud-build-btn:hover {
   transform: scale(1.06) translateY(-2px);
-  filter: brightness(1.1);
+  filter: brightness(1.08);
 }
-.farm-fab:active {
+.hud-build-btn:active {
   transform: scale(0.95) translateY(1px);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
 }
 
-/* ── Farm Card Panel ──────────────────────────── */
-.farm-card {
-  background: linear-gradient(180deg, #3d2208 0%, #231206 100%);
-  border: 2.5px solid #8B4513;
-  border-radius: 1.25rem;
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.6), inset 0 1px 1px rgba(255, 255, 255, 0.15);
-  transition: all 0.15s ease-out;
-}
-.farm-card:hover {
-  border-color: #F59E0B;
-  transform: translateY(-2px);
+/* ── Level Shield Badge ───────────────────────── */
+.hud-level-shield {
+  background: linear-gradient(180deg, #4A2810 0%, #2E1506 100%);
+  border: 2px solid #D97706;
+  clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.5);
+  color: #FEF08A;
 }
 
 /* ── Custom Scrollbar for Modals ─────────────── */
@@ -76,19 +101,10 @@ body, html {
   background: #D97706;
 }
 
-/* ── Keyframes & Animations ──────────────────── */
-@keyframes floatSlow {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-4px); }
-}
-.animate-float {
-  animation: floatSlow 3s ease-in-out infinite;
-}
-
 @keyframes popIn {
   0% { opacity: 0; transform: scale(0.92); }
   100% { opacity: 1; transform: scale(1); }
 }
 .animate-pop-in {
-  animation: popIn 0.22s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+  animation: popIn 0.2s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
 }

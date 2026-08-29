@@ -1,9 +1,8 @@
-﻿import React, { useEffect, useRef, useState } from 'react';
+﻿import React from 'react';
 import { useGameStore } from '../game/gameState';
 import { LEVELS } from '../config/levels';
-import { SEASONS_INFO } from '../config/events';
-import { Settings, Volume2, VolumeX, Plus } from 'lucide-react';
 import { sounds } from '../audio/SoundManager';
+import { Plus } from 'lucide-react';
 
 function fmtNumber(n: number): string {
   if (n >= 1_000_000) return (n / 1_000_000).toFixed(1) + 'M';
@@ -14,109 +13,97 @@ function fmtNumber(n: number): string {
 export const TopBar: React.FC = () => {
   const {
     level, xp, coins, gems,
-    activeSeason, activeEvent,
-    soundMuted, setSoundMuted, openModal,
+    getStorageUsed, barnCapacity,
+    openModal,
   } = useGameStore();
 
   const currentLevelConfig = LEVELS[level - 1];
   const xpNeeded = currentLevelConfig ? currentLevelConfig.xpRequired : 1000;
   const xpPercent = Math.min(100, Math.round((xp / xpNeeded) * 100));
-  const seasonInfo = SEASONS_INFO[activeSeason];
+  const barnUsed = getStorageUsed('barn');
 
   return (
-    <header className="fixed top-0 left-0 right-0 z-30 pointer-events-none p-2.5 sm:p-4 select-none">
-      <div className="max-w-7xl mx-auto flex items-center justify-between gap-2">
-        
-        {/* ── LEFT: Level & XP Bar ── */}
+    <header className="fixed top-0 left-0 right-0 z-30 pointer-events-none p-2 sm:p-3 select-none">
+      <div className="max-w-4xl mx-auto flex items-center justify-between gap-1.5 sm:gap-3">
+
+        {/* ── LEFT: Farm Badge + Level Shield + XP Bar ── */}
         <div 
           onClick={() => {
             sounds.playClick();
             openModal('levelup');
           }}
-          className="pointer-events-auto cursor-pointer flex items-center gap-2 farm-pill px-3 py-1.5 active:scale-95 transition-transform"
+          className="pointer-events-auto cursor-pointer hud-parchment flex items-center gap-2 px-2.5 py-1.5 active:scale-95 transition-transform"
         >
-          {/* Level Star Badge */}
-          <div className="relative flex items-center justify-center w-8 h-8 sm:w-9 sm:h-9 bg-gradient-to-tr from-amber-500 to-yellow-300 rounded-full border-2 border-yellow-100 shadow-md font-black text-amber-950 text-sm sm:text-base">
-            <span>{level}</span>
+          {/* Farm Sprout Icon */}
+          <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-amber-200/80 border border-amber-700/60 flex items-center justify-center text-lg sm:text-xl shadow-inner shrink-0">
+            🌱
           </div>
 
-          {/* XP Bar */}
-          <div className="flex flex-col gap-0.5 min-w-[70px] sm:min-w-[110px]">
-            <div className="flex justify-between items-center text-[10px] sm:text-xs font-bold text-amber-200">
-              <span className="hidden sm:inline">ОПЫТ</span>
-              <span>{xp}/{xpNeeded}</span>
+          {/* Farm Name & Level Info */}
+          <div className="flex flex-col">
+            <div className="flex items-center gap-2">
+              <span className="font-extrabold text-xs sm:text-sm text-[#3B1F0D] tracking-tight">
+                Ферма Репка
+              </span>
+
+              {/* Level Shield */}
+              <div className="flex items-center justify-center w-6 h-6 bg-[#3B1F0D] border border-amber-500 rounded font-black text-[11px] text-yellow-300 shadow">
+                {level}
+              </div>
             </div>
-            <div className="w-full h-2 sm:h-2.5 bg-amber-950/80 rounded-full overflow-hidden border border-amber-600/60">
+
+            {/* XP Mini Bar */}
+            <div className="w-full h-1.5 bg-[#4A2810] rounded-full overflow-hidden border border-amber-900 mt-1">
               <div 
-                className="h-full bg-gradient-to-r from-blue-500 to-cyan-300 transition-all duration-500 rounded-full"
+                className="h-full bg-gradient-to-r from-amber-400 to-yellow-300 rounded-full transition-all duration-300"
                 style={{ width: `${xpPercent}%` }}
               />
             </div>
           </div>
         </div>
 
-        {/* ── CENTER: Coins & Gems Currency Badges ── */}
-        <div className="flex items-center gap-1.5 sm:gap-3">
-          {/* Coins */}
-          <div className="pointer-events-auto flex items-center gap-1.5 farm-pill px-2.5 sm:px-3 py-1 sm:py-1.5">
-            <span className="text-base sm:text-lg animate-bounce" style={{ animationDuration: '3s' }}>🪙</span>
-            <span className="font-extrabold text-xs sm:text-sm text-yellow-300 tracking-wide min-w-[36px] sm:min-w-[48px]">
+        {/* ── RIGHT: Currencies & Resources Badges ── */}
+        <div className="flex items-center gap-1.5 sm:gap-2">
+          
+          {/* 1. Coins Badge */}
+          <div className="pointer-events-auto hud-parchment flex items-center gap-1 px-2.5 py-1 sm:py-1.5">
+            <span className="text-base sm:text-lg">🪙</span>
+            <span className="font-extrabold text-xs sm:text-sm text-[#3B1F0D] min-w-[28px] sm:min-w-[36px]">
               {fmtNumber(coins)}
             </span>
-            <button 
-              onClick={() => {
-                sounds.playClick();
-                openModal('orders');
-              }}
-              className="w-5 h-5 rounded-full bg-green-500 hover:bg-green-400 border border-green-200 text-white flex items-center justify-center text-xs font-black shadow active:scale-90 transition-transform cursor-pointer"
-            >
-              +
-            </button>
           </div>
 
-          {/* Gems */}
-          <div className="pointer-events-auto flex items-center gap-1.5 farm-pill px-2.5 sm:px-3 py-1 sm:py-1.5">
-            <span className="text-base sm:text-lg animate-pulse">💎</span>
-            <span className="font-extrabold text-xs sm:text-sm text-cyan-300 tracking-wide min-w-[24px] sm:min-w-[32px]">
-              {fmtNumber(gems)}
+          {/* 2. Wood / Barn Storage Badge */}
+          <div 
+            onClick={() => {
+              sounds.playClick();
+              openModal('barn');
+            }}
+            className="pointer-events-auto cursor-pointer hud-parchment flex items-center gap-1 px-2.5 py-1 sm:py-1.5 hover:brightness-105 active:scale-95 transition-all"
+          >
+            <span className="text-base sm:text-lg">🪵</span>
+            <span className="font-extrabold text-xs sm:text-sm text-[#3B1F0D]">
+              {barnUsed}
             </span>
-            <button 
+          </div>
+
+          {/* 3. Gems / Energy Badge with [+] Button */}
+          <div className="pointer-events-auto hud-parchment flex items-center gap-1.5 pl-2.5 pr-1 py-1 sm:py-1.5">
+            <span className="text-base sm:text-lg">⚡</span>
+            <span className="font-extrabold text-xs sm:text-sm text-[#1E3A8A]">
+              {gems}/30
+            </span>
+            <button
               onClick={() => {
                 sounds.playClick();
                 openModal('events');
               }}
-              className="w-5 h-5 rounded-full bg-cyan-500 hover:bg-cyan-400 border border-cyan-200 text-white flex items-center justify-center text-xs font-black shadow active:scale-90 transition-transform cursor-pointer"
+              className="w-5 h-5 sm:w-6 sm:h-6 rounded-lg bg-green-600 hover:bg-green-500 border border-green-300 text-white flex items-center justify-center text-xs font-black shadow active:scale-90 transition-transform cursor-pointer"
             >
               +
             </button>
           </div>
-        </div>
 
-        {/* ── RIGHT: Season & Settings ── */}
-        <div className="flex items-center gap-1.5 sm:gap-2">
-          {/* Season Badge */}
-          <button
-            onClick={() => {
-              sounds.playClick();
-              openModal('events');
-            }}
-            className="pointer-events-auto hidden sm:flex items-center gap-1.5 farm-pill px-3 py-1.5 hover:brightness-110 active:scale-95 transition-all cursor-pointer"
-          >
-            <span className="text-base">{seasonInfo.icon}</span>
-            <span className="text-xs font-bold text-amber-200">{seasonInfo.name}</span>
-          </button>
-
-          {/* Settings Button */}
-          <button
-            onClick={() => {
-              sounds.playClick();
-              openModal('settings');
-            }}
-            className="pointer-events-auto w-9 h-9 sm:w-10 sm:h-10 rounded-full farm-pill flex items-center justify-center text-amber-200 hover:text-white hover:brightness-110 active:scale-90 transition-transform cursor-pointer"
-            title="Настройки фермы"
-          >
-            <Settings size={18} className="sm:w-5 sm:h-5" />
-          </button>
         </div>
 
       </div>
