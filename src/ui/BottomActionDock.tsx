@@ -1,4 +1,4 @@
-﻿import React from 'react';
+import React from 'react';
 import { useGameStore } from '../game/gameState';
 import { sounds } from '../audio/SoundManager';
 import { triggerTelegramHaptic } from '../utils/telegram';
@@ -88,7 +88,7 @@ export const BottomActionDock: React.FC = () => {
           </span>
         </button>
 
-        {/* 3. 🏡 СТРОИТЬ / 🌾 ФЕРМА (Квадратная с закругленными углами как и все остальные!) */}
+        {/* 3. 🏡 СТРОИТЬ / 🌾 ФЕРМА (Квадратная с закругленными углами, КРУПНЕЕ остальных!) */}
         <button
           id={isInsideTab ? 'btn-return-farm' : 'btn-build-action'}
           onClick={() => {
@@ -102,31 +102,29 @@ export const BottomActionDock: React.FC = () => {
               toggleActionStrip();
             }
           }}
-          className="flex flex-col items-center justify-center gap-0.5 group active:scale-95 transition-transform cursor-pointer w-full"
+          className="flex flex-col items-center justify-center gap-0.5 group active:scale-95 transition-transform cursor-pointer w-full -my-1.5"
         >
           {isInsideTab ? (
-            /* Inside Tab: 🌾 Ферма */
+            /* Inside Tab: 🌾 Ферма (Крупная кнопка) */
             <>
-              <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-2xl flex items-center justify-center text-2xl transition-all shadow-lg border-2 border-green-300 bg-gradient-to-tr from-green-600 via-emerald-500 to-green-400 text-white animate-pulse">
+              <div className="w-13 h-13 sm:w-15 sm:h-15 rounded-2xl sm:rounded-3xl flex items-center justify-center text-3xl sm:text-3xl transition-all shadow-xl border-2 border-green-300 bg-gradient-to-tr from-green-600 via-emerald-500 to-green-400 text-white animate-pulse">
                 🌾
               </div>
-              <span className="text-[10px] sm:text-xs font-black tracking-tight text-emerald-400 uppercase">
+              <span className="text-[10px] sm:text-xs font-black tracking-tight text-emerald-400 uppercase leading-tight mt-0.5">
                 Ферма
               </span>
             </>
           ) : (
-            /* On Farm: 🏡 Строить */
+            /* On Farm: 🏡 Строить (Крупная кнопка) */
             <>
-              <div className={`w-11 h-11 sm:w-12 sm:h-12 rounded-2xl flex items-center justify-center text-2xl transition-all shadow-lg border-2 ${
+              <div className={`w-13 h-13 sm:w-15 sm:h-15 rounded-2xl sm:rounded-3xl flex items-center justify-center text-3xl sm:text-3xl transition-all shadow-xl border-2 ${
                 isActionStripOpen
-                  ? 'border-yellow-200 ring-4 ring-yellow-400/50 scale-105 bg-gradient-to-tr from-amber-500 via-yellow-400 to-amber-300 text-amber-950'
-                  : isDesign2026
-                  ? 'bg-gradient-to-tr from-amber-500 via-yellow-400 to-yellow-300 border-yellow-200 shadow-yellow-500/40 text-amber-950'
-                  : 'bg-gradient-to-tr from-amber-500 via-yellow-400 to-yellow-300 border-yellow-200 shadow-amber-900/60 text-amber-950'
+                  ? 'border-yellow-200 ring-4 ring-yellow-400/50 scale-105 bg-gradient-to-tr from-amber-500 via-yellow-400 to-amber-300 text-amber-950 shadow-yellow-500/50'
+                  : 'bg-gradient-to-tr from-amber-500 via-yellow-400 to-yellow-300 border-yellow-200 shadow-yellow-500/40 text-amber-950 hover:scale-105'
               }`}>
                 🏡
               </div>
-              <span className="text-[10px] sm:text-xs font-black tracking-tight text-yellow-300 uppercase">
+              <span className="text-[10px] sm:text-xs font-black tracking-tight text-yellow-300 uppercase leading-tight mt-0.5">
                 Строить
               </span>
             </>
