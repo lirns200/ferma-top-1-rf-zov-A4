@@ -44,10 +44,14 @@ const EnergySvg = () => (
 
 export const TopBar: React.FC = () => {
   const {
-    level, xp, coins, gems,
+    level,
+    xp,
+    coins,
+    gems,
     getStorageUsed,
     openModal,
     isDesign2026,
+    activeModal,
   } = useGameStore();
 
   const tgProfile = useMemo(() => getTelegramUserProfile(), []);
@@ -117,8 +121,8 @@ export const TopBar: React.FC = () => {
             </div>
           </div>
 
-          {/* Daily Missions Under Level */}
-          <DailyMissionsWidget />
+          {/* Daily Missions Under Level (Only on 3D Farm Map) */}
+          {activeModal === null && <DailyMissionsWidget />}
         </div>
 
         {/* ── RIGHT: 3 Currency Badges & Weather Widget below them ── */}
@@ -172,8 +176,8 @@ export const TopBar: React.FC = () => {
             </div>
           </div>
 
-          {/* Weather & Local Time Widget directly under Currency Badges */}
-          <WeatherForecastWidget />
+          {/* Weather & Local Time Widget directly under Currency Badges (Only on 3D Farm Map) */}
+          {activeModal === null && <WeatherForecastWidget />}
         </div>
 
       </div>

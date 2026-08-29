@@ -88,32 +88,34 @@ export const DailyMissionsWidget: React.FC = () => {
         <div className="fixed top-[52px] sm:top-[60px] left-2 sm:left-4 w-[calc(100vw-16px)] max-w-[340px] sm:max-w-[380px] p-3.5 sm:p-4 rounded-3xl bg-[#10141D]/95 backdrop-blur-2xl border border-white/20 shadow-2xl shadow-black/90 text-white flex flex-col gap-3 animate-pop-in z-[110]">
           
           {/* Header */}
-          <div className="flex items-center justify-between border-b border-white/10 pb-2">
-            <div className="flex items-center gap-2">
-              <div className="w-7 h-7 rounded-lg bg-emerald-500/20 border border-emerald-400/40 flex items-center justify-center text-sm">
+          <div className="flex items-center justify-between border-b border-white/10 pb-2.5">
+            <div className="flex items-center gap-2 min-w-0">
+              <div className="w-8 h-8 rounded-xl bg-emerald-500/20 border border-emerald-400/40 flex items-center justify-center text-base shrink-0">
                 🎯
               </div>
-              <div className="flex flex-col">
-                <span className="font-black text-xs text-white flex items-center gap-1.5">
+              <div className="flex flex-col min-w-0">
+                <span className="font-black text-xs sm:text-sm text-white flex items-center gap-1.5 truncate">
                   <span>Миссии дня</span>
-                  <span className="text-[8px] px-1 py-0.2 rounded bg-amber-500/20 text-yellow-300 font-bold">
+                  <span className="text-[9px] px-1.5 py-0.2 rounded bg-amber-500/20 text-yellow-300 font-bold">
                     24ч
                   </span>
                 </span>
-                <span className="text-[10px] text-[#8E939D] flex items-center gap-1">
-                  <Clock size={10} /> Сброс через {timeLeftStr}
+                <span className="text-[10px] text-[#8E939D] flex items-center gap-1 truncate">
+                  <Clock size={11} /> Сброс через {timeLeftStr}
                 </span>
               </div>
             </div>
 
+            {/* Bright, high-contrast Close Button (Крестик) */}
             <button
               onClick={() => {
                 sounds.playClick();
                 setIsOpen(false);
               }}
-              className="w-6 h-6 rounded-lg bg-white/10 hover:bg-white/20 text-white/70 hover:text-white flex items-center justify-center text-xs font-bold transition-colors cursor-pointer"
+              className="w-8 h-8 rounded-xl bg-white/15 hover:bg-red-600 border border-white/30 text-white flex items-center justify-center text-sm font-black transition-all cursor-pointer shrink-0 shadow-md active:scale-90 ml-2"
+              title="Закрыть"
             >
-              <X size={13} />
+              <X size={18} strokeWidth={2.5} />
             </button>
           </div>
 
