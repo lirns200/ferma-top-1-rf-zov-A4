@@ -109,8 +109,6 @@ export const RoadsideShopModal: React.FC = () => {
   const [sellCount, setSellCount] = useState<number>(1);
   const [sellPrice, setSellPrice] = useState<number>(10);
 
-  if (activeModal !== 'roadside' && activeModal !== 'market') return null;
-
   const tgProfile = getTelegramUserProfile();
 
   const allTradableItems = useMemo(() => {
@@ -221,6 +219,8 @@ export const RoadsideShopModal: React.FC = () => {
 
     addFloatingText(`Куплено: ${itemName} ×${count}!`, window.innerWidth / 2, window.innerHeight / 2, '#38BDF8');
   };
+
+  if (activeModal !== 'roadside' && activeModal !== 'market') return null;
 
   return (
     <div className={`fixed inset-0 pt-14 sm:pt-16 pb-20 sm:pb-24 z-40 flex flex-col select-none animate-pop-in overflow-hidden transition-colors ${
