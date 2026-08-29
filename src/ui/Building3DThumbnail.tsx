@@ -19,32 +19,32 @@ let sharedCamera: THREE.PerspectiveCamera | null = null;
 function getSharedOffscreenContext() {
   if (!sharedRenderer && typeof document !== 'undefined') {
     const canvas = document.createElement('canvas');
-    canvas.width = 128;
-    canvas.height = 128;
+    canvas.width = 256;
+    canvas.height = 256;
     sharedRenderer = new THREE.WebGLRenderer({
       canvas,
       alpha: true,
       antialias: true,
       preserveDrawingBuffer: true,
     });
-    sharedRenderer.setSize(128, 128, false);
+    sharedRenderer.setSize(256, 256, false);
     sharedRenderer.setClearColor(0x000000, 0);
 
     sharedScene = new THREE.Scene();
 
     // Warm, vibrant isometric lighting
-    const ambient = new THREE.AmbientLight(0xfff6e6, 1.4);
+    const ambient = new THREE.AmbientLight(0xfff8ee, 1.6);
     sharedScene.add(ambient);
 
-    const dirLight = new THREE.DirectionalLight(0xffffff, 2.0);
+    const dirLight = new THREE.DirectionalLight(0xffffff, 2.2);
     dirLight.position.set(5, 10, 7);
     sharedScene.add(dirLight);
 
-    const fillLight = new THREE.DirectionalLight(0x93c5fd, 0.8);
+    const fillLight = new THREE.DirectionalLight(0x93c5fd, 0.9);
     fillLight.position.set(-5, 4, -4);
     sharedScene.add(fillLight);
 
-    sharedCamera = new THREE.PerspectiveCamera(32, 1, 0.1, 100);
+    sharedCamera = new THREE.PerspectiveCamera(34, 1, 0.1, 100);
   }
   return { renderer: sharedRenderer, scene: sharedScene, camera: sharedCamera };
 }
@@ -63,14 +63,14 @@ export function generateBuildingThumbnailDataUrl(id: string): string {
     const grp = new THREE.Group();
     // Tilled soil bed
     const soil = new THREE.Mesh(
-      new THREE.BoxGeometry(2.2, 0.35, 2.2),
+      new THREE.BoxGeometry(2.4, 0.4, 2.4),
       new THREE.MeshLambertMaterial({ color: 0x5C3718 })
     );
-    soil.position.y = 0.15;
+    soil.position.y = 0.2;
     grp.add(soil);
     const crop = createCropStageMesh('wheat', 4, '#FACC15');
-    crop.scale.set(0.9, 0.9, 0.9);
-    crop.position.y = 0.35;
+    crop.scale.set(1.1, 1.1, 1.1);
+    crop.position.y = 0.4;
     grp.add(crop);
     model = grp;
   } else if (id === 'silo') {
@@ -99,20 +99,20 @@ export function generateBuildingThumbnailDataUrl(id: string): string {
 
   scene.add(model);
 
-  // Auto-frame model with bounding box
+  // Auto-frame model with bounding box, zoomed in close!
   const bbox = new THREE.Box3().setFromObject(model);
   const center = bbox.getCenter(new THREE.Vector3());
   const size = bbox.getSize(new THREE.Vector3());
-  const maxDim = Math.max(size.x, size.y, size.z, 1.5);
+  const maxDim = Math.max(size.x, size.y, size.z, 1.4);
 
-  // Rotate model slightly for classic isometric angle
+  // Center model and rotate for optimal 3D isometric view
   model.position.x = -center.x;
   model.position.y = -center.y;
   model.position.z = -center.z;
   model.rotation.y = Math.PI / 4;
 
-  const dist = maxDim * 2.2;
-  camera.position.set(dist * 0.9, dist * 0.8, dist * 0.9);
+  const dist = maxDim * 1.52;
+  camera.position.set(dist * 0.88, dist * 0.76, dist * 0.88);
   camera.lookAt(0, 0, 0);
 
   renderer.render(scene, camera);
@@ -129,7 +129,7 @@ export const Building3DThumbnail: React.FC<{
   fallbackEmoji?: string;
   className?: string;
   size?: number;
-}> = ({ buildingId, fallbackEmoji = '🏡', className = 'w-10 h-10', size = 44 }) => {
+}> = ({ buildingId, fallbackEmoji = '🏡', className = '', size = 52 }) => {
   const [dataUrl, setDataUrl] = useState<string | null>(() => thumbnailDataUrlCache.get(buildingId) || null);
 
   useEffect(() => {
@@ -149,10 +149,10 @@ export const Building3DThumbnail: React.FC<{
         src={dataUrl}
         alt={buildingId}
         className={`${className} object-contain filter drop-shadow-md select-none pointer-events-none transition-transform`}
-        style={{ width: size, height: size }}
+        style={{ width: size, height: size, minWidth: size, minHeight: size }}
       />
     );
   }
 
-  return <span className="text-2xl sm:text-3xl select-none">{fallbackEmoji}</span>;
+  return <span className="text-3xl select-none">{fallbackEmoji}</span>;
 };

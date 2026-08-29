@@ -344,14 +344,14 @@ export const FloatingToolsOverlay: React.FC = () => {
                     }
                   }}
                   disabled={!isUnlocked || !canAfford}
-                  className={`flex flex-col items-center justify-center gap-0.5 p-2 sm:p-2.5 min-w-[72px] sm:min-w-[80px] shrink-0 relative rounded-2xl transition-all cursor-pointer ${
+                  className={`flex flex-col items-center justify-center gap-1 p-2.5 sm:p-3 min-w-[84px] sm:min-w-[92px] shrink-0 relative rounded-2xl transition-all cursor-pointer ${
                     isDesign2026
                       ? 'bg-white/10 border border-white/15 hover:bg-white/20 text-white shadow-lg'
                       : 'hud-tool-btn text-[#3B1F0D]'
                   } ${!isUnlocked || !canAfford ? 'opacity-50 grayscale' : 'hover:scale-105 active:scale-95'}`}
                 >
-                  <Building3DThumbnail buildingId={item.id} fallbackEmoji={item.icon} size={40} className="my-0.5" />
-                  <span className={`text-[10px] font-extrabold truncate max-w-[66px] ${
+                  <Building3DThumbnail buildingId={item.id} fallbackEmoji={item.icon} size={54} className="my-0.5" />
+                  <span className={`text-xs font-black truncate max-w-[78px] tracking-tight ${
                     isDesign2026 ? 'text-white' : 'text-[#3B1F0D]'
                   }`}>
                     {item.name}
@@ -360,7 +360,7 @@ export const FloatingToolsOverlay: React.FC = () => {
                   {/* Price with crisp Vector Coin */}
                   <div className="flex items-center gap-1 mt-0.5">
                     <CoinSvg />
-                    <span className={`text-[10px] font-black ${
+                    <span className={`text-xs font-black ${
                       isDesign2026 ? 'text-yellow-300' : 'text-amber-900'
                     }`}>
                       {item.cost}
