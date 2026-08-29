@@ -273,6 +273,26 @@ function createGrassTuftGeometry(): THREE.BufferGeometry {
   return mergedGeo;
 }
 
+function isRoadOrBridgeOrWater(x: number, z: number): boolean {
+  // Main East-West Road & Bridge (spans all x from -36 to 36, width covers z in [-11.8, -6.8])
+  if (z >= -11.8 && z <= -6.8) {
+    return true;
+  }
+  // Farmhouse entrance path (from -7.8 to -3.2, z from -7.2 to 0.5)
+  if (x >= -7.8 && x <= -3.2 && z >= -7.2 && z <= 0.5) {
+    return true;
+  }
+  // Roadside shop entrance path (from 0.5 to 6.5, z from -7.2 to 0.5)
+  if (x >= 0.5 && x <= 6.5 && z >= -7.2 && z <= 0.5) {
+    return true;
+  }
+  // River water channel (from 10.2 to 21.8)
+  if (x >= 10.2 && x <= 21.8) {
+    return true;
+  }
+  return false;
+}
+
 function createMeadowDetails(season: SeasonType, random: () => number) {
   const palette = SEASON_PALETTES[season];
   const group = new THREE.Group();
@@ -295,8 +315,11 @@ function createMeadowDetails(season: SeasonType, random: () => number) {
   positions.forEach(([baseX, baseZ], index) => {
     for (let offset = 0; offset < 2; offset++) {
       const i = index * 2 + offset;
-      const x = baseX + (random() - 0.5) * 1.6;
-      const z = baseZ + (random() - 0.5) * 1.6;
+      let x = baseX + (random() - 0.5) * 1.6;
+      let z = baseZ + (random() - 0.5) * 1.6;
+      if (isRoadOrBridgeOrWater(x, z)) {
+        z = z > -9.3 ? -5.5 : -13.0;
+      }
       const height = 0.7 + random() * 0.55;
       const rotY = random() * Math.PI * 2;
       const scale = 0.72 + random() * 0.45;
@@ -328,9 +351,9 @@ function createMeadowDetails(season: SeasonType, random: () => number) {
       x = 24.5 + random() * 11;
       z = -28 + random() * 56;
     } else if (zone === 2) {
-      // River banks (west and east bank fringes)
+      // River banks (west and east bank fringes, outside water)
       const isWestBank = i % 2 === 0;
-      x = isWestBank ? (9.2 - random() * 2.5) : (22.5 + random() * 2.5);
+      x = isWestBank ? (8.8 - random() * 2.2) : (22.8 + random() * 2.2);
       z = -26 + random() * 52;
     } else if (zone === 3) {
       // North and South mountain footings
@@ -341,10 +364,18 @@ function createMeadowDetails(season: SeasonType, random: () => number) {
       // Farm yard fringes, borders, and lawn clearings
       x = -13 + random() * 24;
       z = -13 + random() * 24;
-      // Keep main road clear
-      if (z >= -10.8 && z <= -7.4) {
-        z = z > -9.1 ? -6.2 : -12.0;
+    }
+
+    // Strictly ensure grass NEVER spawns on the road, bridge, farmhouse/shop paths, or inside water
+    let safetyTries = 0;
+    while (isRoadOrBridgeOrWater(x, z) && safetyTries < 10) {
+      if (z >= -11.8 && z <= -6.8) {
+        z = (random() > 0.5) ? (-5.5 - random() * 2.0) : (-13.0 - random() * 2.0);
       }
+      if (x >= 10.2 && x <= 21.8) {
+        x = (i % 2 === 0) ? (8.5 - random() * 2.5) : (23.2 + random() * 2.5);
+      }
+      safetyTries++;
     }
 
     const scX = 0.75 + random() * 0.55;

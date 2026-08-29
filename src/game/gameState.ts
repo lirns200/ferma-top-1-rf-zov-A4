@@ -217,7 +217,7 @@ export interface GameStore {
   setActiveTool: (tool: ActiveTool | null) => void;
   setPlacingBuilding: (configId: string | null) => void;
   rotatePlacingBuilding: () => void;
-  isAreaAvailable: (x: number, z: number, width: number, depth: number, ignoreId?: string) => boolean;
+  isAreaAvailable: (x: number, z: number, width: number, depth: number, ignoreId?: string, configId?: string) => boolean;
   isAreaInsideUnlockedTerritory: (x: number, z: number, width: number, depth: number) => boolean;
   placeBuilding: (configId: string, x: number, z: number, rotation: 0 | 1 | 2 | 3) => boolean;
   moveEntity: (id: string, x: number, z: number, rotation: 0 | 1 | 2 | 3) => boolean;
@@ -753,37 +753,84 @@ export const useGameStore = create<GameStore>((set, get) => ({
     set(s => ({ placingRotation: ((s.placingRotation + 1) % 4) as 0 | 1 | 2 | 3 }));
   },
 
-  isAreaAvailable: (x, z, width, depth, ignoreId) => {
+  isAreaAvailable: (x, z, width, depth, ignoreId, configId) => {
     const entities = get().entities;
+
+    // 1. Collision with any existing entity (buildings, crops, trees, obstacles, animal pens, decorations)
     for (const ent of entities) {
       if (ent.id === ignoreId) continue;
-      // Axis-aligned bounding box collision
       const overlapX = x < ent.x + ent.width && x + width > ent.x;
       const overlapZ = z < ent.z + ent.depth && z + depth > ent.z;
       if (overlapX && overlapZ) {
         return false;
       }
     }
+
+    // 2. Prohibit placing on Roads, Paths, Water/River, Sand Shoreline, Mountains, or Cliffs
+    if (configId !== 'fishing_dock') {
+      // Mountains & Off-map boundaries
+      if (z < -6.5 || z + depth > 24.5 || x < -24.5 || x + width > 27.5) {
+        return false;
+      }
+
+      // Main Road & Wooden Bridge (spans full width x from -36 to 36, z in [-11.2, -6.8])
+      const overlapRoadZ = z < -6.8 && z + depth > -11.2;
+      if (overlapRoadZ) {
+        return false;
+      }
+
+      // Farmhouse approach path: x in [-7.8, -3.2], z in [-7.2, 0.2]
+      const overlapFarmPathX = x < -3.2 && x + width > -7.8;
+      const overlapFarmPathZ = z < 0.2 && z + depth > -7.2;
+      if (overlapFarmPathX && overlapFarmPathZ) {
+        return false;
+      }
+
+      // Roadside shop approach path: x in [0.5, 6.5], z in [-7.2, 0.2]
+      const overlapShopPathX = x < 6.5 && x + width > 0.5;
+      const overlapShopPathZ = z < 0.2 && z + depth > -7.2;
+      if (overlapShopPathX && overlapShopPathZ) {
+        return false;
+      }
+
+      // River Water Channel & Sand Shoreline (x in [8.5, 23.5])
+      const overlapRiverX = x < 23.5 && x + width > 8.5;
+      if (overlapRiverX) {
+        return false;
+      }
+    }
+
     return true;
   },
 
   isAreaInsideUnlockedTerritory: (x, z, width, depth) => {
     const expansions = get().expansions.filter(e => e.isUnlocked);
-    // Every corner of the bounding box must be inside at least one unlocked expansion chunk
+    
+    // Check points across the entire bounding box
+    const step = 0.5;
+    for (let ix = x + 0.05; ix < x + width; ix += step) {
+      for (let iz = z + 0.05; iz < z + depth; iz += step) {
+        const isInside = expansions.some(chunk => 
+          ix >= chunk.x && ix <= chunk.x + chunk.width &&
+          iz >= chunk.z && iz <= chunk.z + chunk.depth
+        );
+        if (!isInside) return false;
+      }
+    }
     const corners = [
-      { cx: x, cz: z },
-      { cx: x + width, cz: z },
-      { cx: x, cz: z + depth },
-      { cx: x + width, cz: z + depth },
+      [x + 0.05, z + 0.05],
+      [x + width - 0.05, z + 0.05],
+      [x + 0.05, z + depth - 0.05],
+      [x + width - 0.05, z + depth - 0.05],
     ];
-
-    for (const { cx, cz } of corners) {
+    for (const [cx, cz] of corners) {
       const isInside = expansions.some(chunk => 
         cx >= chunk.x && cx <= chunk.x + chunk.width &&
         cz >= chunk.z && cz <= chunk.z + chunk.depth
       );
       if (!isInside) return false;
     }
+
     return true;
   },
 
@@ -797,13 +844,13 @@ export const useGameStore = create<GameStore>((set, get) => ({
     const width = (rotation % 2 === 1) ? rawD : rawW;
     const depth = (rotation % 2 === 1) ? rawW : rawD;
 
-    if (!state.isAreaAvailable(x, z, width, depth)) {
-      state.addFloatingText('Место занято!', 0, 0, '#EF4444');
+    if (!state.isAreaAvailable(x, z, width, depth, undefined, configId)) {
+      state.addFloatingText('Здесь нельзя ставить объект! 🚫', 0, 0, '#EF4444');
       return false;
     }
 
     if (!state.isAreaInsideUnlockedTerritory(x, z, width, depth)) {
-      state.addFloatingText('Земля ещё не открыта!', 0, 0, '#EF4444');
+      state.addFloatingText('Земля ещё не открыта или это горы! ⛰️', 0, 0, '#EF4444');
       return false;
     }
 
@@ -898,13 +945,13 @@ export const useGameStore = create<GameStore>((set, get) => ({
     const width = (rotation % 2 === 1) ? ent.depth : ent.width;
     const depth = (rotation % 2 === 1) ? ent.width : ent.depth;
 
-    if (!state.isAreaAvailable(x, z, width, depth, id)) {
-      state.addFloatingText('Место занято!', 0, 0, '#EF4444');
+    if (!state.isAreaAvailable(x, z, width, depth, id, ent.configId)) {
+      state.addFloatingText('Здесь нельзя ставить объект! 🚫', 0, 0, '#EF4444');
       return false;
     }
 
     if (!state.isAreaInsideUnlockedTerritory(x, z, width, depth)) {
-      state.addFloatingText('Нельзя ставить вне фермы!', 0, 0, '#EF4444');
+      state.addFloatingText('Земля ещё не открыта или это горы! ⛰️', 0, 0, '#EF4444');
       return false;
     }
 

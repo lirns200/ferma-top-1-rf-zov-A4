@@ -2003,7 +2003,7 @@ export const GameScene: React.FC = () => {
     if (bConfig) {
       const pW = (rotation % 2 === 1) ? bConfig.depth : bConfig.width;
       const pD = (rotation % 2 === 1) ? bConfig.width : bConfig.depth;
-      const valid = isAreaAvailable(tile.x, tile.z, pW, pD) &&
+      const valid = isAreaAvailable(tile.x, tile.z, pW, pD, movingEntityId || undefined, configId) &&
                     isAreaInsideUnlockedTerritory(tile.x, tile.z, pW, pD);
 
       const pGeo = new THREE.PlaneGeometry(pW, pD);
