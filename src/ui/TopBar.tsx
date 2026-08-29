@@ -1,8 +1,8 @@
-﻿import React from 'react';
+﻿import React, { useMemo } from 'react';
 import { useGameStore } from '../game/gameState';
 import { LEVELS } from '../config/levels';
 import { sounds } from '../audio/SoundManager';
-import { triggerTelegramHaptic } from '../utils/telegram';
+import { triggerTelegramHaptic, getTelegramUserProfile } from '../utils/telegram';
 
 function fmtNumber(n: number): string {
   if (n >= 1_000_000) return (n / 1_000_000).toFixed(1) + 'M';
@@ -10,7 +10,7 @@ function fmtNumber(n: number): string {
   return n.toLocaleString('ru-RU');
 }
 
-// ── CRISP VECTOR ICONS (Никогда не превращаются в квадратики []) ──
+// ── CRISP VECTOR ICONS ──
 const CoinSvg = () => (
   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" className="shrink-0">
     <circle cx="12" cy="12" r="10" fill="url(#coin_g)" stroke="#92400E" strokeWidth="1.5" />
@@ -40,14 +40,6 @@ const EnergySvg = () => (
   </svg>
 );
 
-const SproutSvg = () => (
-  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" className="shrink-0">
-    <path d="M12 22V11C12 7 8 4 4 4C4 8 7 12 11 12" stroke="#15803D" strokeWidth="2.2" strokeLinecap="round" />
-    <path d="M12 13C16 13 19 11 20 7C16 6 13 8 12 11" fill="#4ADE80" stroke="#15803D" strokeWidth="1.5" />
-    <circle cx="12" cy="21" r="2" fill="#78350F" />
-  </svg>
-);
-
 export const TopBar: React.FC = () => {
   const {
     level, xp, coins, gems,
@@ -56,48 +48,64 @@ export const TopBar: React.FC = () => {
     isDesign2026,
   } = useGameStore();
 
+  const tgProfile = useMemo(() => getTelegramUserProfile(), []);
+
   const currentLevelConfig = LEVELS[level - 1];
   const xpNeeded = currentLevelConfig ? currentLevelConfig.xpRequired : 1000;
   const xpPercent = Math.min(100, Math.round((xp / xpNeeded) * 100));
   const barnUsed = getStorageUsed('barn');
 
-  const pillClass = isDesign2026
-    ? 'hud-ios26-pill text-white'
-    : 'hud-parchment text-[#3B1F0D]';
+  const cardClass = isDesign2026
+    ? 'hud-ios26-card px-2.5 sm:px-3 py-1.5 rounded-2xl text-white'
+    : 'hud-parchment px-2.5 py-1.5 rounded-2xl text-[#3B1F0D]';
 
   return (
     <header className="fixed top-0 left-0 right-0 z-50 pointer-events-none p-2 sm:p-3 select-none">
       <div className="max-w-4xl mx-auto flex items-center justify-between gap-1.5 sm:gap-3">
 
-        {/* ── LEFT: Farm Badge + Level Shield + XP Bar ── */}
+        {/* ── LEFT: Telegram Profile Avatar + Level Shield + XP Bar (Квадратный со скруглением) ── */}
         <div 
           onClick={() => {
             sounds.playClick();
             triggerTelegramHaptic('light');
             openModal('settings');
           }}
-          className={`pointer-events-auto cursor-pointer flex items-center gap-2 px-2.5 py-1.5 active:scale-95 transition-all ${pillClass}`}
+          className={`pointer-events-auto cursor-pointer flex items-center gap-2.5 active:scale-95 transition-all ${cardClass}`}
         >
-          {/* Sprout Icon */}
-          <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-amber-200/90 border border-amber-700/60 flex items-center justify-center shadow-inner shrink-0">
-            <SproutSvg />
+          {/* Telegram User Avatar */}
+          <div className="relative shrink-0">
+            {tgProfile.photoUrl ? (
+              <img
+                src={tgProfile.photoUrl}
+                alt={tgProfile.name}
+                className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl object-cover border border-white/25 shadow"
+              />
+            ) : (
+              <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-gradient-to-tr from-purple-600 to-indigo-500 border border-white/30 flex items-center justify-center font-black text-white text-xs shadow">
+                {tgProfile.name.charAt(0)}
+              </div>
+            )}
+            {/* Online Green Indicator Dot */}
+            <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 bg-emerald-500 border border-black rounded-full" />
           </div>
 
-          {/* Farm Name & Level Info */}
-          <div className="flex flex-col">
-            <div className="flex items-center gap-2">
-              <span className={`font-extrabold text-xs sm:text-sm tracking-tight ${isDesign2026 ? 'text-white' : 'text-[#3B1F0D]'}`}>
-                Ферма Репка
+          {/* User Name & Level Info */}
+          <div className="flex flex-col min-w-[70px] sm:min-w-[85px]">
+            <div className="flex items-center gap-2 justify-between">
+              <span className={`font-bold text-xs sm:text-sm tracking-tight truncate max-w-[80px] sm:max-w-[100px] ${
+                isDesign2026 ? 'text-white' : 'text-[#3B1F0D]'
+              }`}>
+                {tgProfile.name}
               </span>
 
               {/* Level Shield */}
-              <div className="flex items-center justify-center w-6 h-6 bg-[#3B1F0D] border border-amber-500 rounded font-black text-[11px] text-yellow-300 shadow">
+              <div className="flex items-center justify-center w-5 h-5 sm:w-5.5 sm:h-5.5 bg-[#3B1F0D] border border-amber-400 rounded-lg font-black text-[10px] sm:text-[11px] text-yellow-300 shadow">
                 {level}
               </div>
             </div>
 
             {/* XP Mini Bar */}
-            <div className="w-full h-1.5 bg-[#4A2810] rounded-full overflow-hidden border border-amber-900 mt-1">
+            <div className="w-full h-1.5 bg-black/50 rounded-full overflow-hidden border border-white/10 mt-1">
               <div 
                 className="h-full bg-gradient-to-r from-amber-400 to-yellow-300 rounded-full transition-all duration-300"
                 style={{ width: `${xpPercent}%` }}
@@ -106,13 +114,15 @@ export const TopBar: React.FC = () => {
           </div>
         </div>
 
-        {/* ── RIGHT: Currencies & Resources Badges ── */}
+        {/* ── RIGHT: Currencies & Resources Badges (Квадратные с закругленными углами) ── */}
         <div className="flex items-center gap-1.5 sm:gap-2">
           
           {/* 1. Coins Badge */}
-          <div className={`pointer-events-auto flex items-center gap-1.5 px-2.5 py-1 sm:py-1.5 ${pillClass}`}>
+          <div className={`pointer-events-auto flex items-center gap-1.5 ${cardClass}`}>
             <CoinSvg />
-            <span className={`font-extrabold text-xs sm:text-sm min-w-[28px] sm:min-w-[36px] ${isDesign2026 ? 'text-yellow-300' : 'text-[#3B1F0D]'}`}>
+            <span className={`font-extrabold text-xs sm:text-sm min-w-[28px] sm:min-w-[36px] ${
+              isDesign2026 ? 'text-amber-300' : 'text-[#3B1F0D]'
+            }`}>
               {fmtNumber(coins)}
             </span>
           </div>
@@ -124,18 +134,22 @@ export const TopBar: React.FC = () => {
               triggerTelegramHaptic('light');
               openModal('barn');
             }}
-            className={`pointer-events-auto cursor-pointer flex items-center gap-1.5 px-2.5 py-1 sm:py-1.5 hover:brightness-105 active:scale-95 transition-all ${pillClass}`}
+            className={`pointer-events-auto cursor-pointer flex items-center gap-1.5 hover:brightness-105 active:scale-95 transition-all ${cardClass}`}
           >
             <WoodSvg />
-            <span className={`font-extrabold text-xs sm:text-sm ${isDesign2026 ? 'text-amber-200' : 'text-[#3B1F0D]'}`}>
+            <span className={`font-extrabold text-xs sm:text-sm ${
+              isDesign2026 ? 'text-amber-200' : 'text-[#3B1F0D]'
+            }`}>
               {barnUsed}
             </span>
           </div>
 
           {/* 3. Gems / Energy Badge with [+] Button */}
-          <div className={`pointer-events-auto flex items-center gap-1.5 pl-2.5 pr-1 py-1 sm:py-1.5 ${pillClass}`}>
+          <div className={`pointer-events-auto flex items-center gap-1.5 pl-2.5 pr-1 py-1 sm:py-1.5 ${cardClass}`}>
             <EnergySvg />
-            <span className={`font-extrabold text-xs sm:text-sm ${isDesign2026 ? 'text-cyan-300' : 'text-[#1E3A8A]'}`}>
+            <span className={`font-extrabold text-xs sm:text-sm ${
+              isDesign2026 ? 'text-sky-300' : 'text-[#1E3A8A]'
+            }`}>
               {gems}/30
             </span>
             <button
@@ -144,7 +158,7 @@ export const TopBar: React.FC = () => {
                 triggerTelegramHaptic('light');
                 openModal('events');
               }}
-              className="w-5 h-5 sm:w-6 sm:h-6 rounded-lg bg-green-600 hover:bg-green-500 border border-green-300 text-white flex items-center justify-center text-xs font-black shadow active:scale-90 transition-transform cursor-pointer"
+              className="w-5 h-5 sm:w-6 sm:h-6 rounded-lg bg-emerald-600 hover:bg-emerald-500 border border-emerald-300 text-white flex items-center justify-center text-xs font-black shadow active:scale-90 transition-transform cursor-pointer"
             >
               +
             </button>
