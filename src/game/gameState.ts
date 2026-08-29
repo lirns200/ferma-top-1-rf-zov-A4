@@ -1739,9 +1739,9 @@ export const useGameStore = create<GameStore>((set, get) => ({
       }));
     }
 
-    // Dispatch seller's delivery vehicle (7s travel time)
-    const travelTime = 7000;
-    set({
+    // Dispatch seller's delivery vehicle (6.5s travel time)
+    const travelTime = 6500;
+    set(s => ({
       marketDelivery: {
         id: `del_${Date.now()}`,
         sellerName: seller,
@@ -1752,11 +1752,17 @@ export const useGameStore = create<GameStore>((set, get) => ({
         orderedAt: Date.now(),
         arrivedAt: Date.now() + travelTime,
         isArrived: false,
+      },
+      cargoTruckState: {
+        ...s.cargoTruckState,
+        isDrivingOut: false,
+        isDrivingIn: false,
+        isParkedWaiting: false,
       }
-    });
+    }));
 
     sounds.playTruckHonk();
-    state.addFloatingText(`🚚 Машина ${seller} выехала к вашей ферме!`, 0, 0, '#38BDF8');
+    state.addFloatingText(`🚚 Фура ${seller} выехала к вашей ферме!`, 0, 0, '#38BDF8');
     return true;
   },
 
@@ -1774,11 +1780,25 @@ export const useGameStore = create<GameStore>((set, get) => ({
     }
 
     state.addItem(delivery.itemId, delivery.count);
+    sounds.playTruckHonk();
     sounds.playLevelUp();
-    confetti({ particleCount: 60, spread: 55 });
+    confetti({ particleCount: 65, spread: 75, origin: { y: 0.55 } });
 
-    set({ marketDelivery: null });
-    state.addFloatingText(`📦 Разгружено: +${delivery.count} ${itemName}!`, 0, 0, '#22C55E');
+    // Smooth departure: reverses onto the road, turns east and drives across the bridge into mountain tunnel
+    set(s => ({
+      marketDelivery: null,
+      cargoTruckState: {
+        ...s.cargoTruckState,
+        isParkedWaiting: false,
+        isDrivingIn: false,
+        isDrivingOut: true,
+        driveStartTime: Date.now(),
+        driveDuration: 4800,
+        loot: undefined,
+      },
+    }));
+
+    state.addFloatingText(`📦 Разгружено: +${delivery.count} ${itemName}! Фура уехала в город 🚚`, 0, 0, '#22C55E');
     return true;
   },
 
