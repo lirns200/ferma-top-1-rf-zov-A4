@@ -938,108 +938,263 @@ export const RoadsideShopModal: React.FC = () => {
               TAB 2: ПРОДАТЬ ПРЕДМЕТ (ВЫСТАВЛЕНИЕ ЛОТА НА РЫНОК)
               ════════════════════════════════════════════════════════════ */}
           {activeTab === 'sell' && (
-            <div className="flex flex-col sm:flex-row gap-4">
+            <div className="flex flex-col lg:flex-row gap-4">
               
               {/* Left Column: Select Item from Inventory */}
-              <div className="flex-1 flex flex-col gap-2">
-                <span className="text-xs font-extrabold text-[#8E939D] uppercase tracking-wider px-1">
-                  Выберите предмет со склада
-                </span>
+              <div className="flex-1 flex flex-col gap-2.5">
+                <div className="flex items-center justify-between px-1">
+                  <span className="text-xs font-black text-[#8E939D] uppercase tracking-wider">
+                    Выберите предмет со склада
+                  </span>
+                  <span className="text-xs text-sky-400 font-bold">
+                    Доступно видов: {userInventoryItems.length}
+                  </span>
+                </div>
 
                 {userInventoryItems.length === 0 ? (
-                  <div className={`p-8 rounded-2xl border text-center flex flex-col items-center justify-center gap-2 ${
+                  <div className={`p-10 rounded-3xl border text-center flex flex-col items-center justify-center gap-3 ${
                     isDesign2026 ? 'bg-[#181C24] border-[#242A35] text-[#8E939D]' : 'hud-parchment text-[#5C3718]'
                   }`}>
-                    <span className="text-4xl">📦</span>
-                    <span className="font-bold text-sm">Ваш склад пуст!</span>
-                    <span className="text-xs">Соберите урожай или произведите товары, чтобы продавать на рынке.</span>
+                    <span className="text-5xl">📦</span>
+                    <span className="font-extrabold text-base text-white">Ваш склад пуст!</span>
+                    <span className="text-xs max-w-xs text-[#8E939D]">
+                      Соберите урожай с грядок или произведите готовую продукцию, чтобы выставить её на рынок.
+                    </span>
                   </div>
                 ) : (
-                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5 max-h-[380px] overflow-y-auto pr-1">
-                    {userInventoryItems.map(({ item, count }) => (
-                      <div
-                        key={item.id}
-                        onClick={() => handleSelectSellItem(item.id, count)}
-                        className={`p-3 rounded-2xl border shadow flex flex-col items-center justify-between text-center gap-1 cursor-pointer transition-all ${
-                          sellItemKey === item.id
-                            ? 'bg-emerald-950/60 border-emerald-500 ring-2 ring-emerald-400/50 scale-105'
-                            : isDesign2026
-                            ? 'bg-[#181C24] border-[#242A35] text-white hover:border-white/30'
-                            : 'hud-parchment border-amber-700/60 text-[#3B1F0D]'
-                        }`}
-                      >
-                        <span className="text-3xl my-0.5">{item.icon}</span>
-                        <span className="font-bold text-xs truncate max-w-full">{item.name}</span>
-                        <span className="text-[11px] font-black text-emerald-400">×{count} на складе</span>
-                      </div>
-                    ))}
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 max-h-[440px] overflow-y-auto pr-1">
+                    {userInventoryItems.map(({ item, count }) => {
+                      const isSelected = sellItemKey === item.id;
+
+                      return (
+                        <div
+                          key={item.id}
+                          onClick={() => handleSelectSellItem(item.id, count)}
+                          className={`p-3.5 rounded-2xl border shadow-md flex flex-col items-center justify-between text-center gap-2 cursor-pointer transition-all duration-200 relative select-none ${
+                            isSelected
+                              ? 'bg-gradient-to-b from-emerald-950/80 to-[#12241E] border-emerald-400 ring-2 ring-emerald-400/40 scale-[1.03] shadow-emerald-950/50'
+                              : isDesign2026
+                              ? 'bg-[#181C24] border-[#242A35] text-white hover:border-white/25 hover:bg-[#1E232D] active:scale-95'
+                              : 'hud-parchment border-amber-700/60 text-[#3B1F0D] hover:scale-[1.02]'
+                          }`}
+                        >
+                          {/* Selected Checkmark Badge */}
+                          {isSelected && (
+                            <div className="absolute top-2 right-2 w-5 h-5 rounded-full bg-emerald-500 text-white flex items-center justify-center text-[10px] font-black shadow">
+                              ✓
+                            </div>
+                          )}
+
+                          {/* 3D Item Icon Box */}
+                          <div className={`w-14 h-14 rounded-2xl flex items-center justify-center text-3xl shadow-inner transition-transform ${
+                            isSelected ? 'bg-emerald-900/40 scale-110' : 'bg-black/30'
+                          }`}>
+                            {item.icon}
+                          </div>
+
+                          <div className="flex flex-col items-center w-full">
+                            <span className="font-extrabold text-xs sm:text-sm truncate max-w-full text-white">
+                              {item.name}
+                            </span>
+                            <span className="text-[10px] text-[#8E939D] mt-0.5">
+                              Базовая: ~{item.basePrice} 🪙
+                            </span>
+                          </div>
+
+                          {/* Quantity Stock Pill */}
+                          <div className={`px-2.5 py-1 rounded-full text-[11px] font-black border ${
+                            isSelected
+                              ? 'bg-emerald-500/20 text-emerald-300 border-emerald-400/50'
+                              : 'bg-black/40 text-emerald-400 border-white/5'
+                          }`}>
+                            ×{count} на складе
+                          </div>
+                        </div>
+                      );
+                    })}
                   </div>
                 )}
               </div>
 
               {/* Right Column: Pricing & Fee Calculator */}
-              <div className={`w-full sm:w-80 p-4 sm:p-5 rounded-2xl border shadow-xl flex flex-col justify-between gap-4 ${
-                isDesign2026 ? 'bg-[#181C24] border-[#242A35] text-white' : 'hud-parchment border-amber-600 text-[#3B1F0D]'
+              <div className={`w-full lg:w-96 p-5 rounded-3xl border shadow-2xl flex flex-col justify-between gap-4 ${
+                isDesign2026 ? 'bg-[#181C24] border-[#2E3644] text-white' : 'hud-parchment border-amber-600 text-[#3B1F0D]'
               }`}>
-                <div>
-                  <span className="text-xs font-black uppercase text-[#8E939D]">
+                <div className="flex flex-col gap-4">
+                  <span className="text-xs font-black uppercase text-[#8E939D] tracking-wider">
                     Параметры лота
                   </span>
 
-                  {/* Selected Item Info */}
-                  <div className="flex items-center gap-3 my-3 p-3 rounded-xl bg-black/20 border border-white/5">
-                    <span className="text-3xl">{PRODUCTS[sellItemKey]?.icon || '📦'}</span>
-                    <div className="flex flex-col">
-                      <span className="font-extrabold text-sm">{PRODUCTS[sellItemKey]?.name || sellItemKey}</span>
-                      <span className="text-xs text-[#8E939D]">Доступно: {inventory[sellItemKey] || 0} шт.</span>
+                  {/* Selected Item Info Card */}
+                  <div className="flex items-center gap-3.5 p-3.5 rounded-2xl bg-black/30 border border-white/10 shadow-inner">
+                    <div className="w-12 h-12 rounded-xl bg-black/40 flex items-center justify-center text-3xl shrink-0">
+                      {PRODUCTS[sellItemKey]?.icon || '📦'}
+                    </div>
+                    <div className="flex flex-col flex-1 min-w-0">
+                      <span className="font-black text-sm truncate">{PRODUCTS[sellItemKey]?.name || sellItemKey}</span>
+                      <span className="text-xs text-[#8E939D] flex items-center gap-1">
+                        Доступно на складе: <b className="text-emerald-400 font-black">{inventory[sellItemKey] || 0} шт.</b>
+                      </span>
                     </div>
                   </div>
 
-                  {/* Quantity Slider */}
-                  <div className="flex flex-col gap-1.5 mb-3">
+                  {/* Quantity Stepper & Slider */}
+                  <div className="flex flex-col gap-1.5">
                     <div className="flex items-center justify-between text-xs font-bold">
-                      <span>Количество:</span>
-                      <span className="text-emerald-400 font-black">{sellCount} шт.</span>
+                      <span className="text-[#8E939D]">Количество на продажу:</span>
+                      <span className="text-emerald-400 font-black text-sm">{sellCount} шт.</span>
                     </div>
-                    <input
-                      type="range"
-                      min={1}
-                      max={Math.max(1, inventory[sellItemKey] || 1)}
-                      value={sellCount}
-                      onChange={e => setSellCount(Number(e.target.value))}
-                      className="w-full accent-emerald-500 cursor-pointer"
-                    />
+
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => {
+                          sounds.playClick();
+                          setSellCount(Math.max(1, sellCount - 1));
+                        }}
+                        className="w-9 h-9 rounded-xl bg-[#242A35] hover:bg-[#353D4C] text-white font-black text-base flex items-center justify-center cursor-pointer border border-[#353D4C] active:scale-95 transition-transform"
+                      >
+                        -
+                      </button>
+                      <input
+                        type="range"
+                        min={1}
+                        max={Math.max(1, inventory[sellItemKey] || 1)}
+                        value={sellCount}
+                        onChange={e => setSellCount(Number(e.target.value))}
+                        className="flex-1 accent-emerald-500 cursor-pointer"
+                      />
+                      <button
+                        onClick={() => {
+                          sounds.playClick();
+                          setSellCount(Math.min(inventory[sellItemKey] || 1, sellCount + 1));
+                        }}
+                        className="w-9 h-9 rounded-xl bg-[#242A35] hover:bg-[#353D4C] text-white font-black text-base flex items-center justify-center cursor-pointer border border-[#353D4C] active:scale-95 transition-transform"
+                      >
+                        +
+                      </button>
+                    </div>
+
+                    {/* Quick Count Presets */}
+                    <div className="flex items-center gap-1.5 mt-1">
+                      {[1, 5, 10].filter(q => q <= (inventory[sellItemKey] || 1)).map(qty => (
+                        <button
+                          key={qty}
+                          onClick={() => {
+                            sounds.playClick();
+                            setSellCount(qty);
+                          }}
+                          className={`flex-1 py-1 rounded-lg text-[10px] font-black border transition-all cursor-pointer ${
+                            sellCount === qty
+                              ? 'bg-emerald-500/20 text-emerald-300 border-emerald-400'
+                              : 'bg-black/20 text-[#8E939D] border-white/5 hover:text-white'
+                          }`}
+                        >
+                          {qty} шт.
+                        </button>
+                      ))}
+                      <button
+                        onClick={() => {
+                          sounds.playClick();
+                          setSellCount(Math.max(1, inventory[sellItemKey] || 1));
+                        }}
+                        className={`flex-1 py-1 rounded-lg text-[10px] font-black border transition-all cursor-pointer ${
+                          sellCount === (inventory[sellItemKey] || 1)
+                            ? 'bg-emerald-500/20 text-emerald-300 border-emerald-400'
+                            : 'bg-black/20 text-[#8E939D] border-white/5 hover:text-white'
+                        }`}
+                      >
+                        МАКС
+                      </button>
+                    </div>
                   </div>
 
-                  {/* Price Setting */}
-                  <div className="flex flex-col gap-1.5 mb-3">
+                  {/* Price Setting Stepper & Slider */}
+                  <div className="flex flex-col gap-1.5">
                     <div className="flex items-center justify-between text-xs font-bold">
-                      <span>Цена продажи:</span>
-                      <span className="text-amber-300 font-black flex items-center gap-1"><CoinSvg /> {sellPrice}</span>
+                      <span className="text-[#8E939D]">Цена продажи лота:</span>
+                      <span className="text-amber-300 font-black text-sm flex items-center gap-1">
+                        <CoinSvg /> {sellPrice}
+                      </span>
                     </div>
-                    <input
-                      type="range"
-                      min={Math.max(1, Math.round((PRODUCTS[sellItemKey]?.basePrice || 5) * sellCount * 0.5))}
-                      max={Math.round((PRODUCTS[sellItemKey]?.basePrice || 5) * sellCount * 3)}
-                      value={sellPrice}
-                      onChange={e => setSellPrice(Number(e.target.value))}
-                      className="w-full accent-amber-500 cursor-pointer"
-                    />
+
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => {
+                          sounds.playClick();
+                          setSellPrice(Math.max(1, sellPrice - 1));
+                        }}
+                        className="w-9 h-9 rounded-xl bg-[#242A35] hover:bg-[#353D4C] text-white font-black text-base flex items-center justify-center cursor-pointer border border-[#353D4C] active:scale-95 transition-transform"
+                      >
+                        -
+                      </button>
+                      <input
+                        type="range"
+                        min={Math.max(1, Math.round((PRODUCTS[sellItemKey]?.basePrice || 5) * sellCount * 0.5))}
+                        max={Math.round((PRODUCTS[sellItemKey]?.basePrice || 5) * sellCount * 3)}
+                        value={sellPrice}
+                        onChange={e => setSellPrice(Number(e.target.value))}
+                        className="flex-1 accent-amber-500 cursor-pointer"
+                      />
+                      <button
+                        onClick={() => {
+                          sounds.playClick();
+                          setSellPrice(sellPrice + 1);
+                        }}
+                        className="w-9 h-9 rounded-xl bg-[#242A35] hover:bg-[#353D4C] text-white font-black text-base flex items-center justify-center cursor-pointer border border-[#353D4C] active:scale-95 transition-transform"
+                      >
+                        +
+                      </button>
+                    </div>
+
+                    {/* Quick Price Multipliers */}
+                    <div className="flex items-center gap-1.5 mt-1">
+                      {[
+                        { label: '-15% (быстро)', mul: 0.85 },
+                        { label: 'Рыночная', mul: 1.0 },
+                        { label: '+25% (выгодно)', mul: 1.25 },
+                      ].map((preset, idx) => {
+                        const targetP = Math.max(1, Math.round((PRODUCTS[sellItemKey]?.basePrice || 10) * sellCount * preset.mul));
+                        return (
+                          <button
+                            key={idx}
+                            onClick={() => {
+                              sounds.playClick();
+                              setSellPrice(targetP);
+                            }}
+                            className={`flex-1 py-1 rounded-lg text-[10px] font-black border transition-all cursor-pointer ${
+                              sellPrice === targetP
+                                ? 'bg-amber-500/20 text-amber-300 border-amber-400'
+                                : 'bg-black/20 text-[#8E939D] border-white/5 hover:text-white'
+                            }`}
+                          >
+                            {preset.label}
+                          </button>
+                        );
+                      })}
+                    </div>
                   </div>
 
-                  {/* Steam Fee Breakdown */}
-                  <div className="flex flex-col gap-1 p-2.5 rounded-xl bg-black/25 text-xs">
-                    <div className="flex justify-between text-[#8E939D]">
+                  {/* Platform Fee Breakdown Card */}
+                  <div className="flex flex-col gap-2 p-3.5 rounded-2xl bg-black/35 border border-white/10 text-xs shadow-inner">
+                    <div className="flex justify-between items-center text-[#8E939D]">
                       <span>Покупатель заплатит:</span>
-                      <span className="font-bold text-white">{sellPrice} 🪙</span>
+                      <span className="font-bold text-white flex items-center gap-1">
+                        <CoinSvg /> {sellPrice}
+                      </span>
                     </div>
-                    <div className="flex justify-between text-[#8E939D]">
+
+                    <div className="flex justify-between items-center text-[#8E939D]">
                       <span>Комиссия площадки (5%):</span>
-                      <span className="text-red-400 font-bold">-{Math.round(sellPrice * 0.05)} 🪙</span>
+                      <span className="text-rose-400 font-bold flex items-center gap-1">
+                        - {Math.round(sellPrice * 0.05)} <CoinSvg />
+                      </span>
                     </div>
-                    <div className="flex justify-between font-black text-emerald-400 pt-1 border-t border-white/10">
+
+                    <div className="flex justify-between items-center font-black text-emerald-400 pt-2 border-t border-white/10">
                       <span>Вы получите чистыми:</span>
-                      <span>+{Math.round(sellPrice * 0.95)} 🪙</span>
+                      <span className="text-sm flex items-center gap-1">
+                        + {Math.round(sellPrice * 0.95)} <CoinSvg />
+                      </span>
                     </div>
                   </div>
                 </div>
@@ -1047,10 +1202,14 @@ export const RoadsideShopModal: React.FC = () => {
                 <button
                   onClick={handlePublishListing}
                   disabled={(inventory[sellItemKey] || 0) < sellCount}
-                  className="w-full py-3 rounded-xl bg-gradient-to-r from-emerald-500 to-green-600 hover:from-emerald-400 hover:to-green-500 text-white font-black text-xs sm:text-sm shadow-xl flex items-center justify-center gap-1.5 transition-transform active:scale-95 cursor-pointer border border-emerald-300"
+                  className={`w-full py-3.5 rounded-2xl font-black text-xs sm:text-sm shadow-xl flex items-center justify-center gap-2 transition-transform active:scale-95 cursor-pointer border ${
+                    (inventory[sellItemKey] || 0) >= sellCount
+                      ? 'bg-gradient-to-r from-emerald-500 to-green-600 hover:from-emerald-400 hover:to-green-500 text-white border-emerald-300 shadow-emerald-950/50'
+                      : 'bg-zinc-800 text-zinc-500 border-zinc-700 cursor-not-allowed'
+                  }`}
                 >
-                  <Tag size={15} />
-                  <span>Выставить на Торговую площадку</span>
+                  <Tag size={16} />
+                  <span>Выставить лот на продажу</span>
                 </button>
               </div>
 
@@ -1103,7 +1262,8 @@ export const RoadsideShopModal: React.FC = () => {
                                 }}
                                 className="w-full py-2 bg-gradient-to-b from-yellow-400 to-amber-500 text-amber-950 font-black text-xs rounded-xl shadow-md hover:scale-105 active:scale-95 transition-transform flex items-center justify-center gap-1 cursor-pointer"
                               >
-                                <span>Забрать +{slot.price} 🪙</span>
+                                <span>Забрать +{slot.price}</span>
+                                <CoinSvg />
                               </button>
                             </div>
                           ) : (
@@ -1115,7 +1275,9 @@ export const RoadsideShopModal: React.FC = () => {
                               <span className="text-4xl my-1">{item.icon}</span>
                               <div className="flex flex-col w-full">
                                 <span className="font-bold text-xs">{item.name} ×{slot.count}</span>
-                                <span className="font-black text-amber-400 text-sm mt-0.5">{slot.price} 🪙</span>
+                                <span className="font-black text-amber-400 text-sm mt-0.5 flex items-center justify-center gap-1">
+                                  <CoinSvg /> {slot.price}
+                                </span>
                               </div>
                             </div>
                           )
@@ -1177,15 +1339,18 @@ export const RoadsideShopModal: React.FC = () => {
                             <span className="text-3xl p-1 bg-black/20 rounded-xl">{item?.icon || '📦'}</span>
                             <div className="flex flex-col">
                               <span className="font-bold text-xs sm:text-sm">{item?.name || order.itemId}</span>
-                              <span className="text-xs text-[#8E939D]">
-                                Количество: <b className="text-white font-bold">{order.count} шт.</b> • Цена: <b className="text-amber-300 font-bold">{order.pricePerUnit} 🪙/шт.</b>
+                              <span className="text-xs text-[#8E939D] flex items-center gap-1">
+                                <span>Количество: <b className="text-white font-bold">{order.count} шт.</b> • Цена:</span>
+                                <span className="text-amber-300 font-bold flex items-center gap-0.5">
+                                  <CoinSvg /> {order.pricePerUnit}/шт.
+                                </span>
                               </span>
                             </div>
                           </div>
 
                           <div className="flex items-center gap-3">
-                            <span className="text-sm font-black text-amber-400">
-                              {order.totalPrice} 🪙
+                            <span className="text-sm font-black text-amber-400 flex items-center gap-1">
+                              <CoinSvg /> {order.totalPrice}
                             </span>
                             <button
                               onClick={() => handleCancelBuyOrder(order.id)}
@@ -1246,10 +1411,11 @@ export const RoadsideShopModal: React.FC = () => {
                     </div>
 
                     <div className="text-right">
-                      <span className={`font-black text-sm ${
+                      <span className={`font-black text-sm flex items-center gap-1 justify-end ${
                         tx.type === 'sell' ? 'text-emerald-400' : 'text-amber-400'
                       }`}>
-                        {tx.type === 'sell' ? '+' : '-'}{tx.price} 🪙
+                        <span>{tx.type === 'sell' ? '+' : '-'}{tx.price}</span>
+                        <CoinSvg />
                       </span>
                     </div>
                   </div>
