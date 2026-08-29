@@ -93,6 +93,18 @@ export const SettingsModal: React.FC = () => {
             <span>Сохранить игру в памяти</span>
           </button>
 
+          {/* Replay Tutorial Action */}
+          <button
+            onClick={() => {
+              useGameStore.getState().restartTutorial();
+              closeModal();
+            }}
+            className="w-full py-2.5 bg-amber-800/80 hover:bg-amber-700 border border-amber-500/60 text-yellow-200 font-bold text-xs rounded-2xl flex items-center justify-center gap-2 transition-colors"
+          >
+            <span>👨‍🌾</span>
+            <span>Посмотреть историю и пройти обучение заново</span>
+          </button>
+
           {/* Reset Action */}
           <button
             onClick={() => {
@@ -100,7 +112,7 @@ export const SettingsModal: React.FC = () => {
                 resetGame();
               }
             }}
-            className="w-full py-2.5 bg-red-950/80 hover:bg-red-900 border border-red-700/60 text-red-300 font-bold text-xs rounded-2xl flex items-center justify-center gap-2 transition-colors mt-2"
+            className="w-full py-2.5 bg-red-950/80 hover:bg-red-900 border border-red-700/60 text-red-300 font-bold text-xs rounded-2xl flex items-center justify-center gap-2 transition-colors mt-1"
           >
             <RotateCcw size={16} />
             <span>Сбросить ферму и начать сначала</span>

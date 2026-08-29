@@ -1633,18 +1633,18 @@ export const GameScene: React.FC = () => {
     westTunnel.rotation.y = Math.atan2(7.5, -0.3);
     terrainGroup.add(westTunnel);
 
-    // Mailbox (x = -4, z = -8)
+    // Roadside Mailbox (x = -4.2, z = -5.8 on the grass beside driveway 1)
     const mbGroup = new THREE.Group();
     mbGroup.name = 'farm_mailbox';
     const mbPost = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, 1.0, 6), archWoodMat);
-    mbPost.position.set(-4, 0.5, -8);
+    mbPost.position.set(-4.2, 0.5, -5.8);
     mbPost.castShadow = true;
     const mbBox = new THREE.Mesh(new THREE.BoxGeometry(0.32, 0.32, 0.52), getCachedColorMaterial('#DC2626', 0.5));
-    mbBox.position.set(-4, 1.0, -8);
+    mbBox.position.set(-4.2, 1.0, -5.8);
     mbBox.castShadow = true;
     const mbFlag = new THREE.Mesh(new THREE.BoxGeometry(0.03, 0.22, 0.12), getCachedColorMaterial('#FBBF24', 0.3));
     mbFlag.name = 'mailbox_flag';
-    mbFlag.position.set(-3.83, 1.12, -8);
+    mbFlag.position.set(-4.03, 1.12, -5.8);
     mbGroup.add(mbPost, mbBox, mbFlag);
     terrainGroup.add(mbGroup);
 
@@ -2376,7 +2376,7 @@ export const GameScene: React.FC = () => {
       } else if (tile && Math.abs(tile.x - (-7.0)) <= 2.2 && Math.abs(tile.z - (-3.2)) <= 2.2 && cargoTruckStateRef.current.isParkedWaiting) {
         // Direct click on parked Cargo Semi-Truck (Фура) in Driveway 1 to unload goods!
         claimCargoTruckUnload();
-      } else if (tile && Math.abs(tile.x - (-4)) <= 1.2 && Math.abs(tile.z - (-8)) <= 1.2) {
+      } else if (tile && Math.abs(tile.x - (-4.2)) <= 1.2 && Math.abs(tile.z - (-5.8)) <= 1.2) {
         // Direct click on roadside Mailbox
         openModal('mailbox');
       } else {

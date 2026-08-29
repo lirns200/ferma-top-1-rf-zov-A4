@@ -276,9 +276,12 @@ export interface GameStore {
   // Fishing
   onCatchFish: (speciesId: string, weight: number) => void;
   
-  // Tutorial
+  // Intro & Tutorial
+  introStage: 'story' | 'dispersing' | 'completed';
+  setIntroStage: (stage: 'story' | 'dispersing' | 'completed') => void;
   advanceTutorial: (stepToComplete?: number) => void;
   skipTutorial: () => void;
+  restartTutorial: () => void;
   
   // Seasons & Weather Actions
   setSeason: (season: SeasonType) => void;
@@ -342,6 +345,8 @@ export const useGameStore = create<GameStore>((set, get) => ({
     biggestCatch: {},
   },
   
+  introStage: 'story',
+  setIntroStage: (stage) => set({ introStage: stage }),
   tutorialStep: 1,
   tutorialCompleted: false,
   
@@ -430,6 +435,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
         fishingStats: saved.fishingStats || { fishCaughtCount: 0, biggestCatch: {} },
         tutorialStep: saved.tutorialStep || 1,
         tutorialCompleted: saved.tutorialCompleted ?? false,
+        introStage: (saved.tutorialCompleted || (saved.tutorialStep && saved.tutorialStep > 1)) ? 'completed' : 'story',
         soundMuted: saved.soundMuted ?? false,
         activeSeason: getCurrentRealSeason(),
       });
@@ -1746,13 +1752,14 @@ export const useGameStore = create<GameStore>((set, get) => ({
     const state = get();
     if (expectedStep !== undefined && state.tutorialStep !== expectedStep) return;
     const next = state.tutorialStep + 1;
-    if (next > 8) {
-      set({ tutorialStep: 9, tutorialCompleted: true });
+    if (next > 9) {
+      set({ tutorialStep: 10, tutorialCompleted: true, introStage: 'completed' });
       sounds.playLevelUp();
       confetti({ particleCount: 150, spread: 90 });
-      state.addFloatingText('Обучение завершено! Награда: 100 💰 5 💎', 0, 0, '#FACC15');
-      state.addCoins(100);
-      state.addGems(5);
+      state.addFloatingText('🎉 Обучение завершено! +500 🪙 +25 💎 ✨', 0, 0, '#22C55E');
+      state.addCoins(500);
+      state.addGems(25);
+      state.addXP(150);
     } else {
       set({ tutorialStep: next });
       sounds.playClick();
@@ -1760,7 +1767,12 @@ export const useGameStore = create<GameStore>((set, get) => ({
   },
 
   skipTutorial: () => {
-    set({ tutorialStep: 9, tutorialCompleted: true });
+    set({ tutorialStep: 10, tutorialCompleted: true, introStage: 'completed' });
+    sounds.playClick();
+  },
+
+  restartTutorial: () => {
+    set({ tutorialStep: 1, tutorialCompleted: false, introStage: 'story' });
     sounds.playClick();
   },
 

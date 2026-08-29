@@ -5,6 +5,7 @@ import { TopBar } from './ui/TopBar';
 import { BottomActionDock } from './ui/BottomActionDock';
 import { FloatingToolsOverlay } from './ui/FloatingToolsOverlay';
 import { TutorialOverlay } from './ui/TutorialOverlay';
+import { CinematicIntroOverlay } from './ui/CinematicIntroOverlay';
 import { FloatingTextsOverlay } from './ui/FloatingTextsOverlay';
 
 // Modals
@@ -51,6 +52,7 @@ export function App() {
       <BottomActionDock />
       <FloatingToolsOverlay />
       <TutorialOverlay />
+      <CinematicIntroOverlay />
       <FloatingTextsOverlay />
 
       {/* Interactive Pop-up Modals */}

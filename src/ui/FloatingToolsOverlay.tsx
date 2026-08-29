@@ -187,64 +187,58 @@ export const FloatingToolsOverlay: React.FC = () => {
 
   /* ── Placing building ── */
   if (placingBuildingConfigId) {
+    const { placingRotation } = useGameStore.getState();
     const bConfig = BUILDINGS[placingBuildingConfigId] || DECORATIONS[placingBuildingConfigId] || TREES_BUSHES[placingBuildingConfigId];
     const cost = bConfig?.cost || 0;
     const canAffordCount = cost > 0 ? Math.floor(useGameStore.getState().coins / cost) : Infinity;
+    const rotDegrees = (placingRotation || 0) * 90;
 
     return (
       <div
-        className="absolute bottom-24 left-1/2 -translate-x-1/2 z-30 flex items-center gap-3 px-4 py-2.5 rounded-xl shadow-2xl"
+        className="fixed bottom-20 sm:bottom-24 left-1/2 -translate-x-1/2 z-40 flex items-center gap-3.5 px-5 py-3.5 rounded-2xl shadow-2xl animate-fade-in"
         style={{
-          background: '#231206',
-          border: '2px solid #F59E0B',
-          boxShadow: '0 10px 30px rgba(0,0,0,0.65)',
+          background: 'linear-gradient(180deg, rgba(45, 23, 5, 0.98) 0%, rgba(26, 12, 4, 0.99) 100%)',
+          border: '3px solid #F59E0B',
+          boxShadow: '0 16px 40px rgba(0,0,0,0.85), inset 0 2px 4px rgba(255,255,255,0.2)',
           fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
         }}
       >
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <span style={{ fontSize: 22 }}>{bConfig?.icon || '🔨'}</span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <span style={{ fontSize: 28 }} className="animate-bounce">{bConfig?.icon || '🔨'}</span>
           <div>
-            <div style={{ fontSize: 13, fontWeight: 700, color: '#FEF08A' }}>
+            <div style={{ fontSize: 14, fontWeight: 800, color: '#FEF08A' }}>
               {bConfig?.name || 'Строительство'}
             </div>
-            <div style={{ fontSize: 11, color: '#D97706', fontWeight: 500 }}>
-              {cost > 0 && `🪙 ${cost} за шт.`} {canAffordCount !== Infinity && `(осталось на ${canAffordCount} шт.)`}
+            <div style={{ fontSize: 11, color: '#FBBF24', fontWeight: 600 }}>
+              {cost > 0 ? `🪙 ${cost} за шт.` : 'Бесплатно'} {canAffordCount !== Infinity && `(осталось на ${canAffordCount} шт.)`}
             </div>
           </div>
         </div>
 
+        {/* Prominent Rotate Button */}
         <button
           onClick={rotatePlacingBuilding}
+          className="flex items-center gap-2 px-4 py-2.5 rounded-xl font-bold text-xs text-white shadow-lg active:scale-95 transition-all hover:brightness-110 cursor-pointer border-2 border-yellow-300 animate-pulse"
           style={{
-            padding: '6px 12px',
-            borderRadius: 8,
-            fontSize: 12,
-            fontWeight: 700,
-            color: '#FFF',
             background: 'linear-gradient(180deg, #D97706 0%, #B45309 100%)',
-            border: '1px solid #78350F',
-            cursor: 'pointer',
-            boxShadow: '0 2px 6px rgba(0,0,0,0.3)',
+            boxShadow: '0 4px 12px rgba(217, 119, 6, 0.5)',
           }}
+          title="Повернуть объект на 90 градусов (Клавиша R)"
         >
-          ↻ Повернуть
+          <span style={{ fontSize: 16 }}>🔄</span>
+          <span>Повернуть ({rotDegrees}°)</span>
         </button>
 
+        {/* Done / Finish Placing Button */}
         <button
           onClick={() => setPlacingBuilding(null)}
+          className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl font-bold text-xs text-white shadow-md active:scale-95 transition-all hover:brightness-110 cursor-pointer border border-red-400"
           style={{
-            padding: '6px 14px',
-            borderRadius: 8,
-            fontSize: 12,
-            fontWeight: 700,
-            color: '#FFF',
             background: 'linear-gradient(180deg, #EF4444 0%, #DC2626 100%)',
-            border: '1px solid #991B1B',
-            cursor: 'pointer',
-            boxShadow: '0 2px 6px rgba(0,0,0,0.3)',
           }}
         >
-          ✕ Завершить
+          <span>✕</span>
+          <span>Завершить</span>
         </button>
       </div>
     );
