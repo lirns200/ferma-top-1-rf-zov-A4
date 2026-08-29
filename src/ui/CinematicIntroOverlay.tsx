@@ -1,13 +1,9 @@
-﻿import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useGameStore } from '../game/gameState';
 import { sounds } from '../audio/SoundManager';
 
 export const CinematicIntroOverlay: React.FC = () => {
   const { introStage, setIntroStage } = useGameStore();
-
-  // If already completed, do not render
-  if (introStage === 'completed') return null;
-
   const [fadeState, setFadeState] = useState<'showing' | 'clearing'>('showing');
   const [displayedTextIndex, setDisplayedTextIndex] = useState(0);
 
@@ -19,11 +15,15 @@ export const CinematicIntroOverlay: React.FC = () => {
   ];
 
   useEffect(() => {
+    if (introStage === 'completed') return;
     const timer = setInterval(() => {
       setDisplayedTextIndex(prev => (prev < storyLines.length - 1 ? prev + 1 : prev));
     }, 2400);
     return () => clearInterval(timer);
-  }, []);
+  }, [introStage, storyLines.length]);
+
+  // If already completed, do not render
+  if (introStage === 'completed') return null;
 
   const handleStartAdventure = () => {
     sounds.playClick();
