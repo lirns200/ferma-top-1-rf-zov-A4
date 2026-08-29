@@ -420,21 +420,28 @@ export const GameScene: React.FC = () => {
     scene.add(particleSystem);
 
     // ── Delivery Circuit Curves (Pickup Truck - Driveway 2) ───────────────
-    // Outbound journey: from Driveway 2 over wooden bridge into East Mountain Tunnel (to Town)
-    const outboundDeliveryCurve = new THREE.CatmullRomCurve3([
-      new THREE.Vector3(4.2, 0.05, -2.8),   // 0. Home parking spot in Driveway 2
-      new THREE.Vector3(2.8, 0.05, -5.5),   // 1. Driving up Driveway 2 curve
-      new THREE.Vector3(1.2, 0.05, -8.6),   // 2. Merging onto Main Road
-      new THREE.Vector3(9.6, 0.05, -9.0),   // 3. Entrance to wooden bridge
-      new THREE.Vector3(16.0, 0.22, -9.0),  // 4. Middle crest of wooden bridge
-      new THREE.Vector3(22.4, 0.05, -9.0),  // 5. Bridge exit onto east bank
-      new THREE.Vector3(26.0, 0.05, -8.5),  // 6. East bank road bend
-      new THREE.Vector3(30.0, 0.05, -7.2),  // 7. Road curving towards mountain
-      new THREE.Vector3(32.2, 0.05, -6.2),  // 8. East Mountain Tunnel portal
-      new THREE.Vector3(35.5, 0.05, -4.8),  // 9. Deep inside mountain cave (vanished)
+    // Reversing Out: backs up along Driveway 2 and swings rear left onto road
+    const pickupReverseCurve = new THREE.CatmullRomCurve3([
+      new THREE.Vector3(4.2, 0.05, -2.8),   // 0. Parked in Driveway 2
+      new THREE.Vector3(2.8, 0.05, -5.5),   // 1. Reversing up Driveway 2 curve
+      new THREE.Vector3(1.2, 0.05, -8.6),   // 2. Reversing onto road
+      new THREE.Vector3(-0.6, 0.05, -8.8),  // 3. Swung rear left onto road
     ]);
 
-    // Return journey: emerging from TOP / West Mountain Tunnel back down to Driveway 2!
+    // Forward drive: accelerates eastward across bridge into East Mountain Tunnel
+    const pickupForwardCurve = new THREE.CatmullRomCurve3([
+      new THREE.Vector3(-0.6, 0.05, -8.8),  // 0. Junction on road
+      new THREE.Vector3(4.0, 0.05, -8.8),   // 1. Accelerating along road
+      new THREE.Vector3(9.6, 0.05, -9.0),   // 2. Entrance to wooden bridge
+      new THREE.Vector3(16.0, 0.22, -9.0),  // 3. Middle crest of wooden bridge
+      new THREE.Vector3(22.4, 0.05, -9.0),  // 4. Bridge exit onto east bank
+      new THREE.Vector3(26.0, 0.05, -8.5),  // 5. East bank road bend
+      new THREE.Vector3(30.0, 0.05, -7.2),  // 6. Road curving towards mountain
+      new THREE.Vector3(32.2, 0.05, -6.2),  // 7. East Mountain Tunnel portal
+      new THREE.Vector3(35.5, 0.05, -4.8),  // 8. Deep inside mountain cave (vanished)
+    ]);
+
+    // Return journey: emerging from West Mountain Tunnel back down to Driveway 2!
     const returnDeliveryCurve = new THREE.CatmullRomCurve3([
       new THREE.Vector3(-33.5, 0.05, -10.0),  // 0. Inside West Mountain Cave (vanished)
       new THREE.Vector3(-29.2, 0.05, -10.15), // 1. Emerging from West Mountain Tunnel portal
@@ -453,19 +460,29 @@ export const GameScene: React.FC = () => {
       new THREE.Vector3(-26.0, 0.05, -10.3),  // 1. Approaching farm along road
       new THREE.Vector3(-14.0, 0.05, -9.4),   // 2. Slowing down near mailbox
       new THREE.Vector3(-7.5, 0.05, -8.8),    // 3. Turning into Driveway 1
-      new THREE.Vector3(-6.8, 0.05, -5.5),    // 4. Along Driveway 1 curve
+      new THREE.Vector3(-6.6, 0.05, -5.5),    // 4. Along Driveway 1 curve
       new THREE.Vector3(-4.6, 0.05, -2.2),    // 5. Parked in Driveway 1 unloading bay
     ]);
 
-    // Outbound: from Driveway 1 back up onto Road and leaving through East Tunnel
-    const cargoOutboundCurve = new THREE.CatmullRomCurve3([
+    // Reversing Out: backs up along Driveway 1 and swings rear left onto road
+    const cargoReverseCurve = new THREE.CatmullRomCurve3([
       new THREE.Vector3(-4.6, 0.05, -2.2),   // 0. Unloading bay
-      new THREE.Vector3(-3.5, 0.05, -0.8),   // 1. Rolling forward
-      new THREE.Vector3(-6.0, 0.05, -5.5),   // 2. Up Driveway 1 curve
-      new THREE.Vector3(-7.5, 0.05, -8.8),   // 3. Merging onto main road
-      new THREE.Vector3(1.0, 0.05, -8.8),    // 4. Along main road
-      new THREE.Vector3(16.0, 0.22, -9.0),   // 5. Crossing wooden bridge
-      new THREE.Vector3(35.5, 0.05, -4.8),   // 6. Leaving into East Mountain Tunnel
+      new THREE.Vector3(-6.6, 0.05, -5.5),   // 1. Reversing up Driveway 1
+      new THREE.Vector3(-8.2, 0.05, -8.8),   // 2. Reversing onto road
+      new THREE.Vector3(-11.0, 0.05, -9.0),  // 3. Swung rear left onto road
+    ]);
+
+    // Forward drive: accelerates eastward across bridge into East Mountain Tunnel
+    const cargoForwardCurve = new THREE.CatmullRomCurve3([
+      new THREE.Vector3(-11.0, 0.05, -9.0),  // 0. Road junction
+      new THREE.Vector3(-5.0, 0.05, -9.0),   // 1. Accelerating along road
+      new THREE.Vector3(1.0, 0.05, -8.8),    // 2. Passing market & Driveway 2
+      new THREE.Vector3(9.6, 0.05, -9.0),    // 3. Approach bridge
+      new THREE.Vector3(16.0, 0.22, -9.0),   // 4. Crossing wooden bridge
+      new THREE.Vector3(22.4, 0.05, -9.0),   // 5. Bridge exit onto east bank
+      new THREE.Vector3(26.0, 0.05, -8.5),   // 6. East bank road bend
+      new THREE.Vector3(32.2, 0.05, -6.2),   // 7. East Mountain Tunnel portal
+      new THREE.Vector3(35.5, 0.05, -4.8),   // 8. Deep inside mountain cave (vanished)
     ]);
 
     // ── 3D Procedural Branching Lightning Bolt Generator ─────────────────
@@ -1110,38 +1127,67 @@ export const GameScene: React.FC = () => {
       // ── Delivery Truck Animation along Dual-Tunnel Circuit (Driveway 2) ──
       const tState = truckStateRef.current;
       if (tState.isDelivering) {
-        const totalDuration = 8000;
+        const totalDuration = 8500;
         const elapsedDelivery = Math.max(0, totalDuration - Math.max(0, tState.deliveringUntil - Date.now()));
         const progress = Math.min(1, elapsedDelivery / totalDuration);
 
-        if (progress < 0.44) {
-          // Outbound journey: Driving to town through East Mountain Tunnel
-          const t = progress / 0.44;
-          const pos = outboundDeliveryCurve.getPointAt(t);
-          const tangent = outboundDeliveryCurve.getTangentAt(t);
+        if (progress < 0.16) {
+          // 1. Reversing (сдаёт задом) up Driveway 2 onto the road
+          const t = progress / 0.16;
+          const pos = pickupReverseCurve.getPointAt(t);
+          const tangent = pickupReverseCurve.getTangentAt(t);
+          truckGroup.position.set(pos.x, pos.y + Math.abs(Math.sin(elapsed * 14)) * 0.025, pos.z);
+          // Nose points opposite to reverse movement direction
+          truckGroup.rotation.y = -Math.atan2(-tangent.z, -tangent.x);
+          truckGroup.visible = true;
+
+          // Wheels spin backwards
+          truckGroup.traverse(child => {
+            if (child.name === 'truck_wheel') {
+              child.children.forEach(c => { c.rotation.y -= delta * 14; });
+            }
+          });
+        } else if (progress < 0.22) {
+          // 2. Pause on the road & switch gears / turn nose to the East (0.5s pause)
+          const pauseT = (progress - 0.16) / 0.06;
+          const junctionPos = pickupReverseCurve.getPointAt(1.0);
+          truckGroup.position.set(junctionPos.x, junctionPos.y, junctionPos.z);
+          const revEndTangent = pickupReverseCurve.getTangentAt(1.0);
+          const startRot = -Math.atan2(-revEndTangent.z, -revEndTangent.x);
+          const targetRot = 0.0; // Facing East along road towards bridge
+          let diff = targetRot - startRot;
+          while (diff > Math.PI) diff -= Math.PI * 2;
+          while (diff < -Math.PI) diff += Math.PI * 2;
+          truckGroup.rotation.y = startRot + diff * Math.min(1, pauseT * 1.5);
+          truckGroup.visible = true;
+        } else if (progress < 0.50) {
+          // 3. Driving Forward along road and over bridge to Town Tunnel
+          const t = (progress - 0.22) / 0.28;
+          const pos = pickupForwardCurve.getPointAt(t);
+          const tangent = pickupForwardCurve.getTangentAt(t);
           truckGroup.position.set(pos.x, pos.y + Math.abs(Math.sin(elapsed * 18)) * 0.035, pos.z);
           truckGroup.rotation.y = -Math.atan2(tangent.z, tangent.x);
           truckGroup.visible = t < 0.94;
 
-          // Rotate wheels while driving
+          // Wheels spin forward
           truckGroup.traverse(child => {
             if (child.name === 'truck_wheel') {
               child.children.forEach(c => { c.rotation.y += delta * 16; });
             }
           });
-        } else if (progress <= 0.56) {
-          // In Town: Inside the mountain tunnel
+        } else if (progress <= 0.60) {
+          // 4. Inside Town (Mountain Tunnel)
           truckGroup.visible = false;
         } else {
-          // Return journey: Driving back from Town emerging from TOP / West Mountain Tunnel!
-          const t = (progress - 0.56) / 0.44;
+          // 5. Returning from Town: emerges from West Tunnel and drives smoothly forward into Driveway 2!
+          const t = (progress - 0.60) / 0.40;
           const pos = returnDeliveryCurve.getPointAt(t);
           const tangent = returnDeliveryCurve.getTangentAt(t);
           truckGroup.position.set(pos.x, pos.y + Math.abs(Math.sin(elapsed * 18)) * 0.035, pos.z);
           truckGroup.rotation.y = -Math.atan2(tangent.z, tangent.x);
           truckGroup.visible = t > 0.06;
 
-          // Rotate wheels while driving
+          // Wheels spin forward
           truckGroup.traverse(child => {
             if (child.name === 'truck_wheel') {
               child.children.forEach(c => { c.rotation.y += delta * 16; });
@@ -1149,7 +1195,7 @@ export const GameScene: React.FC = () => {
           });
         }
       } else {
-        // Parked comfortably at home in Driveway 2
+        // Parked comfortably at home in Driveway 2 (facing into farm, no sudden jumps!)
         truckGroup.position.set(4.2, 0.05, -2.8);
         truckGroup.rotation.y = -2.2;
         truckGroup.visible = true;
@@ -1162,7 +1208,7 @@ export const GameScene: React.FC = () => {
       if (cState.isDrivingIn) {
         cargoTruckGroup.visible = true;
         if (lootBadge) lootBadge.visible = false;
-        const totalDuration = cState.driveDuration || 4000;
+        const totalDuration = cState.driveDuration || 4200;
         const elapsedDriving = Math.max(0, Date.now() - cState.driveStartTime);
         const t = Math.min(1, elapsedDriving / totalDuration);
         const pos = cargoInboundCurve.getPointAt(t);
@@ -1187,20 +1233,51 @@ export const GameScene: React.FC = () => {
       } else if (cState.isDrivingOut) {
         cargoTruckGroup.visible = true;
         if (lootBadge) lootBadge.visible = false;
-        const totalDuration = cState.driveDuration || 4500;
+        const totalDuration = cState.driveDuration || 5500;
         const elapsedDriving = Math.max(0, Date.now() - cState.driveStartTime);
-        const t = Math.min(1, elapsedDriving / totalDuration);
-        const pos = cargoOutboundCurve.getPointAt(t);
-        const tangent = cargoOutboundCurve.getTangentAt(t);
-        cargoTruckGroup.position.set(pos.x, pos.y + Math.abs(Math.sin(elapsed * 16)) * 0.035, pos.z);
-        cargoTruckGroup.rotation.y = -Math.atan2(tangent.z, tangent.x);
-        cargoTruckGroup.visible = t < 0.96;
+        const progress = Math.min(1, elapsedDriving / totalDuration);
 
-        cargoTruckGroup.traverse(child => {
-          if (child.name === 'truck_wheel') {
-            child.children.forEach(c => { c.rotation.y += delta * 16; });
-          }
-        });
+        if (progress < 0.32) {
+          // 1. Reversing (сдаёт задом) up Driveway 1 onto the road
+          const t = progress / 0.32;
+          const pos = cargoReverseCurve.getPointAt(t);
+          const tangent = cargoReverseCurve.getTangentAt(t);
+          cargoTruckGroup.position.set(pos.x, pos.y + Math.abs(Math.sin(elapsed * 14)) * 0.025, pos.z);
+          // Nose points opposite to reverse motion
+          cargoTruckGroup.rotation.y = -Math.atan2(-tangent.z, -tangent.x);
+
+          cargoTruckGroup.traverse(child => {
+            if (child.name === 'truck_wheel') {
+              child.children.forEach(c => { c.rotation.y -= delta * 12; });
+            }
+          });
+        } else if (progress < 0.44) {
+          // 2. Pause on the road & switch gears / turn nose to the East (0.7s pause)
+          const pauseT = (progress - 0.32) / 0.12;
+          const junctionPos = cargoReverseCurve.getPointAt(1.0);
+          cargoTruckGroup.position.set(junctionPos.x, junctionPos.y, junctionPos.z);
+          const revEndTangent = cargoReverseCurve.getTangentAt(1.0);
+          const startRot = -Math.atan2(-revEndTangent.z, -revEndTangent.x);
+          const targetRot = 0.0; // Facing East along road towards bridge
+          let diff = targetRot - startRot;
+          while (diff > Math.PI) diff -= Math.PI * 2;
+          while (diff < -Math.PI) diff += Math.PI * 2;
+          cargoTruckGroup.rotation.y = startRot + diff * Math.min(1, pauseT * 1.4);
+        } else {
+          // 3. Driving Forward along road and over bridge to Town Tunnel
+          const t = (progress - 0.44) / 0.56;
+          const pos = cargoForwardCurve.getPointAt(t);
+          const tangent = cargoForwardCurve.getTangentAt(t);
+          cargoTruckGroup.position.set(pos.x, pos.y + Math.abs(Math.sin(elapsed * 16)) * 0.035, pos.z);
+          cargoTruckGroup.rotation.y = -Math.atan2(tangent.z, tangent.x);
+          cargoTruckGroup.visible = t < 0.96;
+
+          cargoTruckGroup.traverse(child => {
+            if (child.name === 'truck_wheel') {
+              child.children.forEach(c => { c.rotation.y += delta * 16; });
+            }
+          });
+        }
       } else {
         cargoTruckGroup.visible = false;
       }
