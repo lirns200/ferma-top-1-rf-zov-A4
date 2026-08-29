@@ -227,42 +227,34 @@ export const RoadsideShopModal: React.FC = () => {
       isDesign2026 ? 'bg-[#0F1115] text-white' : 'bg-[#2A1406] text-[#3B1F0D]'
     }`}>
       
-      {/* ── TOP STEAM MARKET HEADER ── */}
-      <div className={`px-3 sm:px-6 py-2.5 flex flex-col gap-2.5 border-b shrink-0 ${
+      {/* ── TOP MARKET HEADER ── */}
+      <div className={`px-3.5 sm:px-6 py-3 flex flex-col gap-2.5 border-b shrink-0 ${
         isDesign2026 ? 'bg-[#181C24] border-[#242A35]' : 'bg-[#3D2008] border-[#5C3718]'
       }`}>
         <div className="flex items-center justify-between gap-3">
           
           {/* Market Title Badge */}
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-sky-600 to-indigo-600 flex items-center justify-center text-base shadow border border-sky-400/40">
+          <div className="flex items-center gap-2.5">
+            <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-sky-500 to-indigo-600 flex items-center justify-center text-lg shadow-md border border-sky-400/40">
               🏪
             </div>
             <div className="flex flex-col">
-              <span className="font-black text-sm tracking-wide uppercase flex items-center gap-1.5">
+              <span className="font-black text-sm sm:text-base tracking-wide flex items-center gap-2">
                 <span>Рынок Долины</span>
-                <span className="text-[9px] px-2 py-0.5 rounded-full bg-sky-500/20 text-sky-300 font-bold border border-sky-400/30 uppercase">
-                  Steam Market
+                <span className="text-[10px] px-2 py-0.5 rounded-lg bg-sky-500/20 text-sky-300 font-bold border border-sky-400/30">
+                  Онлайн
                 </span>
               </span>
-              <span className={`text-[11px] ${isDesign2026 ? 'text-[#8E939D]' : 'text-amber-200'}`}>
+              <span className={`text-[11px] font-semibold ${isDesign2026 ? 'text-[#8E939D]' : 'text-amber-200'}`}>
                 Торговая площадка между игроками
               </span>
             </div>
           </div>
 
-          {/* Player Balance */}
-          <div className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl border shadow font-black text-xs ${
-            isDesign2026 ? 'bg-[#242A35] border-[#353D4C] text-amber-300' : 'bg-amber-100 border-amber-400 text-[#3B1F0D]'
-          }`}>
-            <CoinSvg />
-            <span>{coins.toLocaleString('ru-RU')}</span>
-          </div>
-
         </div>
 
-        {/* ── STEAM MARKET NAVIGATION TABS ── */}
-        <div className="flex items-center gap-1.5 overflow-x-auto pb-0.5">
+        {/* ── MARKET NAVIGATION TABS (MODERN SQUARISH BUTTONS) ── */}
+        <div className="flex items-center gap-2 overflow-x-auto pb-0.5 scrollbar-none">
           
           {/* Tab 1: Торговая площадка */}
           <button
@@ -272,17 +264,17 @@ export const RoadsideShopModal: React.FC = () => {
               setActiveTab('browse');
               setSelectedItemId(null);
             }}
-            className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-extrabold transition-all cursor-pointer shrink-0 ${
+            className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-black transition-all cursor-pointer shrink-0 border ${
               activeTab === 'browse'
                 ? isDesign2026
-                  ? 'bg-sky-600 text-white shadow-lg border border-sky-400 scale-105'
-                  : 'hud-parchment shadow-lg border-2 border-yellow-400 scale-105 text-[#3B1F0D]'
+                  ? 'bg-sky-600 text-white shadow-lg border-sky-400 scale-[1.02]'
+                  : 'bg-amber-400 text-[#3B1F0D] shadow-lg border-amber-200 scale-[1.02]'
                 : isDesign2026
-                ? 'bg-[#242A35] text-[#8E939D] hover:text-white'
-                : 'bg-[#2A1406]/80 text-amber-200 border border-amber-900 hover:bg-[#2A1406]'
+                ? 'bg-[#242A35] text-[#8E939D] border-[#353D4C] hover:text-white hover:bg-[#2D3543]'
+                : 'bg-[#2A1406]/80 text-amber-200 border-amber-900 hover:bg-[#2A1406]'
             }`}
           >
-            <ShoppingBag size={14} />
+            <ShoppingBag size={15} />
             <span>Торговая площадка</span>
           </button>
 
@@ -294,17 +286,17 @@ export const RoadsideShopModal: React.FC = () => {
               setActiveTab('sell');
               setSelectedItemId(null);
             }}
-            className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-extrabold transition-all cursor-pointer shrink-0 ${
+            className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-black transition-all cursor-pointer shrink-0 border ${
               activeTab === 'sell'
                 ? isDesign2026
-                  ? 'bg-emerald-600 text-white shadow-lg border border-emerald-400 scale-105'
-                  : 'hud-parchment shadow-lg border-2 border-yellow-400 scale-105 text-[#3B1F0D]'
+                  ? 'bg-emerald-600 text-white shadow-lg border-emerald-400 scale-[1.02]'
+                  : 'bg-emerald-500 text-white shadow-lg border-emerald-300 scale-[1.02]'
                 : isDesign2026
-                ? 'bg-[#242A35] text-[#8E939D] hover:text-white'
-                : 'bg-[#2A1406]/80 text-amber-200 border border-amber-900 hover:bg-[#2A1406]'
+                ? 'bg-[#242A35] text-[#8E939D] border-[#353D4C] hover:text-white hover:bg-[#2D3543]'
+                : 'bg-[#2A1406]/80 text-amber-200 border-amber-900 hover:bg-[#2A1406]'
             }`}
           >
-            <Plus size={14} />
+            <Plus size={15} />
             <span>Продать предмет</span>
           </button>
 
@@ -316,20 +308,20 @@ export const RoadsideShopModal: React.FC = () => {
               setActiveTab('my_listings');
               setSelectedItemId(null);
             }}
-            className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-extrabold transition-all cursor-pointer shrink-0 relative ${
+            className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-black transition-all cursor-pointer shrink-0 relative border ${
               activeTab === 'my_listings'
                 ? isDesign2026
-                  ? 'bg-purple-600 text-white shadow-lg border border-purple-400 scale-105'
-                  : 'hud-parchment shadow-lg border-2 border-yellow-400 scale-105 text-[#3B1F0D]'
+                  ? 'bg-purple-600 text-white shadow-lg border-purple-400 scale-[1.02]'
+                  : 'bg-amber-500 text-white shadow-lg border-amber-300 scale-[1.02]'
                 : isDesign2026
-                ? 'bg-[#242A35] text-[#8E939D] hover:text-white'
-                : 'bg-[#2A1406]/80 text-amber-200 border border-amber-900 hover:bg-[#2A1406]'
+                ? 'bg-[#242A35] text-[#8E939D] border-[#353D4C] hover:text-white hover:bg-[#2D3543]'
+                : 'bg-[#2A1406]/80 text-amber-200 border-amber-900 hover:bg-[#2A1406]'
             }`}
           >
-            <Tag size={14} />
+            <Tag size={15} />
             <span>Мои лоты</span>
             {shopSlots.some(s => s.isSold) && (
-              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping absolute top-1 right-1" />
+              <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-ping absolute top-1 right-1" />
             )}
           </button>
 
@@ -341,17 +333,17 @@ export const RoadsideShopModal: React.FC = () => {
               setActiveTab('history');
               setSelectedItemId(null);
             }}
-            className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-extrabold transition-all cursor-pointer shrink-0 ${
+            className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-black transition-all cursor-pointer shrink-0 border ${
               activeTab === 'history'
                 ? isDesign2026
-                  ? 'bg-amber-600 text-white shadow-lg border border-amber-400 scale-105'
-                  : 'hud-parchment shadow-lg border-2 border-yellow-400 scale-105 text-[#3B1F0D]'
+                  ? 'bg-amber-600 text-white shadow-lg border-amber-400 scale-[1.02]'
+                  : 'bg-amber-600 text-white shadow-lg border-amber-400 scale-[1.02]'
                 : isDesign2026
-                ? 'bg-[#242A35] text-[#8E939D] hover:text-white'
-                : 'bg-[#2A1406]/80 text-amber-200 border border-amber-900 hover:bg-[#2A1406]'
+                ? 'bg-[#242A35] text-[#8E939D] border-[#353D4C] hover:text-white hover:bg-[#2D3543]'
+                : 'bg-[#2A1406]/80 text-amber-200 border-amber-900 hover:bg-[#2A1406]'
             }`}
           >
-            <History size={14} />
+            <History size={15} />
             <span>История</span>
           </button>
 
@@ -363,36 +355,36 @@ export const RoadsideShopModal: React.FC = () => {
         <div className="max-w-5xl mx-auto flex flex-col gap-4 pb-12">
 
           {/* ════════════════════════════════════════════════════════════
-              TAB 1: ТОРГОВАЯ ПЛОЩАДКА (КАТАЛОГ STEAM MARKET)
+              TAB 1: ТОРГОВАЯ ПЛОЩАДКА (КАТАЛОГ)
               ════════════════════════════════════════════════════════════ */}
           {activeTab === 'browse' && !selectedItemId && (
             <>
-              {/* 🔥 LIVE STEAM MARKET TICKER */}
+              {/* 🔥 LIVE MARKET TICKER */}
               <div className={`px-3.5 py-2 rounded-xl border flex items-center justify-between gap-3 text-xs overflow-hidden ${
                 isDesign2026 ? 'bg-[#181C24] border-[#242A35]' : 'hud-parchment border-amber-800'
               }`}>
                 <div className="flex items-center gap-2 shrink-0 font-extrabold text-amber-400">
-                  <span className="text-sm animate-bounce">🔥</span>
-                  <span className="uppercase text-[10px] tracking-wider">Тренды рынка:</span>
+                  <span className="text-sm">🔥</span>
+                  <span className="uppercase text-[10px] tracking-wider font-black">Тренды рынка:</span>
                 </div>
                 <div className="flex items-center gap-4 overflow-x-auto text-[11px] font-bold text-[#8E939D] scrollbar-none">
-                  <span className="flex items-center gap-1 shrink-0">
+                  <span className="flex items-center gap-1.5 shrink-0">
                     <span>🪵 Доски</span>
                     <b className="text-emerald-400 font-extrabold">+18.4%</b>
                   </span>
-                  <span className="flex items-center gap-1 shrink-0">
+                  <span className="flex items-center gap-1.5 shrink-0">
                     <span>🪓 Топоры</span>
                     <b className="text-emerald-400 font-extrabold">+24.1%</b>
                   </span>
-                  <span className="flex items-center gap-1 shrink-0">
+                  <span className="flex items-center gap-1.5 shrink-0">
                     <span>🍞 Хлеб</span>
                     <b className="text-rose-400 font-extrabold">-3.2%</b>
                   </span>
-                  <span className="flex items-center gap-1 shrink-0">
+                  <span className="flex items-center gap-1.5 shrink-0">
                     <span>🥕 Морковь</span>
                     <b className="text-emerald-400 font-extrabold">+9.5%</b>
                   </span>
-                  <span className="flex items-center gap-1 shrink-0">
+                  <span className="flex items-center gap-1.5 shrink-0">
                     <span>🧀 Сыр</span>
                     <b className="text-emerald-400 font-extrabold">+12.0%</b>
                   </span>
@@ -403,7 +395,7 @@ export const RoadsideShopModal: React.FC = () => {
               <div className="flex flex-col sm:flex-row items-center gap-2.5 justify-between">
                 
                 {/* Search Input */}
-                <div className={`flex items-center gap-2 px-3 py-2 rounded-xl border w-full sm:w-80 ${
+                <div className={`flex items-center gap-2 px-3.5 py-2.5 rounded-xl border w-full sm:w-80 ${
                   isDesign2026 ? 'bg-[#181C24] border-[#242A35] text-white' : 'bg-amber-100 border-[#5C3718] text-[#3B1F0D]'
                 }`}>
                   <Search size={16} className="text-[#8E939D] shrink-0" />
@@ -434,7 +426,7 @@ export const RoadsideShopModal: React.FC = () => {
                         sounds.playClick();
                         setSelectedCategory(cat.id as MarketCategory);
                       }}
-                      className={`px-3 py-1.5 rounded-xl text-xs font-extrabold flex items-center gap-1 transition-all cursor-pointer shrink-0 ${
+                      className={`px-3.5 py-2 rounded-xl text-xs font-extrabold flex items-center gap-1.5 transition-all cursor-pointer shrink-0 ${
                         selectedCategory === cat.id
                           ? 'bg-sky-600 text-white shadow border border-sky-400'
                           : isDesign2026
@@ -450,7 +442,7 @@ export const RoadsideShopModal: React.FC = () => {
 
               </div>
 
-              {/* Items Grid (Steam Catalog Cards) */}
+              {/* Items Grid (Catalog Cards) */}
               <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 sm:gap-4">
                 {filteredTradableItems.map(item => {
                   const matchingListings = marketListings.filter(l => l.itemId === item.id && !l.sold);
@@ -486,16 +478,17 @@ export const RoadsideShopModal: React.FC = () => {
                         </span>
                       </div>
 
-                      <div className="w-full pt-2 border-t border-white/10 flex items-center justify-between">
+                      <div className="w-full pt-2.5 border-t border-white/10 flex items-center justify-between gap-2">
                         <div className="flex flex-col text-left">
-                          <span className="text-[9px] text-[#8E939D] uppercase">Начиная с</span>
+                          <span className="text-[9px] text-[#8E939D] uppercase font-bold">Начиная с</span>
                           <span className="text-xs font-black text-amber-400 flex items-center gap-0.5">
                             <CoinSvg /> {minPrice}
                           </span>
                         </div>
 
-                        <div className="p-1.5 rounded-lg bg-sky-600 group-hover:bg-sky-500 text-white shadow">
-                          <ChevronRight size={14} />
+                        {/* Кнопка "Открыть" за место стрелочки */}
+                        <div className="px-3 py-1.5 rounded-xl bg-sky-600 group-hover:bg-sky-500 text-white text-xs font-black shadow transition-all active:scale-95 flex items-center gap-1 border border-sky-400">
+                          <span>Открыть</span>
                         </div>
                       </div>
                     </div>
@@ -506,7 +499,7 @@ export const RoadsideShopModal: React.FC = () => {
           )}
 
           {/* ════════════════════════════════════════════════════════════
-              STEAM ORDER BOOK / ITEM DETAIL VIEW
+              ITEM DETAIL / ORDER BOOK VIEW
               ════════════════════════════════════════════════════════════ */}
           {activeTab === 'browse' && selectedItem && (
             <div className="flex flex-col gap-4">
@@ -573,7 +566,7 @@ export const RoadsideShopModal: React.FC = () => {
                 </div>
               </div>
 
-              {/* 📈 STEAM INTERACTIVE PRICE CHART (Динамика цен за 24ч) */}
+              {/* 📈 INTERACTIVE PRICE CHART (Динамика цен за 24ч) */}
               <div className={`p-4 rounded-2xl border shadow-lg flex flex-col gap-2.5 ${
                 isDesign2026 ? 'bg-[#181C24] border-[#242A35] text-white' : 'hud-parchment border-amber-700/60 text-[#3B1F0D]'
               }`}>
@@ -581,7 +574,7 @@ export const RoadsideShopModal: React.FC = () => {
                   <div className="flex items-center gap-2">
                     <span className="text-xs font-black uppercase text-[#8E939D] flex items-center gap-1.5">
                       <TrendingUp size={14} className="text-emerald-400" />
-                      <span>График цен Steam (24 часа)</span>
+                      <span>График цен рынка (24 часа)</span>
                     </span>
                     <span className="text-[10px] px-2 py-0.5 rounded-md bg-emerald-500/20 text-emerald-400 font-black">+14.2%</span>
                   </div>
@@ -621,14 +614,14 @@ export const RoadsideShopModal: React.FC = () => {
                 </div>
               </div>
 
-              {/* Active Listings Table (Как в Steam) */}
+              {/* Active Listings Table */}
               <div className="flex flex-col gap-2">
                 <div className="flex items-center justify-between px-1">
                   <span className="text-xs font-extrabold text-[#8E939D] uppercase tracking-wider">
                     Предложения игроков на рынке ({itemMarketListings.length > 0 ? itemMarketListings.length : 4} лотов)
                   </span>
-                  <span className="text-xs text-sky-400 font-bold">
-                    Комиссия Steam: 5%
+                  <span className="text-xs text-emerald-400 font-bold">
+                    Комиссия рынка: 5%
                   </span>
                 </div>
 
@@ -685,7 +678,7 @@ export const RoadsideShopModal: React.FC = () => {
           )}
 
           {/* ════════════════════════════════════════════════════════════
-              TAB 2: ПРОДАТЬ ПРЕДМЕТ (ВЫСТАВЛЕНИЕ ЛОТА НА STEAM MARKET)
+              TAB 2: ПРОДАТЬ ПРЕДМЕТ (ВЫСТАВЛЕНИЕ ЛОТА НА РЫНОК)
               ════════════════════════════════════════════════════════════ */}
           {activeTab === 'sell' && (
             <div className="flex flex-col sm:flex-row gap-4">
