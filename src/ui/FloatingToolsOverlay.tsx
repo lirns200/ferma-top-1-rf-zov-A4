@@ -6,6 +6,7 @@ import { DECORATIONS } from '../config/decorations';
 import { sounds } from '../audio/SoundManager';
 import { triggerTelegramHaptic } from '../utils/telegram';
 import { RotateCw, Check, X, Trash2, Info } from 'lucide-react';
+import { Building3DThumbnail } from './Building3DThumbnail';
 
 const CoinSvg = () => (
   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" className="shrink-0 inline-block">
@@ -349,7 +350,7 @@ export const FloatingToolsOverlay: React.FC = () => {
                       : 'hud-tool-btn text-[#3B1F0D]'
                   } ${!isUnlocked || !canAfford ? 'opacity-50 grayscale' : 'hover:scale-105 active:scale-95'}`}
                 >
-                  <span className="text-2xl sm:text-3xl my-0.5">{item.icon}</span>
+                  <Building3DThumbnail buildingId={item.id} fallbackEmoji={item.icon} size={40} className="my-0.5" />
                   <span className={`text-[10px] font-extrabold truncate max-w-[66px] ${
                     isDesign2026 ? 'text-white' : 'text-[#3B1F0D]'
                   }`}>

@@ -1,4 +1,4 @@
-﻿import React, { useState } from 'react';
+import React, { useState } from 'react';
 import { useGameStore } from '../../game/gameState';
 import { BUILDINGS } from '../../config/buildings';
 import { DECORATIONS } from '../../config/decorations';
@@ -6,6 +6,7 @@ import { TREES_BUSHES } from '../../config/crops';
 import { sounds } from '../../audio/SoundManager';
 import { triggerTelegramHaptic } from '../../utils/telegram';
 import { Search, Check } from 'lucide-react';
+import { Building3DThumbnail } from '../Building3DThumbnail';
 
 const CoinSvg = () => (
   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" className="shrink-0 inline-block">
@@ -177,10 +178,10 @@ export const BuildShopModal: React.FC = () => {
                 {/* Top Info */}
                 <div>
                   <div className="flex items-start gap-3 mb-2">
-                    <div className={`w-12 h-12 rounded-xl flex items-center justify-center text-3xl shadow-inner shrink-0 ${
+                    <div className={`w-12 h-12 rounded-xl flex items-center justify-center shadow-inner shrink-0 ${
                       isDesign2026 ? 'bg-[#242A35] border border-[#353D4C]' : 'bg-amber-100/90 border border-[#5C3718]'
                     }`}>
-                      {item.icon}
+                      <Building3DThumbnail buildingId={item.id} fallbackEmoji={item.icon} size={44} />
                     </div>
                     <div className="flex flex-col flex-1 pr-12 sm:pr-0">
                       <h3 className={`font-extrabold text-xs sm:text-sm leading-tight ${
