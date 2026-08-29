@@ -21,6 +21,7 @@ import {
   Filter,
   Check,
   ChevronRight,
+  Truck,
 } from 'lucide-react';
 
 type MarketTab = 'browse' | 'sell' | 'my_listings' | 'history';
@@ -126,6 +127,7 @@ export const RoadsideShopModal: React.FC = () => {
     activeModal,
     shopSlots,
     marketListings,
+    marketDelivery,
     inventory,
     coins,
     createRoadsideSale,
@@ -141,6 +143,18 @@ export const RoadsideShopModal: React.FC = () => {
   const [selectedItemId, setSelectedItemId] = useState<string | null>(null);
   const [historyList, setHistoryList] = useState<TransactionHistoryItem[]>(INITIAL_HISTORY);
   const [buyOrdersList, setBuyOrdersList] = useState<BuyOrder[]>(INITIAL_BUY_ORDERS);
+
+  // Buy from Seller Modal State
+  const [buyingLot, setBuyingLot] = useState<{
+    id: string;
+    seller: string;
+    avatar: string;
+    itemName: string;
+    itemId: string;
+    maxCount: number;
+    unitPrice: number;
+  } | null>(null);
+  const [buyLotCount, setBuyLotCount] = useState<number>(1);
 
   // Buy Order Interactive Form State
   const [isBuyOrderModalOpen, setIsBuyOrderModalOpen] = useState<boolean>(false);
@@ -237,31 +251,54 @@ export const RoadsideShopModal: React.FC = () => {
     setActiveTab('my_listings');
   };
 
-  const handleBuyMarketListing = (listingId: string, itemName: string, price: number, count: number) => {
-    if (coins < price) {
+  const handleOpenBuyLotModal = (lot: { id: string; seller: string; avatar: string; count: number; price: number }) => {
+    if (marketDelivery) {
+      alert(`⛔ К вам уже едет машина с товаром от ${marketDelivery.sellerName}!\nДождитесь её прибытия и разгрузите товар, чтобы заказать следующий.`);
+      return;
+    }
+
+    sounds.playClick();
+    triggerTelegramHaptic('light');
+    const unitPrice = Math.max(1, Math.round(lot.price / lot.count));
+    setBuyingLot({
+      id: lot.id,
+      seller: lot.seller,
+      avatar: lot.avatar,
+      itemName: selectedItem?.name || 'Товар',
+      itemId: selectedItem?.id || 'wheat',
+      maxCount: lot.count,
+      unitPrice,
+    });
+    setBuyLotCount(lot.count);
+  };
+
+  const handleConfirmBuyLot = () => {
+    if (!buyingLot) return;
+    const totalCost = buyLotCount * buyingLot.unitPrice;
+    if (coins < totalCost) {
       alert('Недостаточно монет для покупки!');
       return;
     }
 
     sounds.playCoin();
     triggerTelegramHaptic('success');
-    buyFromMarket(listingId);
+    buyFromMarket(buyingLot.id, buyLotCount, buyingLot.seller, buyingLot.avatar, buyingLot.unitPrice);
 
     setHistoryList(prev => [
       {
         id: `tx_${Date.now()}`,
         type: 'buy',
-        itemName,
-        itemIcon: PRODUCTS[selectedItemId || '']?.icon || '📦',
-        count,
-        price,
+        itemName: buyingLot.itemName,
+        itemIcon: PRODUCTS[buyingLot.itemId]?.icon || '📦',
+        count: buyLotCount,
+        price: totalCost,
         timestamp: 'Только что',
-        otherUser: '@valley_trader',
+        otherUser: buyingLot.seller,
       },
       ...prev,
     ]);
 
-    addFloatingText(`Куплено: ${itemName} ×${count}!`, window.innerWidth / 2, window.innerHeight / 2, '#38BDF8');
+    setBuyingLot(null);
   };
 
   const itemBuyOrders = useMemo(() => {
@@ -825,13 +862,15 @@ export const RoadsideShopModal: React.FC = () => {
                             <span className="text-sm font-black text-amber-400 flex items-center gap-1">
                               <CoinSvg /> {lot.price}
                             </span>
-                            <span className="text-[10px] text-[#8E939D]">
-                              {(lot.price / lot.count).toFixed(1)} 🪙 / шт.
+                            <span className="text-[10px] text-[#8E939D] flex items-center gap-0.5 justify-end">
+                              <span>{(lot.price / lot.count).toFixed(1)}</span>
+                              <CoinSvg />
+                              <span>/ шт.</span>
                             </span>
                           </div>
 
                           <button
-                            onClick={() => handleBuyMarketListing(lot.id, selectedItem.name, lot.price, lot.count)}
+                            onClick={() => handleOpenBuyLotModal(lot)}
                             className="px-4 py-2 rounded-xl bg-gradient-to-r from-sky-600 to-blue-600 hover:from-sky-500 hover:to-blue-500 text-white font-black text-xs shadow-lg active:scale-95 transition-transform cursor-pointer border border-sky-400"
                           >
                             Купить
@@ -1576,6 +1615,178 @@ export const RoadsideShopModal: React.FC = () => {
                 }`}
               >
                 <span>Разместить заказ на покупку</span>
+              </button>
+            </div>
+
+          </div>
+        </div>
+      )}
+
+      {/* ── INTERACTIVE BUY QUANTITY MODAL (ПОКУПКА У ИГРОКА) ── */}
+      {buyingLot && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm animate-fade-in">
+          <div className={`w-full max-w-md p-5 sm:p-6 rounded-3xl border shadow-2xl flex flex-col gap-4 animate-scale-up ${
+            isDesign2026 ? 'bg-[#181C24] border-[#2E3644] text-white' : 'hud-parchment border-amber-600 text-[#3B1F0D]'
+          }`}>
+            
+            {/* Header */}
+            <div className="flex items-center justify-between border-b border-white/10 pb-3">
+              <div className="flex items-center gap-3">
+                <div className="w-11 h-11 rounded-2xl bg-black/30 flex items-center justify-center text-2xl border border-white/5">
+                  {buyingLot.avatar}
+                </div>
+                <div className="flex flex-col">
+                  <span className="font-black text-sm sm:text-base">Покупка у игрока</span>
+                  <span className="text-xs text-sky-400 font-bold">{buyingLot.seller}</span>
+                </div>
+              </div>
+              <button
+                onClick={() => setBuyingLot(null)}
+                className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-xs font-bold transition-colors cursor-pointer"
+              >
+                ✕
+              </button>
+            </div>
+
+            {/* Body */}
+            <div className="flex flex-col gap-4">
+              
+              {/* Item Info Banner */}
+              <div className="flex items-center justify-between p-3.5 rounded-2xl bg-black/30 border border-white/10">
+                <div className="flex items-center gap-3">
+                  <span className="text-3xl p-1 bg-black/20 rounded-xl">{PRODUCTS[buyingLot.itemId]?.icon || '📦'}</span>
+                  <div className="flex flex-col">
+                    <span className="font-bold text-sm text-white">{buyingLot.itemName}</span>
+                    <span className="text-xs text-[#8E939D]">В наличии у продавца: {buyingLot.maxCount} шт.</span>
+                  </div>
+                </div>
+                <div className="flex flex-col text-right">
+                  <span className="text-xs text-[#8E939D]">Цена за 1 шт:</span>
+                  <span className="text-sm font-black text-amber-300 flex items-center gap-1 justify-end">
+                    <CoinSvg /> {buyingLot.unitPrice}
+                  </span>
+                </div>
+              </div>
+
+              {/* Quantity Selector */}
+              <div className="flex flex-col gap-1.5">
+                <div className="flex items-center justify-between text-xs font-bold">
+                  <span className="text-[#8E939D]">Сколько вы хотите купить:</span>
+                  <span className="text-emerald-400 font-black text-sm">{buyLotCount} шт.</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => {
+                      sounds.playClick();
+                      setBuyLotCount(Math.max(1, buyLotCount - 1));
+                    }}
+                    className="w-9 h-9 rounded-xl bg-[#242A35] hover:bg-[#353D4C] text-white font-black text-base flex items-center justify-center cursor-pointer border border-[#353D4C] active:scale-95 transition-transform"
+                  >
+                    -
+                  </button>
+                  <input
+                    type="range"
+                    min={1}
+                    max={buyingLot.maxCount}
+                    value={buyLotCount}
+                    onChange={e => setBuyLotCount(Number(e.target.value))}
+                    className="flex-1 accent-sky-500 cursor-pointer"
+                  />
+                  <button
+                    onClick={() => {
+                      sounds.playClick();
+                      setBuyLotCount(Math.min(buyingLot.maxCount, buyLotCount + 1));
+                    }}
+                    className="w-9 h-9 rounded-xl bg-[#242A35] hover:bg-[#353D4C] text-white font-black text-base flex items-center justify-center cursor-pointer border border-[#353D4C] active:scale-95 transition-transform"
+                  >
+                    +
+                  </button>
+                </div>
+
+                {/* Quick Presets */}
+                <div className="flex items-center gap-1.5 mt-1">
+                  {[1, 2, 5].filter(q => q <= buyingLot.maxCount).map(qty => (
+                    <button
+                      key={qty}
+                      onClick={() => {
+                        sounds.playClick();
+                        setBuyLotCount(qty);
+                      }}
+                      className={`flex-1 py-1 rounded-lg text-[10px] font-black border transition-all cursor-pointer ${
+                        buyLotCount === qty
+                          ? 'bg-sky-500/20 text-sky-300 border-sky-400'
+                          : 'bg-black/20 text-[#8E939D] border-white/5 hover:text-white'
+                      }`}
+                    >
+                      {qty} шт.
+                    </button>
+                  ))}
+                  <button
+                    onClick={() => {
+                      sounds.playClick();
+                      setBuyLotCount(buyingLot.maxCount);
+                    }}
+                    className={`flex-1 py-1 rounded-lg text-[10px] font-black border transition-all cursor-pointer ${
+                      buyLotCount === buyingLot.maxCount
+                        ? 'bg-sky-500/20 text-sky-300 border-sky-400'
+                        : 'bg-black/20 text-[#8E939D] border-white/5 hover:text-white'
+                    }`}
+                  >
+                    Все ({buyingLot.maxCount} шт.)
+                  </button>
+                </div>
+              </div>
+
+              {/* Delivery Vehicle Feature Box */}
+              <div className="p-3.5 rounded-2xl bg-sky-950/40 border border-sky-500/30 flex items-center gap-3">
+                <span className="text-3xl shrink-0">🚚</span>
+                <div className="flex flex-col">
+                  <span className="font-extrabold text-xs text-sky-300">Доставка машиной продавца</span>
+                  <span className="text-[11px] text-[#A0A6B2]">
+                    После покупки машина <b>{buyingLot.seller}</b> привезет товар прямо к вашей ферме. Вы сможете забрать его по прибытии!
+                  </span>
+                </div>
+              </div>
+
+              {/* Total Summary */}
+              <div className="p-3.5 rounded-2xl bg-black/30 border border-white/10 flex flex-col gap-2 text-xs">
+                <div className="flex items-center justify-between font-bold">
+                  <span className="text-[#8E939D]">Итого к оплате:</span>
+                  <span className="font-black text-base text-amber-400 flex items-center gap-1">
+                    <CoinSvg /> {(buyLotCount * buyingLot.unitPrice).toLocaleString('ru-RU')}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between text-[11px] pt-1.5 border-t border-white/5">
+                  <span className="text-[#8E939D]">Ваш баланс монет:</span>
+                  <span className={`font-bold flex items-center gap-1 ${coins >= (buyLotCount * buyingLot.unitPrice) ? 'text-white' : 'text-rose-400'}`}>
+                    <span>{coins.toLocaleString('ru-RU')}</span>
+                    <CoinSvg />
+                    {coins < (buyLotCount * buyingLot.unitPrice) && '(недостаточно!)'}
+                  </span>
+                </div>
+              </div>
+
+            </div>
+
+            {/* Actions */}
+            <div className="flex items-center gap-2.5 pt-2">
+              <button
+                onClick={() => setBuyingLot(null)}
+                className="flex-1 py-3 rounded-xl bg-white/10 hover:bg-white/15 text-white font-bold text-xs transition-colors cursor-pointer"
+              >
+                Отмена
+              </button>
+              <button
+                onClick={handleConfirmBuyLot}
+                disabled={coins < (buyLotCount * buyingLot.unitPrice)}
+                className={`flex-[2] py-3 rounded-xl font-black text-xs shadow-xl active:scale-95 transition-transform cursor-pointer flex items-center justify-center gap-1.5 border ${
+                  coins >= (buyLotCount * buyingLot.unitPrice)
+                    ? 'bg-gradient-to-r from-sky-500 to-blue-600 hover:from-sky-400 hover:to-blue-500 text-white border-sky-400 shadow-sky-950/50'
+                    : 'bg-zinc-800 text-zinc-500 border-zinc-700 cursor-not-allowed'
+                }`}
+              >
+                <Truck size={15} />
+                <span>Оформить и вызвать доставку</span>
               </button>
             </div>
 

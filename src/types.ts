@@ -113,6 +113,18 @@ export interface MarketListing {
   sold: boolean;
 }
 
+export interface MarketDeliveryTruck {
+  id: string;
+  sellerName: string;
+  sellerAvatar: string;
+  itemId: string;
+  count: number;
+  totalPrice: number;
+  orderedAt: number;
+  arrivedAt: number;
+  isArrived: boolean;
+}
+
 export type SeasonType = 'spring' | 'summer' | 'autumn' | 'winter';
 export type WeatherType = 
   | 'sunny' 

@@ -7,6 +7,7 @@ import { FloatingToolsOverlay } from './ui/FloatingToolsOverlay';
 import { TutorialOverlay } from './ui/TutorialOverlay';
 import { CinematicIntroOverlay } from './ui/CinematicIntroOverlay';
 import { FloatingTextsOverlay } from './ui/FloatingTextsOverlay';
+import { MarketDeliveryBanner } from './ui/MarketDeliveryBanner';
 
 // Modals
 import { BuildShopModal } from './ui/modals/BuildShopModal';
@@ -55,6 +56,7 @@ export function App() {
       <TutorialOverlay />
       <CinematicIntroOverlay />
       <FloatingTextsOverlay />
+      <MarketDeliveryBanner />
 
       {/* Interactive Pop-up Modals */}
       <BuildShopModal />

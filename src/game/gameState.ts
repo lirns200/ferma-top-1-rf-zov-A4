@@ -5,6 +5,7 @@ import {
   FarmOrder, 
   RoadsideSaleSlot, 
   MarketListing, 
+  MarketDeliveryTruck,
   SeasonType, 
   WeatherType, 
   LevelConfig,
@@ -276,7 +277,9 @@ export interface GameStore {
   // Roadside Shop & Market
   createRoadsideSale: (slotId: string, itemId: string, count: number, price: number) => boolean;
   collectRoadsideCoins: (slotId: string) => boolean;
-  buyFromMarket: (listingId: string) => boolean;
+  marketDelivery: MarketDeliveryTruck | null;
+  buyFromMarket: (listingId: string, customCount?: number, sellerName?: string, sellerAvatar?: string, pricePerUnit?: number) => boolean;
+  claimMarketDelivery: () => boolean;
   refreshMarket: () => void;
   
   // Fishing
@@ -331,6 +334,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
   
   shopSlots: [...INITIAL_SHOP_SLOTS],
   marketListings: generateMarketListings(),
+  marketDelivery: null,
   mailboxDeals: generateMailboxDeals(),
   mailboxGiftClaimed: false,
   mailboxGiftClaimedAt: 0,
@@ -1704,30 +1708,77 @@ export const useGameStore = create<GameStore>((set, get) => ({
     return true;
   },
 
-  buyFromMarket: (listingId) => {
+  buyFromMarket: (listingId: string, customCount?: number, sellerName?: string, sellerAvatar?: string, pricePerUnit?: number) => {
     const state = get();
-    const listing = state.marketListings.find(l => l.id === listingId);
-    if (!listing || listing.sold) return false;
+    if (state.marketDelivery) {
+      state.addFloatingText('К вам уже едет машина с товаром! Разгрузите её.', 0, 0, '#EF4444');
+      return false;
+    }
 
-    if (state.coins < listing.price) {
+    const listing = state.marketListings.find(l => l.id === listingId);
+    const count = customCount || listing?.count || 1;
+    const unitPrice = pricePerUnit || (listing ? Math.round(listing.price / listing.count) : 10);
+    const totalPrice = count * unitPrice;
+    const seller = sellerName || listing?.sellerName || '@valley_trader';
+    const avatar = sellerAvatar || listing?.sellerAvatar || '👨‍🌾';
+    const itemId = listing?.itemId || 'wheat';
+
+    if (state.coins < totalPrice) {
       state.addFloatingText('Не хватает монет!', 0, 0, '#EF4444');
       return false;
     }
 
-    if (!state.canAddItem(listing.itemId, listing.count)) {
-      state.addFloatingText('Склад полон!', 0, 0, '#EF4444');
+    // Deduct coins
+    set(s => ({ coins: s.coins - totalPrice }));
+    sounds.playCoin();
+
+    // Mark listing as sold or reduce
+    if (listing) {
+      set(s => ({
+        marketListings: s.marketListings.map(l => l.id === listingId ? { ...l, sold: true } : l),
+      }));
+    }
+
+    // Dispatch seller's delivery vehicle (7s travel time)
+    const travelTime = 7000;
+    set({
+      marketDelivery: {
+        id: `del_${Date.now()}`,
+        sellerName: seller,
+        sellerAvatar: avatar,
+        itemId,
+        count,
+        totalPrice,
+        orderedAt: Date.now(),
+        arrivedAt: Date.now() + travelTime,
+        isArrived: false,
+      }
+    });
+
+    sounds.playTruckHonk();
+    state.addFloatingText(`🚚 Машина ${seller} выехала к вашей ферме!`, 0, 0, '#38BDF8');
+    return true;
+  },
+
+  claimMarketDelivery: () => {
+    const state = get();
+    const delivery = state.marketDelivery;
+    if (!delivery) return false;
+
+    const prod = PRODUCTS[delivery.itemId];
+    const itemName = prod?.name || delivery.itemId;
+
+    if (!state.canAddItem(delivery.itemId, delivery.count)) {
+      state.addFloatingText('Склад полон! Освободите место.', 0, 0, '#EF4444');
       return false;
     }
 
-    set(s => ({ coins: s.coins - listing.price }));
-    state.addItem(listing.itemId, listing.count);
-    sounds.playCoin();
+    state.addItem(delivery.itemId, delivery.count);
+    sounds.playLevelUp();
+    confetti({ particleCount: 60, spread: 55 });
 
-    set(s => ({
-      marketListings: s.marketListings.map(l => l.id === listingId ? { ...l, sold: true } : l),
-    }));
-
-    state.addFloatingText(`Куплено: +${listing.count} шт!`, 0, 0, '#22C55E');
+    set({ marketDelivery: null });
+    state.addFloatingText(`📦 Разгружено: +${delivery.count} ${itemName}!`, 0, 0, '#22C55E');
     return true;
   },
 
