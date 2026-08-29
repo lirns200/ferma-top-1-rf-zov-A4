@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import * as THREE from 'three';
 import {
   createBarnGroup,
@@ -63,15 +63,22 @@ export function generateBuildingThumbnailDataUrl(id: string): string {
     const grp = new THREE.Group();
     // Tilled soil bed
     const soil = new THREE.Mesh(
-      new THREE.BoxGeometry(2.4, 0.4, 2.4),
-      new THREE.MeshLambertMaterial({ color: 0x5C3718 })
+      new THREE.BoxGeometry(2.0, 0.3, 2.0),
+      new THREE.MeshLambertMaterial({ color: 0x543214 })
     );
-    soil.position.y = 0.2;
+    soil.position.y = 0.15;
     grp.add(soil);
-    const crop = createCropStageMesh('wheat', 4, '#FACC15');
-    crop.scale.set(1.1, 1.1, 1.1);
-    crop.position.y = 0.4;
-    grp.add(crop);
+
+    // Multiple lush wheat clusters across the plot
+    const offsets = [
+      [-0.45, -0.45], [0.45, -0.45], [-0.45, 0.45], [0.45, 0.45], [0, 0]
+    ];
+    offsets.forEach(([ox, oz]) => {
+      const crop = createCropStageMesh('wheat', 4, '#FACC15');
+      crop.scale.set(0.72, 0.72, 0.72);
+      crop.position.set(ox, 0.3, oz);
+      grp.add(crop);
+    });
     model = grp;
   } else if (id === 'silo') {
     model = createSiloGroup();

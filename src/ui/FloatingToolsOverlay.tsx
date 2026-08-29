@@ -326,8 +326,8 @@ export const FloatingToolsOverlay: React.FC = () => {
             </button>
           </div>
 
-          {/* Horizontal Scrollable Building Cards */}
-          <div className="flex items-center gap-2 overflow-x-auto pb-1 px-0.5">
+          {/* Horizontal Scrollable Building Cards (с достаточным отступом, чтобы ничего не обрезалось!) */}
+          <div className="flex items-center gap-2.5 overflow-x-auto py-2.5 px-1">
             {QUICK_BUILD_ITEMS.map(item => {
               const isUnlocked = level >= item.level;
               const canAfford = coins >= item.cost;
@@ -344,14 +344,19 @@ export const FloatingToolsOverlay: React.FC = () => {
                     }
                   }}
                   disabled={!isUnlocked || !canAfford}
-                  className={`flex flex-col items-center justify-center gap-1 p-2.5 sm:p-3 min-w-[84px] sm:min-w-[92px] shrink-0 relative rounded-2xl transition-all cursor-pointer ${
+                  className={`group flex flex-col items-center justify-center gap-1 p-2.5 sm:p-3 min-w-[86px] sm:min-w-[94px] shrink-0 relative rounded-2xl transition-all duration-150 cursor-pointer ${
                     isDesign2026
-                      ? 'bg-white/10 border border-white/15 hover:bg-white/20 text-white shadow-lg'
-                      : 'hud-tool-btn text-[#3B1F0D]'
-                  } ${!isUnlocked || !canAfford ? 'opacity-50 grayscale' : 'hover:scale-105 active:scale-95'}`}
+                      ? 'bg-white/10 border border-white/15 hover:bg-white/20 hover:border-yellow-300/70 hover:shadow-lg text-white'
+                      : 'hud-tool-btn text-[#3B1F0D] hover:brightness-105'
+                  } ${!isUnlocked || !canAfford ? 'opacity-50 grayscale' : 'active:scale-95'}`}
                 >
-                  <Building3DThumbnail buildingId={item.id} fallbackEmoji={item.icon} size={54} className="my-0.5" />
-                  <span className={`text-xs font-black truncate max-w-[78px] tracking-tight ${
+                  <Building3DThumbnail
+                    buildingId={item.id}
+                    fallbackEmoji={item.icon}
+                    size={52}
+                    className="my-0.5 group-hover:scale-105 transition-transform duration-150"
+                  />
+                  <span className={`text-xs font-black truncate max-w-[80px] tracking-tight ${
                     isDesign2026 ? 'text-white' : 'text-[#3B1F0D]'
                   }`}>
                     {item.name}
@@ -384,14 +389,14 @@ export const FloatingToolsOverlay: React.FC = () => {
                 setActionStripOpen(false);
                 openModal('shop');
               }}
-              className={`flex flex-col items-center justify-center gap-1 p-2 sm:p-2.5 min-w-[72px] sm:min-w-[80px] shrink-0 rounded-2xl transition-all cursor-pointer ${
+              className={`group flex flex-col items-center justify-center gap-1 p-2.5 sm:p-3 min-w-[86px] sm:min-w-[94px] shrink-0 rounded-2xl transition-all duration-150 cursor-pointer ${
                 isDesign2026
-                  ? 'bg-purple-900/60 border border-purple-400/50 hover:bg-purple-800/80 text-white shadow-lg'
+                  ? 'bg-purple-900/60 border border-purple-400/50 hover:bg-purple-800/80 hover:border-purple-300 text-white shadow-lg'
                   : 'hud-tool-btn bg-amber-200 hover:brightness-110 text-[#3B1F0D]'
-              }`}
+              } active:scale-95`}
             >
-              <span className="text-2xl">📑</span>
-              <span className="text-[9px] font-extrabold text-center leading-tight">
+              <span className="text-3xl my-1 group-hover:scale-105 transition-transform">📑</span>
+              <span className="text-[10px] font-black text-center leading-tight">
                 Все здания...
               </span>
             </button>
