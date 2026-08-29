@@ -1,0 +1,7 @@
+{
+  "name": "Sunnyside Valley Farm 3D",
+  "description": "Полноценная 3D ферма с посадкой культур, производством, животными, заказами, рыбалкой, декором и сезонами.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
+

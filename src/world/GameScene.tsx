@@ -1,0 +1,1609 @@
+import React, { useRef, useEffect, useCallback } from 'react';
+import * as THREE from 'three';
+import { useGameStore } from '../game/gameState';
+import { CROPS, TREES_BUSHES } from '../config/crops';
+import { BUILDINGS } from '../config/buildings';
+import { DECORATIONS } from '../config/decorations';
+import { SEASONS_INFO } from '../config/events';
+import { 
+  createFarmhouseGroup, 
+  createSiloGroup, 
+  createBarnGroup, 
+  createOrderBoardGroup,
+  createRoadsideShopGroup,
+  createFishingDockGroup,
+  createProductionBuildingGroup, 
+  createAnimalPenGroup, 
+  createAnimalMesh, 
+  createCropStageMesh, 
+  createTreeBushMesh, 
+  createObstacleMesh, 
+  createDecorationMesh,
+  createMountainTunnelGroup,
+  createMountainWaterfallGroup,
+  createWindingRiverMesh,
+  createStylizedDeliveryTruck,
+  getCachedColorMaterial
+} from './ModelGenerators';
+import { createLandscapeDetailGroup } from './LandscapeDetails';
+
+export const GameScene: React.FC = () => {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+
+  const {
+    entities,
+    expansions,
+    selectedEntityId,
+    activeTool,
+    placingBuildingConfigId,
+    placingRotation,
+    activeSeason,
+    activeEvent,
+    truckState,
+    setSelectedEntity,
+    plantCrop,
+    harvestCrop,
+    harvestTreeBush,
+    feedAnimal,
+    collectAnimalProduct,
+    collectProduct,
+    clearObstacle,
+    openModal,
+    isAreaAvailable,
+    isAreaInsideUnlockedTerritory,
+    placeBuilding,
+    unlockExpansionChunk,
+  } = useGameStore();
+
+  // Smooth Camera Coordinates & Target
+  const targetCamPosRef = useRef({ x: 0, z: 1 });
+  const currentCamPosRef = useRef({ x: 0, z: 1 });
+  const targetZoomRef = useRef(19);
+  const currentZoomRef = useRef(19);
+
+  // Dragging & Interaction memory
+  const isDraggingRef = useRef(false);
+  const dragStartScreenRef = useRef({ x: 0, y: 0 });
+  const dragStartCamRef = useRef({ x: 0, z: 1 });
+  const hasMovedRef = useRef(false);
+  const touchDistanceRef = useRef<number | null>(null);
+
+  // Hovered Tile Ref (avoids triggering React re-renders on mouse move!)
+  const hoveredTileRef = useRef<{ x: number; z: number } | null>(null);
+
+  // Swipe Tool memory to avoid duplicate triggers
+  const swipedEntitiesRef = useRef<Set<string>>(new Set());
+
+  // Store Refs for 60fps render loop
+  const truckStateRef = useRef(truckState);
+  truckStateRef.current = truckState;
+
+  const placingRef = useRef({ configId: placingBuildingConfigId, rotation: placingRotation });
+  placingRef.current = { configId: placingBuildingConfigId, rotation: placingRotation };
+
+  const activeSeasonRef = useRef(activeSeason);
+  activeSeasonRef.current = activeSeason;
+
+  const activeEventRef = useRef(activeEvent);
+  activeEventRef.current = activeEvent;
+
+  // Three.js References
+  const sceneRef = useRef<THREE.Scene | null>(null);
+  const cameraRef = useRef<THREE.OrthographicCamera | null>(null);
+  const rendererRef = useRef<THREE.WebGLRenderer | null>(null);
+  const entitiesGroupRef = useRef<THREE.Group | null>(null);
+  const terrainGroupRef = useRef<THREE.Group | null>(null);
+  const previewGridGroupRef = useRef<THREE.Group | null>(null);
+  const truckGroupRef = useRef<THREE.Group | null>(null);
+
+  // Ground Plane Raycast function
+  const getGroundIntersectionFromScreen = useCallback((screenX: number, screenY: number): { x: number; z: number } | null => {
+    if (!canvasRef.current || !cameraRef.current) return null;
+    const rect = canvasRef.current.getBoundingClientRect();
+    const ndcX = ((screenX - rect.left) / rect.width) * 2 - 1;
+    const ndcY = -((screenY - rect.top) / rect.height) * 2 + 1;
+
+    const raycaster = new THREE.Raycaster();
+    raycaster.setFromCamera(new THREE.Vector2(ndcX, ndcY), cameraRef.current);
+
+    const groundPlane = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0);
+    const target = new THREE.Vector3();
+    const hit = raycaster.ray.intersectPlane(groundPlane, target);
+
+    if (hit) {
+      return { x: hit.x, z: hit.z };
+    }
+    return null;
+  }, []);
+
+  const getTileIntersection = useCallback((screenX: number, screenY: number): { x: number; z: number } | null => {
+    const pt = getGroundIntersectionFromScreen(screenX, screenY);
+    if (pt) {
+      return {
+        x: Math.floor(pt.x),
+        z: Math.floor(pt.z),
+      };
+    }
+    return null;
+  }, [getGroundIntersectionFromScreen]);
+
+  // -------------------------------------------------------------------
+  // 1. INITIALIZE THREE.JS SCENE ONCE ON MOUNT
+  // -------------------------------------------------------------------
+  useEffect(() => {
+    if (!canvasRef.current || !containerRef.current) return;
+
+    const width = containerRef.current.clientWidth;
+    const height = containerRef.current.clientHeight;
+
+    // 1. Scene & Atmosphere
+    const scene = new THREE.Scene();
+    sceneRef.current = scene;
+    const skyBg = activeSeason === 'winter' ? '#E0F2FE' : activeSeason === 'autumn' ? '#FED7AA' : '#BAE6FD';
+    scene.background = new THREE.Color(skyBg);
+    scene.fog = new THREE.FogExp2(skyBg, 0.006);
+
+    // 2. Isometric Camera
+    const aspect = width / height;
+    const d = currentZoomRef.current;
+    const camera = new THREE.OrthographicCamera(
+      -d * aspect, d * aspect, d, -d, 1, 1000
+    );
+    const camAngleOffset = 26;
+    const camHeight = 30;
+    camera.position.set(
+      currentCamPosRef.current.x + camAngleOffset,
+      camHeight,
+      currentCamPosRef.current.z + camAngleOffset
+    );
+    camera.lookAt(currentCamPosRef.current.x, 0, currentCamPosRef.current.z);
+    cameraRef.current = camera;
+
+    // 3. Renderer
+    const renderer = new THREE.WebGLRenderer({
+      canvas: canvasRef.current,
+      antialias: true,
+      powerPreference: 'high-performance',
+    });
+    renderer.setSize(width, height);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    rendererRef.current = renderer;
+
+    // 4. Lighting
+    const ambientLight = new THREE.AmbientLight(
+      activeSeason === 'winter' ? '#E2E8F0' : '#FEF3C7',
+      0.95
+    );
+    scene.add(ambientLight);
+
+    const sunLight = new THREE.DirectionalLight('#FFFBEB', 1.35);
+    sunLight.position.set(38, 55, 28);
+    sunLight.castShadow = true;
+    sunLight.shadow.mapSize.width = 2048;
+    sunLight.shadow.mapSize.height = 2048;
+    sunLight.shadow.camera.near = 0.5;
+    sunLight.shadow.camera.far = 170;
+    const sCam = 42;
+    sunLight.shadow.camera.left = -sCam;
+    sunLight.shadow.camera.right = sCam;
+    sunLight.shadow.camera.top = sCam;
+    sunLight.shadow.camera.bottom = -sCam;
+    sunLight.shadow.bias = -0.0003;
+    scene.add(sunLight);
+
+    const fillLight = new THREE.DirectionalLight('#93C5FD', 0.4);
+    fillLight.position.set(-25, 25, -25);
+    scene.add(fillLight);
+
+    // 5. Terrain Group
+    const terrainGroup = new THREE.Group();
+    terrainGroupRef.current = terrainGroup;
+    scene.add(terrainGroup);
+
+    // 6. Cloud Shadows
+    const cloudShadowsGroup = new THREE.Group();
+    const shadowMat = new THREE.MeshBasicMaterial({
+      color: 0x0F172A,
+      transparent: true,
+      opacity: 0.14,
+      depthWrite: false,
+    });
+    const cloudShadowsData = [
+      { x: -28, z: -15, scaleX: 7.5, scaleZ: 5.0, speed: 0.75 },
+      { x: -10, z: 8, scaleX: 9.0, scaleZ: 6.0, speed: 0.85 },
+      { x: 12, z: -18, scaleX: 6.5, scaleZ: 4.5, speed: 0.7 },
+      { x: 25, z: 12, scaleX: 8.0, scaleZ: 5.5, speed: 0.8 },
+      { x: -35, z: 18, scaleX: 7.0, scaleZ: 4.8, speed: 0.65 },
+    ];
+    const shadowMeshes: Array<{ mesh: THREE.Group; speed: number }> = [];
+    cloudShadowsData.forEach((cs) => {
+      const cGroup = new THREE.Group();
+      cGroup.position.set(cs.x, 0.035, cs.z);
+      const cGeo1 = new THREE.CircleGeometry(cs.scaleX * 0.4, 16);
+      const cGeo2 = new THREE.CircleGeometry(cs.scaleX * 0.32, 16);
+      const cGeo3 = new THREE.CircleGeometry(cs.scaleX * 0.28, 16);
+      const m1 = new THREE.Mesh(cGeo1, shadowMat);
+      m1.rotation.x = -Math.PI / 2;
+      const m2 = new THREE.Mesh(cGeo2, shadowMat);
+      m2.rotation.x = -Math.PI / 2;
+      m2.position.set(cs.scaleX * 0.25, 0, cs.scaleZ * 0.15);
+      const m3 = new THREE.Mesh(cGeo3, shadowMat);
+      m3.rotation.x = -Math.PI / 2;
+      m3.position.set(-cs.scaleX * 0.22, 0, -cs.scaleZ * 0.1);
+      cGroup.add(m1, m2, m3);
+      cloudShadowsGroup.add(cGroup);
+      shadowMeshes.push({ mesh: cGroup, speed: cs.speed });
+    });
+    scene.add(cloudShadowsGroup);
+
+    // 7. Entities Group
+    const entitiesGroup = new THREE.Group();
+    entitiesGroupRef.current = entitiesGroup;
+    scene.add(entitiesGroup);
+
+    // 8. Preview Grid Group
+    const previewGridGroup = new THREE.Group();
+    previewGridGroupRef.current = previewGridGroup;
+    scene.add(previewGridGroup);
+
+    // 9. Stylized Farm Delivery Truck (Vintage red pickup with wooden bed, cargo & chrome details)
+    const truckGroup = createStylizedDeliveryTruck();
+    truckGroupRef.current = truckGroup;
+    truckGroup.position.set(2.5, 0.05, -9.0);
+    scene.add(truckGroup);
+
+    // Weather Particles
+    const particleCount = 180;
+    const particleGeo = new THREE.BufferGeometry();
+    const particlePositions = new Float32Array(particleCount * 3);
+    for (let i = 0; i < particleCount; i++) {
+      particlePositions[i * 3] = (Math.random() - 0.5) * 65;
+      particlePositions[i * 3 + 1] = Math.random() * 26;
+      particlePositions[i * 3 + 2] = (Math.random() - 0.5) * 65;
+    }
+    particleGeo.setAttribute('position', new THREE.BufferAttribute(particlePositions, 3));
+    const particleMat = new THREE.PointsMaterial({
+      color: 0x93C5FD,
+      size: 0.25,
+      transparent: true,
+      opacity: 0.75,
+    });
+    const particleSystem = new THREE.Points(particleGeo, particleMat);
+    scene.add(particleSystem);
+
+    // ── Delivery Circuit Curves ──────────────────────────────────────────
+    // Outbound journey: from farm over wooden bridge into East Mountain Tunnel (to Town)
+    const outboundDeliveryCurve = new THREE.CatmullRomCurve3([
+      new THREE.Vector3(2.5, 0.05, -9.0),   // 0. Farm parking spot (near shop)
+      new THREE.Vector3(9.6, 0.05, -9.0),   // 1. Entrance to wooden bridge
+      new THREE.Vector3(16.0, 0.22, -9.0),  // 2. Middle crest of wooden bridge
+      new THREE.Vector3(22.4, 0.05, -9.0),  // 3. Bridge exit onto east bank
+      new THREE.Vector3(26.0, 0.05, -8.5),  // 4. East bank road bend
+      new THREE.Vector3(30.0, 0.05, -7.2),  // 5. Road curving towards mountain
+      new THREE.Vector3(32.2, 0.05, -6.2),  // 6. East Mountain Tunnel portal
+      new THREE.Vector3(35.5, 0.05, -4.8),  // 7. Deep inside mountain cave (vanished)
+    ]);
+
+    // Return journey: emerging from TOP / West Mountain Tunnel back down to farm!
+    const returnDeliveryCurve = new THREE.CatmullRomCurve3([
+      new THREE.Vector3(-33.5, 0.05, -10.0),  // 0. Inside West Mountain Cave (vanished)
+      new THREE.Vector3(-29.2, 0.05, -10.15), // 1. Emerging from West Mountain Tunnel portal
+      new THREE.Vector3(-23.0, 0.05, -10.4),  // 2. Road along country fence
+      new THREE.Vector3(-15.0, 0.05, -9.4),   // 3. Approaching farm road
+      new THREE.Vector3(-7.0, 0.05, -9.1),    // 4. Passing mailbox & entrance arch
+      new THREE.Vector3(1.0, 0.05, -8.8),     // 5. Slowing down near shop
+      new THREE.Vector3(2.5, 0.05, -9.0),     // 6. Parked smoothly at farm stand
+    ]);
+
+    // 10. ANIMATION LOOP (Smooth 60/120 FPS)
+    let animFrameId: number;
+    const clock = new THREE.Clock();
+
+    const animate = () => {
+      animFrameId = requestAnimationFrame(animate);
+      const delta = clock.getDelta();
+      const elapsed = clock.getElapsedTime();
+
+      // Smooth Camera Damping (Lerp)
+      currentCamPosRef.current.x += (targetCamPosRef.current.x - currentCamPosRef.current.x) * 0.25;
+      currentCamPosRef.current.z += (targetCamPosRef.current.z - currentCamPosRef.current.z) * 0.25;
+      currentZoomRef.current += (targetZoomRef.current - currentZoomRef.current) * 0.25;
+
+      const dZoom = currentZoomRef.current;
+      const curAspect = (containerRef.current ? containerRef.current.clientWidth / containerRef.current.clientHeight : 1);
+      camera.left = -dZoom * curAspect;
+      camera.right = dZoom * curAspect;
+      camera.top = dZoom;
+      camera.bottom = -dZoom;
+      camera.updateProjectionMatrix();
+
+      camera.position.set(
+        currentCamPosRef.current.x + camAngleOffset,
+        camHeight,
+        currentCamPosRef.current.z + camAngleOffset
+      );
+      camera.lookAt(currentCamPosRef.current.x, 0, currentCamPosRef.current.z);
+
+      // ── Dynamic Flowing River Waves with Edge Falloff (zero bank clipping) ─────
+      const waterMesh = scene.getObjectByName('river_water') as THREE.Mesh;
+      if (waterMesh && waterMesh.geometry) {
+        const posAttr = waterMesh.geometry.attributes.position;
+        const vArr = posAttr.array as Float32Array;
+        const count = posAttr.count;
+        const numCross = 12;
+        const stride = numCross + 1;
+
+        for (let i = 0; i < count; i++) {
+          const c = i % stride;
+          const vx = vArr[i * 3];
+          const vz = vArr[i * 3 + 2];
+          // Edge damping factor: 0 at shorelines, 1 in the middle
+          const edgeDamp = Math.sin((c / numCross) * Math.PI);
+
+          // Smooth traveling wave downstream (3.2 m/s):
+          const flowPhase = (vz - elapsed * 3.6) * 0.85;
+          const crossPhase = vx * 1.1;
+          const wave = (Math.sin(flowPhase) * 0.038 + Math.sin(flowPhase * 1.8 + crossPhase) * 0.02) * edgeDamp;
+          vArr[i * 3 + 1] = -0.06 + wave; // Stays cleanly at -0.06 at edges, rises gently in center
+        }
+        posAttr.needsUpdate = true;
+        waterMesh.geometry.computeVertexNormals();
+      }
+
+      // ── Animate Mountain Waterfall Currents & Foam ────────────────────
+      const wf1 = scene.getObjectByName('waterfall_foam_1');
+      if (wf1) wf1.scale.y = 1 + Math.sin(elapsed * 14) * 0.15;
+      const wf2 = scene.getObjectByName('waterfall_foam_2');
+      if (wf2) wf2.scale.y = 1 + Math.sin(elapsed * 16 + 1.2) * 0.18;
+      const c1 = scene.getObjectByName('waterfall_curtain_1');
+      if (c1) c1.position.x = Math.sin(elapsed * 6) * 0.03;
+      const c2 = scene.getObjectByName('waterfall_curtain_2');
+      if (c2) c2.position.x = Math.cos(elapsed * 8) * 0.03;
+
+      for (let r = 0; r < 3; r++) {
+        const ring = scene.getObjectByName(`waterfall_foam_ring_${r}`) as THREE.Mesh;
+        if (ring) {
+          const phase = (elapsed * 1.4 + r * 0.33) % 1;
+          ring.scale.set(0.75 + phase * 0.9, 0.75 + phase * 0.9, 1);
+          const mat = ring.material as THREE.MeshStandardMaterial;
+          if (mat) mat.opacity = 0.9 * (1 - phase);
+        }
+      }
+
+      // ── Animate River Water Lilies, Moored Boat & Bobber ─────────────
+      scene.traverse(obj => {
+        if (obj.name === 'river_water_lily') {
+          obj.position.y = -0.04 + Math.sin(elapsed * 2.2 + obj.position.x) * 0.012;
+          obj.rotation.y = Math.sin(elapsed * 0.5 + obj.position.z) * 0.08;
+        }
+        if (obj.name === 'fishing_rowboat') {
+          obj.position.y = -0.05 + Math.sin(elapsed * 2.4) * 0.015;
+          obj.rotation.z = Math.sin(elapsed * 1.8) * 0.03;
+          obj.rotation.x = Math.cos(elapsed * 1.5) * 0.02;
+        }
+        if (obj.name === 'fishing_bobber') {
+          obj.position.y = 0.02 + Math.sin(elapsed * 3.0) * 0.012;
+        }
+        if (obj.name === 'mill_blades') {
+          obj.rotation.z += delta * 1.6;
+        }
+        if (obj.name === 'bakery_fire_glow') {
+          const s = 1 + Math.sin(elapsed * 8) * 0.12;
+          obj.scale.set(s, s, s);
+        }
+      });
+
+      const riverGlimmers = scene.getObjectByName('river_glimmers') as THREE.InstancedMesh | undefined;
+      if (riverGlimmers) {
+        const material = riverGlimmers.material as THREE.MeshBasicMaterial;
+        material.opacity = 0.42 + Math.sin(elapsed * 1.8) * 0.2;
+        riverGlimmers.position.z = Math.sin(elapsed * 0.35) * 0.16;
+      }
+
+      const butterflies = scene.getObjectByName('meadow_butterflies');
+      if (butterflies) {
+        butterflies.position.y = Math.sin(elapsed * 2.4) * 0.16;
+        butterflies.rotation.y = Math.sin(elapsed * 0.45) * 0.08;
+      }
+
+      // Cloud Shadows Drift
+      shadowMeshes.forEach(({ mesh, speed }) => {
+        mesh.position.x += delta * speed * 2.2;
+        mesh.position.z += delta * speed * 0.8;
+        if (mesh.position.x > 38) {
+          mesh.position.x = -38;
+          mesh.position.z = (Math.random() - 0.5) * 40;
+        }
+      });
+
+      // ── Tree, Bush & Foliage Harmonic Wind Sway ───────────────────────
+      const curWeather = activeEventRef.current?.type || 'sunny';
+      const curSeason = activeSeasonRef.current || 'summer';
+      const isStrongWind = curWeather === 'windy' || curWeather === 'thunderstorm';
+      const windSpeed = isStrongWind ? 5.2 : curWeather === 'rain' ? 3.4 : 2.2;
+      // Highly visible, juicy, natural wind sway (9° in wind, 4.5° in calm breeze)
+      const windIntensity = isStrongWind ? 0.16 : curWeather === 'rain' ? 0.10 : 0.07;
+
+      scene.traverse(obj => {
+        if (obj.name === 'tree_crown') {
+          const wx = obj.parent ? (obj.parent.position.x || 0) : 0;
+          const wz = obj.parent ? (obj.parent.position.z || 0) : 0;
+          const phase = elapsed * windSpeed + wx * 0.35 + wz * 0.25;
+          obj.rotation.z = Math.sin(phase) * windIntensity;
+          obj.rotation.x = Math.cos(phase * 0.85) * (windIntensity * 0.7);
+          obj.position.x = Math.sin(phase) * (windIntensity * 0.35);
+        } else if (obj.name === 'bush_crown') {
+          const wx = obj.parent ? (obj.parent.position.x || 0) : 0;
+          const wz = obj.parent ? (obj.parent.position.z || 0) : 0;
+          const phase = elapsed * windSpeed * 1.2 + wx * 0.4 + wz * 0.3;
+          obj.rotation.z = Math.sin(phase) * (windIntensity * 0.8);
+          obj.scale.y = 1 + Math.sin(phase * 1.5) * 0.04;
+        }
+      });
+
+      // ── Dynamic Weather Particles (Rain, Snow, Falling Leaves, Pollen, Fog) ──
+      const positions = particleGeo.attributes.position.array as Float32Array;
+      const isRain = curWeather === 'rain' || curWeather === 'thunderstorm';
+      const isSnow = curWeather === 'snow' || curSeason === 'winter';
+      const isWind = curWeather === 'windy' || curSeason === 'autumn';
+      const isFog = curWeather === 'fog';
+
+      for (let i = 0; i < particleCount; i++) {
+        const idx = i * 3;
+        if (isRain) {
+          // Rapid angled rain streaks
+          positions[idx + 1] -= delta * 25;
+          positions[idx] += delta * 4.5;
+          positions[idx + 2] += delta * 2.0;
+          if (positions[idx + 1] < 0) {
+            positions[idx + 1] = 26;
+            positions[idx] = (Math.random() - 0.5) * 65;
+            positions[idx + 2] = (Math.random() - 0.5) * 65;
+          }
+        } else if (isSnow) {
+          // Soft swirling snowflakes
+          positions[idx + 1] -= delta * 2.6;
+          positions[idx] += Math.sin(elapsed * 1.8 + i) * 0.035;
+          positions[idx + 2] += Math.cos(elapsed * 1.4 + i) * 0.035;
+          if (positions[idx + 1] < 0) {
+            positions[idx + 1] = 24;
+            positions[idx] = (Math.random() - 0.5) * 65;
+            positions[idx + 2] = (Math.random() - 0.5) * 65;
+          }
+        } else if (isWind) {
+          // Tumbling autumn leaves / swirling windy petals
+          positions[idx] += delta * 8.5;
+          positions[idx + 1] -= delta * 1.8;
+          positions[idx + 2] += delta * 3.8;
+          if (positions[idx] > 35 || positions[idx + 1] < 0) {
+            positions[idx] = -35;
+            positions[idx + 1] = 2 + Math.random() * 16;
+            positions[idx + 2] = (Math.random() - 0.5) * 65;
+          }
+        } else if (isFog) {
+          // Drifting river valley mist
+          positions[idx + 1] = 0.6 + Math.sin(elapsed * 0.6 + i) * 0.6;
+          positions[idx] += delta * 1.4;
+          if (positions[idx] > 35) positions[idx] = -35;
+        } else {
+          // Gentle floating summer pollen / dandelion seeds
+          positions[idx + 1] -= delta * 0.9;
+          positions[idx] += Math.sin(elapsed * 0.8 + i) * 0.02 + delta * 0.8;
+          positions[idx + 2] += Math.cos(elapsed * 0.6 + i) * 0.02;
+          if (positions[idx + 1] < 0) {
+            positions[idx + 1] = 18;
+            positions[idx] = (Math.random() - 0.5) * 65;
+            positions[idx + 2] = (Math.random() - 0.5) * 65;
+          }
+        }
+      }
+      particleGeo.attributes.position.needsUpdate = true;
+
+      // Adjust particle material styling dynamically
+      if (particleMat) {
+        if (isRain) {
+          particleMat.color.setHex(0x7DD3FC);
+          particleMat.size = 0.35;
+          particleMat.opacity = 0.85;
+        } else if (isSnow) {
+          particleMat.color.setHex(0xFFFFFF);
+          particleMat.size = 0.4;
+          particleMat.opacity = 0.9;
+        } else if (isWind) {
+          particleMat.color.setHex(curSeason === 'autumn' ? 0xEA580C : 0x34D399);
+          particleMat.size = 0.42;
+          particleMat.opacity = 0.85;
+        } else if (curSeason === 'spring') {
+          particleMat.color.setHex(0xF472B6); // Cherry blossom pink
+          particleMat.size = 0.32;
+          particleMat.opacity = 0.8;
+        } else {
+          particleMat.color.setHex(0xFEF08A); // Golden pollen
+          particleMat.size = 0.26;
+          particleMat.opacity = 0.65;
+        }
+      }
+
+      // ── Delivery Truck Animation along Dual-Tunnel Circuit ───────────
+      const tState = truckStateRef.current;
+      if (tState.isDelivering) {
+        const totalDuration = 8000;
+        const elapsedDelivery = Math.max(0, totalDuration - Math.max(0, tState.deliveringUntil - Date.now()));
+        const progress = Math.min(1, elapsedDelivery / totalDuration);
+
+        if (progress < 0.44) {
+          // Outbound journey: Driving to town through East Mountain Tunnel
+          const t = progress / 0.44;
+          const pos = outboundDeliveryCurve.getPointAt(t);
+          const tangent = outboundDeliveryCurve.getTangentAt(t);
+          truckGroup.position.set(pos.x, pos.y + Math.abs(Math.sin(elapsed * 18)) * 0.035, pos.z);
+          truckGroup.rotation.y = -Math.atan2(tangent.z, tangent.x);
+          truckGroup.visible = t < 0.94;
+
+          // Rotate wheels while driving
+          truckGroup.traverse(child => {
+            if (child.name === 'truck_wheel') {
+              child.children.forEach(c => { c.rotation.y += delta * 16; });
+            }
+          });
+        } else if (progress <= 0.56) {
+          // In Town: Inside the mountain tunnel
+          truckGroup.visible = false;
+        } else {
+          // Return journey: Driving back from Town emerging from TOP / West Mountain Tunnel!
+          const t = (progress - 0.56) / 0.44;
+          const pos = returnDeliveryCurve.getPointAt(t);
+          const tangent = returnDeliveryCurve.getTangentAt(t);
+          truckGroup.position.set(pos.x, pos.y + Math.abs(Math.sin(elapsed * 18)) * 0.035, pos.z);
+          truckGroup.rotation.y = -Math.atan2(tangent.z, tangent.x);
+          truckGroup.visible = t > 0.06;
+
+          // Rotate wheels while driving
+          truckGroup.traverse(child => {
+            if (child.name === 'truck_wheel') {
+              child.children.forEach(c => { c.rotation.y += delta * 16; });
+            }
+          });
+        }
+      } else {
+        // Parked at the farm roadside
+        truckGroup.position.set(2.5, 0.05, -9.0);
+        truckGroup.rotation.y = 0;
+        truckGroup.visible = true;
+      }
+
+      // Rotating Windmill blades & cogs
+      scene.traverse(child => {
+        if (child.name === 'mill_blades') child.rotation.z += delta * 2.8;
+        if (child.name === 'distant_mill_blades') child.rotation.z += delta * 1.5;
+        if (child.name === 'sugar_cog') child.rotation.z += delta * 3.2;
+      });
+
+      // ── Animate Animals (walk, idle, peck, wing flap) ──────────────────
+      scene.traverse(obj => {
+        if (!obj.name.startsWith('animal_')) return;
+        const ud = obj.userData as {
+          animalType: string;
+          walkDir: { x: number; z: number };
+          walkSpeed: number;
+          walkTimer: number;
+          isIdle: boolean;
+          idleTimer: number;
+          peckTimer: number;
+          isPecking: boolean;
+          peckPhase: number;
+          penHalfSize: number;
+        };
+        if (!ud || !ud.animalType) return;
+
+        const hs = ud.penHalfSize;
+
+        // ── Idle / walk state machine ──────────────────────────────────
+        if (ud.isIdle) {
+          ud.idleTimer -= delta;
+          if (ud.idleTimer <= 0) {
+            ud.isIdle = false;
+            const a = Math.random() * Math.PI * 2;
+            ud.walkDir = { x: Math.cos(a), z: Math.sin(a) };
+            ud.walkTimer = 1.5 + Math.random() * 3.0;
+          }
+        } else {
+          ud.walkTimer -= delta;
+          if (ud.walkTimer <= 0) {
+            // Randomly either change direction or start idle pause
+            if (Math.random() < 0.35) {
+              ud.isIdle = true;
+              ud.idleTimer = 0.6 + Math.random() * 1.8;
+            } else {
+              const a = Math.random() * Math.PI * 2;
+              ud.walkDir = { x: Math.cos(a), z: Math.sin(a) };
+              ud.walkTimer = 1.5 + Math.random() * 2.5;
+            }
+          }
+
+          // Move animal
+          const step = ud.walkSpeed * delta;
+          const nx = obj.position.x + ud.walkDir.x * step;
+          const nz = obj.position.z + ud.walkDir.z * step;
+
+          // Bounce off pen walls
+          if (Math.abs(nx) > hs) {
+            ud.walkDir.x *= -1;
+          } else {
+            obj.position.x = nx;
+          }
+          if (Math.abs(nz) > hs) {
+            ud.walkDir.z *= -1;
+          } else {
+            obj.position.z = nz;
+          }
+
+          // Face walking direction (smooth turn)
+          const targetAngle = Math.atan2(ud.walkDir.x, ud.walkDir.z);
+          const curAngle = obj.rotation.y;
+          let diff = targetAngle - curAngle;
+          while (diff > Math.PI)  diff -= Math.PI * 2;
+          while (diff < -Math.PI) diff += Math.PI * 2;
+          obj.rotation.y += diff * Math.min(1, delta * 8);
+        }
+
+        // ── Per-animal specific animations ─────────────────────────────
+        if (ud.animalType === 'chicken') {
+          // Body bob (always)
+          const body = obj.getObjectByName('chicken_body');
+          if (body) {
+            body.position.y = 0.24 + Math.sin(elapsed * 6 + obj.position.x * 10) * (ud.isIdle ? 0.008 : 0.022);
+          }
+          const comb = obj.getObjectByName('chicken_comb');
+          if (comb) {
+            comb.position.y = 0.46 + Math.sin(elapsed * 6 + obj.position.x * 10) * (ud.isIdle ? 0.008 : 0.022);
+          }
+          const beak = obj.getObjectByName('chicken_beak');
+
+          // Wing flap (when walking)
+          const wingL = obj.getObjectByName('chicken_wingL');
+          const wingR = obj.getObjectByName('chicken_wingR');
+          if (wingL && wingR) {
+            const flapAmt = ud.isIdle ? 0.08 : (0.35 + Math.sin(elapsed * 12 + obj.position.x * 5) * 0.25);
+            (wingL as THREE.Object3D).rotation.z = -(0.2 + flapAmt);
+            (wingR as THREE.Object3D).rotation.z =  (0.2 + flapAmt);
+          }
+
+          // Foot alternation (when walking)
+          if (!ud.isIdle) {
+            const footL = obj.getObjectByName('chicken_footL');
+            const footR = obj.getObjectByName('chicken_footR');
+            const stepCycle = Math.sin(elapsed * 10 + obj.position.x * 8);
+            if (footL) (footL as THREE.Object3D).position.z =  stepCycle * 0.08;
+            if (footR) (footR as THREE.Object3D).position.z = -stepCycle * 0.08;
+          }
+
+          // Pecking animation (only when idle)
+          if (ud.isIdle) {
+            ud.peckTimer -= delta;
+            if (ud.peckTimer <= 0 && !ud.isPecking) {
+              ud.isPecking = true;
+              ud.peckPhase = 0;
+              ud.peckTimer = 1.5 + Math.random() * 3.0;
+            }
+            if (ud.isPecking) {
+              ud.peckPhase = Math.min(1, ud.peckPhase + delta * 4);
+              // Dip head down then back up
+              const peckDip = Math.sin(ud.peckPhase * Math.PI) * 0.18;
+              if (body) body.position.y = 0.24 - peckDip;
+              if (comb) comb.position.y = 0.46 - peckDip;
+              if (beak) (beak as THREE.Object3D).position.y = 0.26 - peckDip;
+              if (ud.peckPhase >= 1) ud.isPecking = false;
+            }
+          }
+
+        } else if (ud.animalType === 'cow' || ud.animalType === 'sheep' || ud.animalType === 'pig') {
+          // Gentle body sway / breathing
+          const breathAmp = ud.isIdle ? 0.012 : 0.005;
+          obj.rotation.z = Math.sin(elapsed * 1.8 + obj.position.x) * breathAmp;
+          obj.position.y = Math.abs(Math.sin(elapsed * (ud.animalType === 'pig' ? 3 : 2) + obj.id * 0.5)) * (ud.isIdle ? 0.005 : 0.018);
+        }
+      });
+
+
+      renderer.render(scene, camera);
+    };
+
+    animate();
+
+    const handleResize = () => {
+      if (!canvasRef.current || !containerRef.current) return;
+      const nw = containerRef.current.clientWidth;
+      const nh = containerRef.current.clientHeight;
+      const nAspect = nw / nh;
+      const zoom = currentZoomRef.current;
+      camera.left = -zoom * nAspect;
+      camera.right = zoom * nAspect;
+      camera.top = zoom;
+      camera.bottom = -zoom;
+      camera.updateProjectionMatrix();
+      renderer.setSize(nw, nh);
+    };
+
+    window.addEventListener('resize', handleResize);
+
+    return () => {
+      cancelAnimationFrame(animFrameId);
+      window.removeEventListener('resize', handleResize);
+      renderer.dispose();
+    };
+  }, []); // Run ONCE on mount!
+
+  // -------------------------------------------------------------------
+  // 2. REBUILD TERRAIN & EXPANSIONS WHEN SEASON OR EXPANSIONS CHANGE
+  // -------------------------------------------------------------------
+  useEffect(() => {
+    if (!terrainGroupRef.current) return;
+    const terrainGroup = terrainGroupRef.current;
+    while (terrainGroup.children.length > 0) {
+      terrainGroup.remove(terrainGroup.children[0]);
+    }
+
+    const seasonInfo = SEASONS_INFO[activeSeason];
+    const cliffMat = getCachedColorMaterial('#451A03', 0.95);
+    const softenedGround = new THREE.Color(seasonInfo.groundColor);
+    if (activeSeason !== 'winter') {
+      softenedGround.lerp(new THREE.Color('#86B95B'), 0.18);
+    }
+    const grassMat = getCachedColorMaterial(`#${softenedGround.getHexString()}`, 0.88);
+    const bankMat = getCachedColorMaterial(activeSeason === 'winter' ? '#CBD5E1' : '#C5A059', 0.88);
+
+    // Main Farm Meadow (West: x from -50 to +10, z from -48 to +48)
+    const farmIslandBase = new THREE.Mesh(new THREE.BoxGeometry(60, 2.5, 96), cliffMat);
+    farmIslandBase.position.set(-20, -1.25, 0);
+    farmIslandBase.receiveShadow = true;
+    terrainGroup.add(farmIslandBase);
+
+    const farmGrass = new THREE.Mesh(new THREE.PlaneGeometry(60, 96), grassMat);
+    farmGrass.rotation.x = -Math.PI / 2;
+    farmGrass.position.set(-20, 0.01, 0);
+    farmGrass.receiveShadow = true;
+    farmGrass.name = 'ground';
+    terrainGroup.add(farmGrass);
+
+    // Soft sandy bank on West shore (x = 10.0)
+    const farmBank = new THREE.Mesh(new THREE.BoxGeometry(2.0, 0.2, 96), bankMat);
+    farmBank.position.set(10.0, -0.08, 0);
+    farmBank.receiveShadow = true;
+    terrainGroup.add(farmBank);
+
+    // East Shore (x = 22 to 62, z from -48 to +48)
+    const eastIslandBase = new THREE.Mesh(new THREE.BoxGeometry(40, 2.5, 96), cliffMat);
+    eastIslandBase.position.set(42, -1.25, 0);
+    eastIslandBase.receiveShadow = true;
+    terrainGroup.add(eastIslandBase);
+
+    const eastGrass = new THREE.Mesh(new THREE.PlaneGeometry(40, 96), grassMat);
+    eastGrass.rotation.x = -Math.PI / 2;
+    eastGrass.position.set(42, 0.01, 0);
+    eastGrass.receiveShadow = true;
+    terrainGroup.add(eastGrass);
+
+    const eastBank = new THREE.Mesh(new THREE.BoxGeometry(2.0, 0.2, 96), bankMat);
+    eastBank.position.set(22.0, -0.08, 0);
+    eastBank.receiveShadow = true;
+    terrainGroup.add(eastBank);
+
+    // Deterministic low-poly relief, winding roads, dense shorelines and meadow life.
+    terrainGroup.add(createLandscapeDetailGroup(activeSeason));
+
+    // ── Cascading Mountain Waterfall plunging from North Mountain at river head ──
+    const mountainWaterfall = createMountainWaterfallGroup(activeSeason);
+    mountainWaterfall.position.set(16.0, 0, -25.5);
+    terrainGroup.add(mountainWaterfall);
+
+    // ── Organic Winding River & Riverbed System ─────────────────────────
+    const { waterMesh, riverbedMesh } = createWindingRiverMesh(activeSeason);
+    terrainGroup.add(riverbedMesh, waterMesh);
+
+    // ── Water Lilies with Blooming Pink Lotus Flowers (Bobbing in current) ──
+    const padGeo = new THREE.CylinderGeometry(0.4, 0.4, 0.02, 8);
+    const padMat = getCachedColorMaterial('#15803D', 0.7);
+    const lotusMat = getCachedColorMaterial('#FB7185', 0.4);
+    const lotusGeo = new THREE.SphereGeometry(0.14, 6, 6);
+    const lotusCenterMat = getCachedColorMaterial('#FEF08A', 0.2);
+    [
+      [12.5, -4], [18.5, -12], [14.0, 5], [17.5, 15], [13.0, -18],
+      [16.5, 22], [18.0, 30], [13.5, 36], [17.0, -2]
+    ].forEach(([lx, lz]) => {
+      const lilyGroup = new THREE.Group();
+      lilyGroup.name = 'river_water_lily';
+      lilyGroup.position.set(lx, -0.04, lz);
+
+      const lily = new THREE.Mesh(padGeo, padMat);
+      const flower = new THREE.Mesh(lotusGeo, lotusMat);
+      flower.position.y = 0.08;
+      const flowerCore = new THREE.Mesh(new THREE.SphereGeometry(0.06, 6, 6), lotusCenterMat);
+      flowerCore.position.y = 0.12;
+
+      lilyGroup.add(lily, flower, flowerCore);
+      terrainGroup.add(lilyGroup);
+    });
+
+    // 4. Cattails & Tall River Reeds along shoreline
+    const reedGeo = new THREE.CylinderGeometry(0.04, 0.05, 1.3, 5);
+    const reedMat = getCachedColorMaterial('#4D7C0F', 0.8);
+    const reedHeadGeo = new THREE.CylinderGeometry(0.08, 0.08, 0.35, 6);
+    const reedHeadMat = getCachedColorMaterial('#78350F', 0.9);
+    for (let rz = -22; rz <= 40; rz += 3.5) {
+      if (rz > -12 && rz < -3) continue; // Skip bridge & fishing dock
+      const rx = 9.8 + (Math.sin(rz * 0.8) * 0.25);
+      const reed = new THREE.Mesh(reedGeo, reedMat);
+      reed.position.set(rx, 0.5, rz);
+      reed.rotation.z = (Math.sin(rz) * 0.12);
+      const rHead = new THREE.Mesh(reedHeadGeo, reedHeadMat);
+      rHead.position.set(rx, 0.9, rz);
+      terrainGroup.add(reed, rHead);
+
+      const rx2 = 22.2 + (Math.cos(rz * 0.8) * 0.25);
+      const reed2 = new THREE.Mesh(reedGeo, reedMat);
+      reed2.position.set(rx2, 0.5, rz);
+      reed2.rotation.z = -(Math.sin(rz) * 0.12);
+      const rHead2 = new THREE.Mesh(reedHeadGeo, reedHeadMat);
+      rHead2.position.set(rx2, 0.9, rz);
+      terrainGroup.add(reed2, rHead2);
+    }
+
+    // Wooden Bridge spanning the River at z = -9
+    const bridgeGroup = new THREE.Group();
+    const bDeck = new THREE.Mesh(new THREE.BoxGeometry(13.0, 0.25, 2.8), getCachedColorMaterial('#78350F', 0.85));
+    bDeck.position.set(16.0, 0.2, -9.0);
+    bDeck.castShadow = true;
+    bDeck.receiveShadow = true;
+    bridgeGroup.add(bDeck);
+
+    const bRailMat = getCachedColorMaterial('#9A3412', 0.7);
+    const bRailL = new THREE.Mesh(new THREE.BoxGeometry(13.0, 0.12, 0.12), bRailMat);
+    bRailL.position.set(16.0, 0.75, -10.3);
+    const bRailR = new THREE.Mesh(new THREE.BoxGeometry(13.0, 0.12, 0.12), bRailMat);
+    bRailR.position.set(16.0, 0.75, -7.7);
+    bridgeGroup.add(bRailL, bRailR);
+
+    const bPostGeo = new THREE.BoxGeometry(0.16, 0.85, 0.16);
+    const bPillarGeo = new THREE.CylinderGeometry(0.18, 0.22, 1.4, 8);
+    [-5.5, -2.0, 2.0, 5.5].forEach(bx => {
+      const p1 = new THREE.Mesh(bPostGeo, bRailMat);
+      p1.position.set(16.0 + bx, 0.5, -10.3);
+      const p2 = new THREE.Mesh(bPostGeo, bRailMat);
+      p2.position.set(16.0 + bx, 0.5, -7.7);
+      bridgeGroup.add(p1, p2);
+
+      const pil = new THREE.Mesh(bPillarGeo, getCachedColorMaterial('#451A03', 0.9));
+      pil.position.set(16.0 + bx, -0.4, -9.0);
+      pil.castShadow = true;
+      bridgeGroup.add(pil);
+    });
+    terrainGroup.add(bridgeGroup);
+
+    // Entrance Arch (x = 9.5, z = -9)
+    const archGroup = new THREE.Group();
+    const archWoodMat = getCachedColorMaterial('#78350F', 0.8);
+    const aPost1 = new THREE.Mesh(new THREE.BoxGeometry(0.25, 3.2, 0.25), archWoodMat);
+    aPost1.position.set(9.5, 1.6, -10.5);
+    const aPost2 = new THREE.Mesh(new THREE.BoxGeometry(0.25, 3.2, 0.25), archWoodMat);
+    aPost2.position.set(9.5, 1.6, -7.5);
+    const aBeam = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.35, 3.5), archWoodMat);
+    aBeam.position.set(9.5, 3.2, -9);
+    const aSign = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.6, 2.2), getCachedColorMaterial('#FEF08A', 0.5));
+    aSign.position.set(9.5, 2.6, -9);
+    archGroup.add(aPost1, aPost2, aBeam, aSign);
+    terrainGroup.add(archGroup);
+
+    // ── Mountain Tunnels at Road Boundaries ──────────────────────────────
+    // 1. East Mountain Tunnel (Town Road Entrance at the East Cliff edge)
+    const eastTunnel = createMountainTunnelGroup(activeSeason, 'ГОРОД');
+    eastTunnel.position.set(32.2, 0.02, -6.2);
+    eastTunnel.rotation.y = Math.atan2(-3.2, -1.4);
+    terrainGroup.add(eastTunnel);
+
+    // 2. West Mountain Tunnel (Valley Pass at the far top-left boundary)
+    const westTunnel = createMountainTunnelGroup(activeSeason, 'ДОЛИНА');
+    westTunnel.position.set(-29.2, 0.02, -10.15);
+    westTunnel.rotation.y = Math.atan2(7.5, -0.3);
+    terrainGroup.add(westTunnel);
+
+    // Mailbox (x = -4, z = -8)
+    const mbGroup = new THREE.Group();
+    const mbPost = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, 1.0, 6), archWoodMat);
+    mbPost.position.set(-4, 0.5, -8);
+    const mbBox = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.3, 0.5), getCachedColorMaterial('#DC2626', 0.6));
+    mbBox.position.set(-4, 1.0, -8);
+    const mbFlag = new THREE.Mesh(new THREE.BoxGeometry(0.02, 0.2, 0.1), getCachedColorMaterial('#FBBF24', 0.4));
+    mbFlag.position.set(-3.84, 1.1, -8);
+    mbGroup.add(mbPost, mbBox, mbFlag);
+    terrainGroup.add(mbGroup);
+
+    // Stepping stones
+    const pathMat = getCachedColorMaterial('#94A3B8', 0.9);
+    const stoneGeo = new THREE.CylinderGeometry(0.35, 0.4, 0.03, 6);
+    [
+      [-5, -4.5], [-5, -3.5], [-5, -2.5], [-4, -2.5], [-3, -2.5],
+      [-2, -4.5], [-1, -4.5], [-1, -3.5], [-7, -5], [-7, -3.5],
+      [-0.5, 0], [0.5, 0], [1.5, 0], [2.5, 0]
+    ].forEach(([sx, sz]) => {
+      const stone = new THREE.Mesh(stoneGeo, pathMat);
+      stone.position.set(sx, 0.03, sz);
+      stone.rotation.y = Math.random() * Math.PI;
+      stone.receiveShadow = true;
+      terrainGroup.add(stone);
+    });
+
+    // ── TREE & MOUNTAIN MATERIALS ───────────────────────────────────────
+    const distTrunkGeo = new THREE.CylinderGeometry(0.2, 0.25, 1.4, 6);
+    const distTrunkMat = getCachedColorMaterial('#78350F', 0.9);
+    const distPineFoliageMat = getCachedColorMaterial(activeSeason === 'winter' ? '#E2E8F0' : '#14532D', 0.75);
+    const distOakFoliageMat = getCachedColorMaterial(seasonInfo.foliageColor, 0.7);
+    const distCherryFoliageMat = getCachedColorMaterial(activeSeason === 'spring' ? '#FDA4AF' : seasonInfo.foliageColor, 0.7);
+
+    // Forest Tree Generator Helper
+    const createLandscapeTree = (tx: number, tz: number, type: 'pine' | 'oak' | 'cherry', scale = 1.0) => {
+      const tGroup = new THREE.Group();
+      tGroup.name = 'landscape_tree';
+      tGroup.position.set(tx, 0, tz);
+      tGroup.scale.set(scale, scale, scale);
+
+      const trunk = new THREE.Mesh(distTrunkGeo, distTrunkMat);
+      trunk.position.y = 0.7;
+      trunk.castShadow = true;
+      tGroup.add(trunk);
+
+      const crownGroup = new THREE.Group();
+      crownGroup.name = 'tree_crown';
+      crownGroup.position.set(0, 1.1, 0);
+
+      if (type === 'pine') {
+        for (let i = 0; i < 3; i++) {
+          const cone = new THREE.Mesh(new THREE.ConeGeometry(1.4 * (1 - i * 0.25), 1.2, 6), distPineFoliageMat);
+          cone.position.y = 0.3 + i * 0.8;
+          cone.castShadow = true;
+          crownGroup.add(cone);
+        }
+      } else {
+        const mat = type === 'cherry' ? distCherryFoliageMat : distOakFoliageMat;
+        const fol1 = new THREE.Mesh(new THREE.SphereGeometry(1.1, 7, 7), mat);
+        fol1.position.set(0, 0.7, 0);
+        fol1.castShadow = true;
+        const fol2 = new THREE.Mesh(new THREE.SphereGeometry(0.8, 7, 7), mat);
+        fol2.position.set(0.3, 1.1, -0.2);
+        fol2.castShadow = true;
+        const fol3 = new THREE.Mesh(new THREE.SphereGeometry(0.7, 7, 7), mat);
+        fol3.position.set(-0.25, 1.0, 0.25);
+        fol3.castShadow = true;
+        crownGroup.add(fol1, fol2, fol3);
+      }
+      tGroup.add(crownGroup);
+      return tGroup;
+    };
+
+    // ── MAJESTIC TOWERING ALPINE MOUNTAINS (RUGGED ROCK RELIEF & CRAGS) ──
+    const rockMat1 = getCachedColorMaterial(activeSeason === 'winter' ? '#64748B' : '#52525B', 0.85);
+    const rockMat2 = getCachedColorMaterial(activeSeason === 'winter' ? '#94A3B8' : '#71717A', 0.80);
+
+    const createMajesticToweringMountain = (
+      mx: number,
+      mz: number,
+      baseRadius: number,
+      height: number,
+      ridgeHarmonics: number,
+      asymOffset: { x: number; z: number },
+      seed: number
+    ) => {
+      const mGroup = new THREE.Group();
+      mGroup.position.set(mx, 0, mz);
+
+      // Altitude gradient colors
+      const cValley = new THREE.Color(activeSeason === 'winter' ? '#94A3B8' : activeSeason === 'autumn' ? '#667C34' : '#3B7528');
+      const cMid    = new THREE.Color(activeSeason === 'winter' ? '#B0C4DE' : activeSeason === 'autumn' ? '#854D0E' : '#2D6320');
+      const cUpper  = new THREE.Color(activeSeason === 'winter' ? '#64748B' : activeSeason === 'autumn' ? '#52525B' : '#475569');
+      const cPeak   = new THREE.Color(activeSeason === 'winter' ? '#F8FAFC' : activeSeason === 'autumn' ? '#A8A29E' : '#334155');
+
+      const rings = 15;      // 15 vertical tiers
+      const segments = 20;   // 20 radial segments for rich faceted low-poly relief
+
+      const positions: number[] = [];
+      const colors: number[] = [];
+      const indices: number[] = [];
+
+      for (let r = 0; r <= rings; r++) {
+        const t = r / rings; // 0.0 (ground base) to 1.0 (summit)
+
+        // Parabolic alpine curve
+        const y = Math.pow(t, 1.25) * height;
+        const currentR = baseRadius * Math.pow(1 - t, 0.72);
+
+        // Asymmetrical summit lean
+        const skewX = asymOffset.x * t * t;
+        const skewZ = asymOffset.z * t * t;
+
+        for (let s = 0; s < segments; s++) {
+          const angle = (s / segments) * Math.PI * 2;
+
+          // Rugged 3D mountain relief: ridges, couloirs, rocky gullies
+          const rockRelief =
+            0.18 * Math.sin(angle * ridgeHarmonics + seed * 1.7) +
+            0.12 * Math.cos(angle * 3 + y * 0.35 - seed * 0.8) +
+            0.07 * Math.sin(angle * 5 + y * 0.7 + seed * 2.1) +
+            0.04 * Math.cos(angle * 7 - y * 1.1);
+
+          const rad = r === rings ? 0 : Math.max(0.25, currentR * (1 + rockRelief));
+          const px = Math.cos(angle) * rad + skewX;
+          const pz = Math.sin(angle) * rad + skewZ;
+
+          positions.push(px, y, pz);
+
+          // Smooth altitude gradient coloring
+          const vertColor = new THREE.Color();
+          if (t < 0.30) {
+            vertColor.copy(cValley).lerp(cMid, t / 0.30);
+          } else if (t < 0.68) {
+            vertColor.copy(cMid).lerp(cUpper, (t - 0.30) / 0.38);
+          } else {
+            vertColor.copy(cUpper).lerp(cPeak, (t - 0.68) / 0.32);
+          }
+          colors.push(vertColor.r, vertColor.g, vertColor.b);
+        }
+      }
+
+      // Triangulation
+      for (let r = 0; r < rings; r++) {
+        for (let s = 0; s < segments; s++) {
+          const nextS = (s + 1) % segments;
+          const curRing = r * segments;
+          const nextRing = (r + 1) * segments;
+
+          const a = curRing + s;
+          const b = curRing + nextS;
+          const c = nextRing + s;
+          const d = nextRing + nextS;
+
+          if (r < rings - 1) {
+            indices.push(a, c, b);
+            indices.push(b, c, d);
+          } else {
+            indices.push(a, c, b);
+          }
+        }
+      }
+
+      const geo = new THREE.BufferGeometry();
+      geo.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+      geo.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
+      geo.setIndex(indices);
+      geo.computeVertexNormals();
+
+      const mat = new THREE.MeshStandardMaterial({
+        vertexColors: true,
+        roughness: 0.85,
+        metalness: 0.04,
+        flatShading: true,
+      });
+
+      const mMesh = new THREE.Mesh(geo, mat);
+      mMesh.castShadow = true;
+      mMesh.receiveShadow = true;
+      mGroup.add(mMesh);
+
+      // ── Exposed Granite Rock Crags & Ledges protruding from the mountain ──
+      const numCrags = 5 + (seed % 4);
+      for (let c = 0; c < numCrags; c++) {
+        const cAngle = (c * 2.15 + seed * 1.1) % (Math.PI * 2);
+        const cHeightFrac = 0.25 + 0.50 * ((c * 1.37) % 1);
+        const cDist = baseRadius * Math.pow(1 - cHeightFrac, 0.72) * 0.95;
+        const cx = Math.cos(cAngle) * cDist + asymOffset.x * cHeightFrac * cHeightFrac;
+        const cz = Math.sin(cAngle) * cDist + asymOffset.z * cHeightFrac * cHeightFrac;
+        const cy = Math.pow(cHeightFrac, 1.25) * height;
+
+        const cragGeo = new THREE.DodecahedronGeometry(1.2 + (c % 3) * 0.6, 0);
+        const crag = new THREE.Mesh(cragGeo, c % 2 === 0 ? rockMat1 : rockMat2);
+        crag.position.set(cx, cy, cz);
+        crag.scale.set(1.4, 0.8 + (c % 2) * 0.4, 1.2);
+        crag.rotation.set((c * 0.4) % 1, cAngle, (c * 0.3) % 1);
+        crag.castShadow = true;
+        crag.receiveShadow = true;
+        mGroup.add(crag);
+      }
+
+      // ── Pine trees around lower foothills ──
+      const numPines = 4 + (seed % 4);
+      for (let i = 0; i < numPines; i++) {
+        const treeAngle = ((i * 2.39 + seed * 0.7) % (Math.PI * 2));
+        const treeDist = baseRadius * (0.68 + 0.22 * ((i * 1.41) % 1));
+        const tx = Math.cos(treeAngle) * treeDist + asymOffset.x * 0.12;
+        const tz = Math.sin(treeAngle) * treeDist + asymOffset.z * 0.12;
+        const ty = (1 - (treeDist / baseRadius)) * (height * 0.24);
+
+        const worldX = mx + tx;
+        const worldZ = mz + tz;
+
+        // Skip pines if too close to tunnel entrances (East: 34, -5.5; West: -32, -10)
+        const dEast = Math.hypot(worldX - 34.0, worldZ - (-5.5));
+        const dWest = Math.hypot(worldX - (-32.0), worldZ - (-10.0));
+        if (dEast < 5.5 || dWest < 5.5) continue;
+
+        const pGroup = new THREE.Group();
+        pGroup.position.set(tx, Math.max(0.1, ty), tz);
+        const pScale = 1.1 + (i % 3) * 0.35;
+        pGroup.scale.set(pScale, pScale, pScale);
+
+        const pTrunk = new THREE.Mesh(distTrunkGeo, distTrunkMat);
+        pTrunk.position.y = 0.5;
+        pTrunk.castShadow = true;
+        pGroup.add(pTrunk);
+
+        for (let l = 0; l < 3; l++) {
+          const pFoliage = new THREE.Mesh(
+            new THREE.ConeGeometry(1.2 * (1 - l * 0.24), 1.1, 5),
+            distPineFoliageMat
+          );
+          pFoliage.position.y = 0.9 + l * 0.65;
+          pFoliage.castShadow = true;
+          pGroup.add(pFoliage);
+        }
+        mGroup.add(pGroup);
+      }
+
+      return mGroup;
+    };
+
+    // ── TOWERING MOUNTAIN RANGES ENCIRCLING THE HORIZON (22M - 32M TALL) ──
+    // Mountains positioned so their slopes seamlessly swallow and fuse with the tunnel roofs
+    const mountainLayout: [number, number, number, number, number, { x: number; z: number }, number][] = [
+      // ── EAST MOUNTAIN RANGE (Seamlessly fusing with East Road Tunnel at x=34.0, z=-5.5) ──
+      [48, -26, 20, 24, 3, { x: 3, z: -2 }, 101],
+      [49, -4.5, 20, 28, 3, { x: 3, z: -1 }, 103],  // Mountain seamlessly fusing with East Tunnel!
+      [51, 16, 21, 26, 4, { x: 3, z: 2 }, 104],
+      [48, 32, 20, 25, 3, { x: 3, z: 1 }, 105],
+      [46, 44, 19, 23, 3, { x: 2, z: -2 }, 106],
+
+      // ── WEST MOUNTAIN RANGE (Seamlessly fusing with West Road Tunnel at x=-32.0, z=-10.0) ──
+      [-47, -28, 20, 24, 3, { x: -3, z: -2 }, 201],
+      [-47, -10, 20, 27, 3, { x: -3, z: -1 }, 202], // Mountain seamlessly fusing with West Tunnel!
+      [-48, 8, 21, 25, 3, { x: -3, z: 1 }, 203],
+      [-49, 24, 22, 27, 4, { x: -4, z: 2 }, 204],
+      [-46, 40, 20, 23, 3, { x: -2, z: -1 }, 205],
+
+      // ── NORTH MOUNTAIN RANGE (Northern Horizon Peaks) ──
+      [-32, -48, 22, 25, 3, { x: -2, z: -4 }, 301],
+      [-16, -52, 24, 29, 4, { x: 1, z: -5 }, 302],
+      [0, -56, 26, 32, 3, { x: 0, z: -6 }, 303],   // Grand 32m Central North Summit
+      [16, -52, 24, 29, 4, { x: -1, z: -5 }, 304],
+      [32, -48, 22, 25, 3, { x: 3, z: -4 }, 305],
+
+      // ── SOUTH MOUNTAIN RANGE (Southern Horizon Peaks) ──
+      [-30, 48, 21, 24, 3, { x: -3, z: 4 }, 401],
+      [-15, 52, 23, 28, 4, { x: 2, z: 5 }, 402],
+      [0, 54, 25, 30, 3, { x: 0, z: 6 }, 403],     // Grand 30m South Peak
+      [18, 52, 23, 28, 4, { x: -2, z: 5 }, 404],
+      [32, 48, 21, 24, 3, { x: 3, z: 4 }, 405]
+    ];
+
+    mountainLayout.forEach(([mx, mz, rad, ht, ridges, asym, seed]) => {
+      terrainGroup.add(createMajesticToweringMountain(mx, mz, rad, ht, ridges, asym, seed));
+    });
+
+    // ── LANDSCAPE TREES (Carefully positioned to keep roads & tunnels open) ──
+    const eastTrees: [number, number, 'pine' | 'oak' | 'cherry', number][] = [
+      [27, -4, 'oak', 1.1], [29, -14, 'pine', 1.2], [31, 8, 'cherry', 1.0],
+      [28, 18, 'pine', 1.3], [30, -22, 'oak', 1.1], [26, 26, 'pine', 1.0],
+      [25, -20, 'cherry', 0.9], [32, -18, 'pine', 1.4], [30, 14, 'oak', 1.2],
+      [26, 10, 'pine', 1.1], [28, -30, 'oak', 1.3], [33, 24, 'pine', 1.2],
+      [42, -18, 'pine', 1.5], [44, 8, 'oak', 1.2], [42, 20, 'pine', 1.4],
+    ];
+    eastTrees.forEach(([tx, tz, type, sc]) => {
+      terrainGroup.add(createLandscapeTree(tx, tz, type, sc));
+    });
+
+    // North Mountain Forest
+    const northTrees: [number, number, 'pine' | 'oak' | 'cherry', number][] = [
+      [-16, -24, 'pine', 1.3], [-10, -26, 'pine', 1.2], [-4, -25, 'oak', 1.1],
+      [2, -27, 'pine', 1.4], [8, -25, 'cherry', 1.0], [-20, -22, 'pine', 1.1],
+      [-14, -28, 'pine', 1.5], [4, -28, 'oak', 1.2]
+    ];
+    northTrees.forEach(([tx, tz, type, sc]) => {
+      terrainGroup.add(createLandscapeTree(tx, tz, type, sc));
+    });
+
+    // West Ridge Forest
+    const westTrees: [number, number, 'pine' | 'oak' | 'cherry', number][] = [
+      [-22, -14, 'pine', 1.2], [-24, -6, 'oak', 1.1], [-23, 4, 'pine', 1.3],
+      [-25, 14, 'cherry', 1.0], [-22, 22, 'pine', 1.2], [-26, -18, 'pine', 1.4]
+    ];
+    westTrees.forEach(([tx, tz, type, sc]) => {
+      terrainGroup.add(createLandscapeTree(tx, tz, type, sc));
+    });
+
+    // South Meadow Woods
+    const southTrees: [number, number, 'pine' | 'oak' | 'cherry', number][] = [
+      [-16, 24, 'oak', 1.2], [-8, 26, 'pine', 1.3], [0, 25, 'cherry', 1.1],
+      [6, 27, 'pine', 1.2], [-20, 26, 'oak', 1.0], [4, 25, 'oak', 1.1]
+    ];
+    southTrees.forEach(([tx, tz, type, sc]) => {
+      terrainGroup.add(createLandscapeTree(tx, tz, type, sc));
+    });
+
+    // Distant Windmill
+    const distMillGroup = new THREE.Group();
+    distMillGroup.position.set(-22, 0, -32);
+    const dmTower = new THREE.Mesh(new THREE.CylinderGeometry(1.4, 2.2, 7.0, 8), getCachedColorMaterial('#F8FAFC', 0.8));
+    dmTower.position.y = 3.5;
+    const dmCap = new THREE.Mesh(new THREE.ConeGeometry(1.8, 1.8, 8), getCachedColorMaterial('#9A3412', 0.7));
+    dmCap.position.y = 7.8;
+    const dmBlades = new THREE.Group();
+    dmBlades.name = 'distant_mill_blades';
+    dmBlades.position.set(0, 6.8, 1.5);
+    const dmHub = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.3, 0.4, 6), getCachedColorMaterial('#78350F', 0.8));
+    dmHub.rotation.x = Math.PI / 2;
+    dmBlades.add(dmHub);
+    for (let i = 0; i < 4; i++) {
+      const arm = new THREE.Mesh(new THREE.BoxGeometry(0.2, 5.0, 0.08), getCachedColorMaterial('#FBBF24', 0.5));
+      arm.position.y = 2.5;
+      const sail = new THREE.Mesh(new THREE.BoxGeometry(1.0, 3.8, 0.04), getCachedColorMaterial('#FEF08A', 0.5));
+      sail.position.set(0.6, 2.5, 0);
+      const br = new THREE.Group();
+      br.rotation.z = (i * Math.PI) / 2;
+      br.add(arm, sail);
+      dmBlades.add(br);
+    }
+    distMillGroup.add(dmTower, dmCap, dmBlades);
+    terrainGroup.add(distMillGroup);
+
+    // Expansion Markers
+    expansions.forEach(chunk => {
+      if (!chunk.isUnlocked) {
+        const cornerGeo = new THREE.CylinderGeometry(0.08, 0.1, 0.6, 6);
+        const postMat = getCachedColorMaterial('#78350F', 0.8);
+        const corners = [
+          [chunk.x + 0.2, chunk.z + 0.2],
+          [chunk.x + chunk.width - 0.2, chunk.z + 0.2],
+          [chunk.x + 0.2, chunk.z + chunk.depth - 0.2],
+          [chunk.x + chunk.width - 0.2, chunk.z + chunk.depth - 0.2],
+        ];
+        corners.forEach(([cx, cz]) => {
+          const post = new THREE.Mesh(cornerGeo, postMat);
+          post.position.set(cx, 0.3, cz);
+          terrainGroup.add(post);
+        });
+
+        const signGroup = new THREE.Group();
+        signGroup.position.set(chunk.x + chunk.width / 2, 0, chunk.z + chunk.depth / 2);
+        const signPost = new THREE.Mesh(new THREE.BoxGeometry(0.12, 1.2, 0.12), postMat);
+        signPost.position.y = 0.6;
+        signPost.castShadow = true;
+        const signBoard = new THREE.Mesh(new THREE.BoxGeometry(1.2, 0.6, 0.08), getCachedColorMaterial('#FBBF24', 0.5));
+        signBoard.position.y = 1.0;
+        signBoard.castShadow = true;
+        const coinBadge = new THREE.Mesh(new THREE.CylinderGeometry(0.18, 0.18, 0.06, 12), getCachedColorMaterial('#F59E0B', 0.2, 0.8));
+        coinBadge.position.set(0, 1.0, 0.06);
+        coinBadge.rotation.x = Math.PI / 2;
+        signGroup.add(signPost, signBoard, coinBadge);
+        terrainGroup.add(signGroup);
+      }
+    });
+  }, [activeSeason, expansions]);
+
+  // -------------------------------------------------------------------
+  // 3. REBUILD ENTITIES WHEN ENTITIES / SELECTION / EVENT CHANGE
+  // -------------------------------------------------------------------
+  useEffect(() => {
+    if (!entitiesGroupRef.current) return;
+    const entitiesGroup = entitiesGroupRef.current;
+    while (entitiesGroup.children.length > 0) {
+      entitiesGroup.remove(entitiesGroup.children[0]);
+    }
+
+    const now = Date.now();
+    const weatherMult = activeEvent?.growthSpeedMultiplier || 1.0;
+
+    entities.forEach(ent => {
+      const entGroup = new THREE.Group();
+      entGroup.position.set(ent.x + ent.width / 2, 0, ent.z + ent.depth / 2);
+      entGroup.rotation.y = (ent.rotation * Math.PI) / 2;
+      entGroup.userData = { entityId: ent.id, entity: ent };
+
+      if (ent.type === 'special') {
+        if (ent.configId === 'farmhouse') {
+          entGroup.add(createFarmhouseGroup(activeSeason));
+        } else if (ent.configId === 'order_board') {
+          entGroup.add(createOrderBoardGroup());
+        } else if (ent.configId === 'roadside_shop') {
+          entGroup.add(createRoadsideShopGroup());
+        } else if (ent.configId === 'fishing_dock') {
+          entGroup.add(createFishingDockGroup());
+        }
+      } else if (ent.type === 'storage') {
+        if (ent.configId === 'silo') {
+          entGroup.add(createSiloGroup());
+        } else {
+          entGroup.add(createBarnGroup(activeSeason));
+        }
+      } else if (ent.type === 'production') {
+        entGroup.add(createProductionBuildingGroup(ent.configId));
+      } else if (ent.type === 'animal_pen') {
+        entGroup.add(createAnimalPenGroup(ent.configId));
+        if (ent.animals) {
+          ent.animals.forEach(anim => {
+            const aMesh = createAnimalMesh(anim.animalConfigId);
+            aMesh.position.set(anim.posX - 1.2, 0, anim.posZ - 1.2);
+            entGroup.add(aMesh);
+          });
+        }
+      } else if (ent.type === 'field') {
+        const patchGeo = new THREE.BoxGeometry(0.94, 0.08, 0.94);
+        const patchMat = getCachedColorMaterial('#3B1808', 0.95);
+        const patch = new THREE.Mesh(patchGeo, patchMat);
+        patch.position.y = 0.04;
+        patch.receiveShadow = true;
+        entGroup.add(patch);
+
+        const furrowGeo = new THREE.CylinderGeometry(0.04, 0.04, 0.88, 6);
+        const furrowMat = getCachedColorMaterial('#542D0C', 0.95);
+        [-0.25, 0, 0.25].forEach(fx => {
+          const f = new THREE.Mesh(furrowGeo, furrowMat);
+          f.position.set(fx, 0.08, 0);
+          f.rotation.x = Math.PI / 2;
+          entGroup.add(f);
+        });
+
+        if (ent.cropId && ent.plantedAt) {
+          const crop = CROPS[ent.cropId];
+          if (crop) {
+            const growMs = (crop.growTimeSeconds * 1000) / weatherMult;
+            const elapsed = now - ent.plantedAt;
+            const progress = Math.min(1.0, elapsed / growMs);
+            const stage = (progress >= 1.0 ? 4 : Math.min(3, Math.floor(progress * 4))) as 0 | 1 | 2 | 3 | 4;
+            entGroup.add(createCropStageMesh(crop.id, stage, crop.color));
+          }
+        }
+      } else if (ent.type === 'fruit_tree') {
+        const cfg = TREES_BUSHES[ent.configId];
+        const hasFruit = !ent.isDead && (ent.treePlantedAt ? now >= ent.treePlantedAt + (cfg ? cfg.growTimeSeconds * 1000 : 60000) : true);
+        entGroup.add(createTreeBushMesh(ent.configId, activeSeason, hasFruit));
+      } else if (ent.type === 'obstacle') {
+        entGroup.add(createObstacleMesh(ent.configId));
+      } else if (ent.type === 'decoration') {
+        entGroup.add(createDecorationMesh(ent.configId));
+      }
+
+      // Selection highlight ring
+      if (selectedEntityId === ent.id) {
+        const selGeo = new THREE.RingGeometry(ent.width * 0.55, ent.width * 0.68, 32);
+        const selMat = new THREE.MeshBasicMaterial({ 
+          color: 0xFACC15, 
+          side: THREE.DoubleSide,
+          transparent: true,
+          opacity: 0.85
+        });
+        const selMesh = new THREE.Mesh(selGeo, selMat);
+        selMesh.rotation.x = -Math.PI / 2;
+        selMesh.position.y = 0.08;
+        entGroup.add(selMesh);
+      }
+
+      entitiesGroup.add(entGroup);
+    });
+  }, [entities, selectedEntityId, activeEvent, activeSeason]);
+
+  // Update placement preview grid without React re-renders
+  const updatePlacementPreview = useCallback((tile: { x: number; z: number } | null) => {
+    if (!previewGridGroupRef.current) return;
+    const previewGridGroup = previewGridGroupRef.current;
+    while (previewGridGroup.children.length > 0) {
+      previewGridGroup.remove(previewGridGroup.children[0]);
+    }
+
+    const { configId, rotation } = placingRef.current;
+    if (!configId || !tile) return;
+
+    const bConfig = BUILDINGS[configId] || DECORATIONS[configId] || TREES_BUSHES[configId];
+    if (bConfig) {
+      const pW = (rotation % 2 === 1) ? bConfig.depth : bConfig.width;
+      const pD = (rotation % 2 === 1) ? bConfig.width : bConfig.depth;
+      const valid = isAreaAvailable(tile.x, tile.z, pW, pD) &&
+                    isAreaInsideUnlockedTerritory(tile.x, tile.z, pW, pD);
+
+      const pGeo = new THREE.PlaneGeometry(pW, pD);
+      const pMat = new THREE.MeshBasicMaterial({
+        color: valid ? 0x22C55E : 0xEF4444,
+        transparent: true,
+        opacity: 0.55,
+        side: THREE.DoubleSide,
+      });
+      const pMesh = new THREE.Mesh(pGeo, pMat);
+      pMesh.rotation.x = -Math.PI / 2;
+      pMesh.position.set(tile.x + pW / 2, 0.1, tile.z + pD / 2);
+      previewGridGroup.add(pMesh);
+
+      const gridHelper = new THREE.GridHelper(Math.max(pW, pD), Math.max(pW, pD), valid ? 0x16A34A : 0xDC2626, valid ? 0x16A34A : 0xDC2626);
+      gridHelper.position.set(tile.x + pW / 2, 0.12, tile.z + pD / 2);
+      previewGridGroup.add(gridHelper);
+    }
+  }, [isAreaAvailable, isAreaInsideUnlockedTerritory]);
+
+  useEffect(() => {
+    updatePlacementPreview(hoveredTileRef.current);
+  }, [placingBuildingConfigId, placingRotation, updatePlacementPreview]);
+
+  // Continuous Swipe Action for rapid farming
+  const executeSwipeActionOnTile = useCallback((tileX: number, tileZ: number) => {
+    const hitEntity = entities.find(e => 
+      tileX >= e.x && tileX < e.x + e.width &&
+      tileZ >= e.z && tileZ < e.z + e.depth
+    );
+
+    if (!hitEntity) return;
+    if (swipedEntitiesRef.current.has(hitEntity.id)) return;
+
+    if (activeTool?.type === 'plant' && hitEntity.type === 'field' && activeTool.configId) {
+      if (!hitEntity.cropId) {
+        plantCrop(hitEntity.id, activeTool.configId);
+        swipedEntitiesRef.current.add(hitEntity.id);
+      }
+    } else if (activeTool?.type === 'harvest') {
+      if (hitEntity.type === 'field' && hitEntity.cropId) {
+        harvestCrop(hitEntity.id);
+        swipedEntitiesRef.current.add(hitEntity.id);
+      } else if (hitEntity.type === 'fruit_tree') {
+        harvestTreeBush(hitEntity.id);
+        swipedEntitiesRef.current.add(hitEntity.id);
+      }
+    } else if (activeTool?.type === 'feed' && hitEntity.type === 'animal_pen' && hitEntity.animals) {
+      const hungryAnimal = hitEntity.animals.find(a => a.isHungry);
+      if (hungryAnimal) {
+        feedAnimal(hitEntity.id, hungryAnimal.id);
+        swipedEntitiesRef.current.add(hitEntity.id);
+      }
+    } else if (activeTool?.type === 'collect' && hitEntity.type === 'animal_pen' && hitEntity.animals) {
+      const readyAnimal = hitEntity.animals.find(a => a.hasProduct);
+      if (readyAnimal) {
+        collectAnimalProduct(hitEntity.id, readyAnimal.id);
+        swipedEntitiesRef.current.add(hitEntity.id);
+      }
+    }
+  }, [entities, activeTool, plantCrop, harvestCrop, harvestTreeBush, feedAnimal, collectAnimalProduct]);
+
+  // -------------------------------------------------------------------
+  // 4. ULTRA-FAST ZERO-ALLOCATION POINTER EVENTS
+  // -------------------------------------------------------------------
+  const onPointerDown = (e: React.PointerEvent) => {
+    isDraggingRef.current = true;
+    hasMovedRef.current = false;
+    dragStartScreenRef.current = { x: e.clientX, y: e.clientY };
+    dragStartCamRef.current = { x: targetCamPosRef.current.x, z: targetCamPosRef.current.z };
+    swipedEntitiesRef.current.clear();
+
+    const tile = getTileIntersection(e.clientX, e.clientY);
+    if (tile && activeTool) {
+      executeSwipeActionOnTile(tile.x, tile.z);
+    }
+  };
+
+  const onPointerMove = (e: React.PointerEvent) => {
+    const tile = getTileIntersection(e.clientX, e.clientY);
+    if (tile) {
+      hoveredTileRef.current = tile;
+      if (placingRef.current.configId) {
+        updatePlacementPreview(tile);
+      }
+    }
+
+    if (!isDraggingRef.current) return;
+
+    const dx = e.clientX - dragStartScreenRef.current.x;
+    const dy = e.clientY - dragStartScreenRef.current.y;
+
+    if (Math.abs(dx) > 4 || Math.abs(dy) > 4) {
+      hasMovedRef.current = true;
+    }
+
+    if (activeTool && tile) {
+      executeSwipeActionOnTile(tile.x, tile.z);
+    } else if (!placingRef.current.configId && containerRef.current) {
+      const viewportHeight = containerRef.current.clientHeight;
+      const zoom = currentZoomRef.current;
+      
+      const worldScale = (zoom * 2) / viewportHeight;
+      // Intuitive direct map grab-and-drag (1:1 with pointer movement)
+      const worldDeltaX = (-dx * 0.7071 - dy * 0.7071 * 1.55) * worldScale;
+      const worldDeltaZ = (dx * 0.7071 - dy * 0.7071 * 1.55) * worldScale;
+
+      targetCamPosRef.current.x = Math.max(-24, Math.min(24, dragStartCamRef.current.x + worldDeltaX));
+      targetCamPosRef.current.z = Math.max(-24, Math.min(24, dragStartCamRef.current.z + worldDeltaZ));
+    }
+  };
+
+  const onPointerUp = (e: React.PointerEvent) => {
+    isDraggingRef.current = false;
+    touchDistanceRef.current = null;
+    swipedEntitiesRef.current.clear();
+
+    if (!hasMovedRef.current) {
+      const tile = getTileIntersection(e.clientX, e.clientY);
+      if (!tile) return;
+
+      if (placingBuildingConfigId) {
+        placeBuilding(placingBuildingConfigId, tile.x, tile.z, placingRotation);
+        return;
+      }
+
+      const clickedChunk = expansions.find(
+        c => !c.isUnlocked && 
+        tile.x >= c.x && tile.x < c.x + c.width &&
+        tile.z >= c.z && tile.z < c.z + c.depth
+      );
+      if (clickedChunk) {
+        unlockExpansionChunk(clickedChunk.id);
+        return;
+      }
+
+      const clickedEntity = entities.find(ent => 
+        tile.x >= ent.x && tile.x < ent.x + ent.width &&
+        tile.z >= ent.z && tile.z < ent.z + ent.depth
+      );
+
+      if (clickedEntity) {
+        setSelectedEntity(clickedEntity.id);
+
+        if (clickedEntity.type === 'special') {
+          if (clickedEntity.configId === 'order_board') openModal('orders');
+          else if (clickedEntity.configId === 'roadside_shop') openModal('roadside');
+          else if (clickedEntity.configId === 'fishing_dock') openModal('fishing');
+          else if (clickedEntity.configId === 'farmhouse') openModal('settings');
+        } else if (clickedEntity.type === 'storage') {
+          if (clickedEntity.configId === 'silo') openModal('silo');
+          else openModal('barn');
+        } else if (clickedEntity.type === 'obstacle') {
+          clearObstacle(clickedEntity.id);
+        } else if (clickedEntity.type === 'production') {
+          if (clickedEntity.completedProducts && clickedEntity.completedProducts.length > 0) {
+            collectProduct(clickedEntity.id, 0);
+          }
+        }
+      } else {
+        setSelectedEntity(null);
+      }
+    }
+  };
+
+  const onWheel = (e: React.WheelEvent) => {
+    e.preventDefault();
+    const zoomDelta = e.deltaY * 0.015;
+    targetZoomRef.current = Math.max(11, Math.min(28, targetZoomRef.current + zoomDelta));
+  };
+
+  const onTouchMove = (e: React.TouchEvent) => {
+    if (e.touches.length === 2) {
+      const t1 = e.touches[0];
+      const t2 = e.touches[1];
+      const dist = Math.hypot(t2.clientX - t1.clientX, t2.clientY - t1.clientY);
+
+      if (touchDistanceRef.current !== null) {
+        const pinchDelta = (touchDistanceRef.current - dist) * 0.05;
+        targetZoomRef.current = Math.max(11, Math.min(28, targetZoomRef.current + pinchDelta));
+      }
+      touchDistanceRef.current = dist;
+    }
+  };
+
+  return (
+    <div 
+      ref={containerRef}
+      className="relative w-full h-full select-none touch-none overflow-hidden"
+      onPointerDown={onPointerDown}
+      onPointerMove={onPointerMove}
+      onPointerUp={onPointerUp}
+      onPointerCancel={onPointerUp}
+      onWheel={onWheel}
+      onTouchMove={onTouchMove}
+    >
+      <canvas ref={canvasRef} className="w-full h-full block cursor-grab active:cursor-grabbing" />
+    </div>
+  );
+};

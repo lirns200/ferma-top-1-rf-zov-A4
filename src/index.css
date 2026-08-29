@@ -1,0 +1,188 @@
+@import "tailwindcss";
+
+/* ═══════════════════════════════════════════════
+   PIXEL ART HUD — Global Styles
+   ═══════════════════════════════════════════════ */
+
+/* Pixel font shortcut */
+.px-font {
+  font-family: 'Press Start 2P', monospace;
+}
+
+/* ── Pixel Panel ──────────────────────────────── */
+/* Dark panel with thick outer border + inset bevel */
+.px-panel {
+  background: #2d1a06;
+  border: 3px solid #000;
+  box-shadow:
+    inset 2px 2px 0 #6b3d0f,   /* top-left bevel (light)  */
+    inset -2px -2px 0 #0f0600, /* bottom-right bevel (dark) */
+    4px 4px 0 #000;             /* outer drop shadow */
+  image-rendering: pixelated;
+}
+
+/* ── Pixel Button ─────────────────────────────── */
+.px-btn {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 8px;
+  border: 2px solid #000;
+  box-shadow:
+    inset 1px 1px 0 rgba(255,255,255,0.25),
+    inset -1px -1px 0 rgba(0,0,0,0.4),
+    3px 3px 0 #000;
+  cursor: pointer;
+  transition: transform 0.05s, box-shadow 0.05s;
+  image-rendering: pixelated;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.px-btn:active {
+  transform: translate(2px, 2px);
+  box-shadow:
+    inset 1px 1px 0 rgba(0,0,0,0.4),
+    1px 1px 0 #000;
+}
+
+/* ── Pixel Button Colors ──────────────────────── */
+.px-btn-green  { background: #2e7d32; color: #b9f6ca; border-color: #000; }
+.px-btn-green:hover  { background: #388e3c; }
+
+.px-btn-amber  { background: #7c4a00; color: #ffe082; border-color: #000; }
+.px-btn-amber:hover  { background: #8d5700; }
+
+.px-btn-red    { background: #b71c1c; color: #ffcdd2; border-color: #000; }
+.px-btn-red:hover    { background: #c62828; }
+
+.px-btn-blue   { background: #0d47a1; color: #bbdefb; border-color: #000; }
+.px-btn-blue:hover   { background: #1565c0; }
+
+.px-btn-cyan   { background: #006064; color: #b2ebf2; border-color: #000; }
+.px-btn-cyan:hover   { background: #00838f; }
+
+/* ── Pixel Badge ──────────────────────────────── */
+.px-badge {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 7px;
+  border: 2px solid #000;
+  box-shadow: 2px 2px 0 #000;
+  line-height: 1;
+  padding: 3px 5px;
+}
+
+/* ── Pixel Progress Bar ───────────────────────── */
+.px-bar-wrap {
+  border: 2px solid #000;
+  background: #0a0400;
+  box-shadow: inset 1px 1px 0 #000, 2px 2px 0 #000;
+  padding: 2px;
+}
+.px-bar-fill {
+  height: 100%;
+  image-rendering: pixelated;
+  transition: width 0.4s steps(10);
+}
+
+/* ── Pixel Card (shop item) ───────────────────── */
+.px-card {
+  background: #3d2208;
+  border: 3px solid #000;
+  box-shadow:
+    inset 1px 1px 0 #7a4010,
+    inset -1px -1px 0 #1a0800,
+    3px 3px 0 #000;
+  transition: transform 0.06s, box-shadow 0.06s;
+  cursor: pointer;
+}
+.px-card:hover:not(.px-card-locked) {
+  transform: translate(-1px, -1px);
+  box-shadow:
+    inset 1px 1px 0 #9a5518,
+    inset -1px -1px 0 #1a0800,
+    4px 4px 0 #000;
+}
+.px-card:active:not(.px-card-locked) {
+  transform: translate(2px, 2px);
+  box-shadow:
+    inset 1px 1px 0 #000,
+    1px 1px 0 #000;
+}
+.px-card-locked { opacity: 0.45; cursor: not-allowed; }
+.px-card-broke  { opacity: 0.75; cursor: not-allowed; }
+
+/* ── Pixel Tab ────────────────────────────────── */
+.px-tab {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 7px;
+  border: 2px solid #000;
+  box-shadow: 2px 2px 0 #000;
+  background: #3d2208;
+  color: #c8a06e;
+  cursor: pointer;
+  padding: 6px 10px;
+  white-space: nowrap;
+  transition: transform 0.05s;
+  text-transform: uppercase;
+}
+.px-tab:hover  { background: #4d2e0e; color: #ffe082; }
+.px-tab-active {
+  background: #7c4a00 !important;
+  color: #ffe082 !important;
+  border-color: #ffd54f !important;
+  box-shadow: 2px 2px 0 #000, 0 0 0 1px #ffd54f !important;
+  transform: translateY(-1px);
+}
+
+/* ── Scanlines overlay (optional, use as pseudo-element) ── */
+.px-scanlines::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 3px,
+    rgba(0,0,0,0.08) 3px,
+    rgba(0,0,0,0.08) 4px
+  );
+  pointer-events: none;
+}
+
+/* ── Pixel input ──────────────────────────────── */
+.px-input {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 8px;
+  background: #1a0800;
+  border: 2px solid #000;
+  box-shadow: inset 2px 2px 0 #000;
+  color: #ffe082;
+  outline: none;
+  padding: 6px 8px;
+}
+.px-input::placeholder { color: #5a3a10; }
+.px-input:focus { border-color: #ffd54f; }
+
+/* ── Pixel divider ────────────────────────────── */
+.px-divider {
+  border: none;
+  border-top: 2px solid #000;
+  box-shadow: 0 1px 0 #6b3d0f;
+  margin: 0;
+}
+
+/* Custom sleek scrollbar for modals */
+.custom-scroll::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+.custom-scroll::-webkit-scrollbar-track {
+  background: #180c04;
+  border-radius: 4px;
+}
+.custom-scroll::-webkit-scrollbar-thumb {
+  background: #78350f;
+  border-radius: 4px;
+  border: 1px solid #9a3412;
+}
+.custom-scroll::-webkit-scrollbar-thumb:hover {
+  background: #9a3412;
+}
