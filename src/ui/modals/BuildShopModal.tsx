@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useGameStore } from '../../game/gameState';
 import { sounds } from '../../audio/SoundManager';
 import { triggerTelegramHaptic, getTelegramUserProfile } from '../../utils/telegram';
@@ -288,22 +288,25 @@ export const BuildShopModal: React.FC = () => {
               ? 'bg-gradient-to-r from-emerald-950/40 via-[#181C24] to-teal-950/40 border-emerald-500/40 text-white'
               : 'hud-parchment border-emerald-600 text-[#3B1F0D]'
           }`}>
-            <div className="flex items-center gap-2.5">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-emerald-500 to-green-600 flex items-center justify-center text-xl shadow-lg shrink-0">
-                🎁
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 shrink-0 flex items-center justify-center filter drop-shadow-md">
+                <Building3DThumbnail buildingId="daily_gift_box" size={56} />
               </div>
               <div className="flex flex-col">
-                <span className="font-extrabold text-xs">Ежедневный подарок</span>
-                <span className={`text-[11px] ${isDesign2026 ? 'text-emerald-300' : 'text-emerald-800 font-bold'}`}>
-                  +500 🪙 и +5 ⚡ бесплатно
-                </span>
+                <span className="font-extrabold text-xs sm:text-sm">Ежедневный подарок</span>
+                <div className="flex items-center gap-1.5 text-[11px] font-bold text-emerald-300">
+                  <span className="flex items-center gap-1">+500 <CoinSvg /></span>
+                  <span>и</span>
+                  <span className="flex items-center gap-0.5 text-sky-400">+5 <Zap size={12} /></span>
+                  <span className="text-zinc-400">бесплатно</span>
+                </div>
               </div>
             </div>
 
             <button
               onClick={handleClaimDaily}
               disabled={dailyClaimed}
-              className={`px-3 py-2 rounded-xl text-xs font-black shadow flex items-center gap-1 transition-all active:scale-95 cursor-pointer shrink-0 ${
+              className={`px-3.5 py-2 rounded-xl text-xs font-black shadow flex items-center gap-1 transition-all active:scale-95 cursor-pointer shrink-0 ${
                 dailyClaimed
                   ? 'bg-zinc-800 text-zinc-500 border border-zinc-700 cursor-default'
                   : 'bg-gradient-to-r from-emerald-500 to-green-600 text-white hover:brightness-110 border border-emerald-300 animate-pulse'
