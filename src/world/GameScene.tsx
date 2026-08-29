@@ -523,6 +523,7 @@ export const GameScene: React.FC = () => {
 
     // AFK Cloud Spawner timer
     let cloudSpawnTimer = 0.8;
+    const tempWindObj = new THREE.Object3D();
 
     // 10. ANIMATION LOOP (Smooth 60/120 FPS)
     let animFrameId: number;
@@ -735,6 +736,60 @@ export const GameScene: React.FC = () => {
         }
       });
 
+      // ── Realistic 3D Grass Cluster Wind Physics ────────────────────────
+      const grassMesh = scene.getObjectByName('meadow_grass_tufts') as THREE.InstancedMesh;
+      if (grassMesh && grassMesh.userData?.instances) {
+        const instances = grassMesh.userData.instances as Array<{ x: number; y: number; z: number; scale: THREE.Vector3; rotY: number }>;
+        const grassWindIntensity = isStrongWind ? 0.30 : isRain ? 0.18 : 0.09;
+        const grassWindSpeed = isStrongWind ? 6.2 : isRain ? 4.0 : 2.6;
+
+        for (let i = 0; i < instances.length; i++) {
+          const inst = instances[i];
+          const phase = elapsed * grassWindSpeed + inst.x * 0.32 + inst.z * 0.32;
+          const swayX = Math.sin(phase) * grassWindIntensity;
+          const swayZ = Math.cos(phase * 0.85) * (grassWindIntensity * 0.7);
+
+          tempWindObj.position.set(inst.x, inst.y, inst.z);
+          tempWindObj.rotation.set(swayX, inst.rotY, swayZ);
+          tempWindObj.scale.copy(inst.scale);
+          tempWindObj.updateMatrix();
+          grassMesh.setMatrixAt(i, tempWindObj.matrix);
+        }
+        grassMesh.instanceMatrix.needsUpdate = true;
+      }
+
+      // ── Flower Stems & Blooms Wind Sway ────────────────────────────────
+      const flowerStemsMesh = scene.getObjectByName('meadow_flower_stems') as THREE.InstancedMesh;
+      const flowerBloomsMesh = scene.getObjectByName('meadow_flower_blooms') as THREE.InstancedMesh;
+      if (flowerStemsMesh && flowerStemsMesh.userData?.instances) {
+        const instances = flowerStemsMesh.userData.instances as Array<{ x: number; y: number; z: number; scale: number; rotY: number; height: number }>;
+        const flowerIntensity = isStrongWind ? 0.20 : 0.07;
+        const flowerSpeed = isStrongWind ? 5.2 : 2.4;
+
+        for (let i = 0; i < instances.length; i++) {
+          const inst = instances[i];
+          const phase = elapsed * flowerSpeed + inst.x * 0.35 + inst.z * 0.25;
+          const swayX = Math.sin(phase) * flowerIntensity;
+          const swayZ = Math.cos(phase * 0.9) * (flowerIntensity * 0.6);
+
+          tempWindObj.position.set(inst.x, inst.height * 0.2, inst.z);
+          tempWindObj.rotation.set(swayX, inst.rotY, swayZ);
+          tempWindObj.scale.set(1, inst.height, 1);
+          tempWindObj.updateMatrix();
+          flowerStemsMesh.setMatrixAt(i, tempWindObj.matrix);
+
+          if (flowerBloomsMesh) {
+            tempWindObj.position.set(inst.x + swayX * 0.25, 0.41 + inst.height * 0.18, inst.z + swayZ * 0.25);
+            tempWindObj.rotation.set(swayX, inst.rotY, swayZ);
+            tempWindObj.scale.setScalar(inst.scale);
+            tempWindObj.updateMatrix();
+            flowerBloomsMesh.setMatrixAt(i, tempWindObj.matrix);
+          }
+        }
+        flowerStemsMesh.instanceMatrix.needsUpdate = true;
+        if (flowerBloomsMesh) flowerBloomsMesh.instanceMatrix.needsUpdate = true;
+      }
+
       // ── Rain Splash Ripples on Ground ─────────────────────────────────
       splashRings.forEach((sr) => {
         if (isRain) {
@@ -858,14 +913,13 @@ export const GameScene: React.FC = () => {
           particleMat.color.setHex(curSeason === 'autumn' ? 0xEA580C : 0x34D399);
           particleMat.size = 0.42;
           particleMat.opacity = 0.85;
-        } else if (curSeason === 'spring') {
-          particleMat.color.setHex(0xF472B6); // Cherry blossom pink
-          particleMat.size = 0.32;
-          particleMat.opacity = 0.8;
+        } else if (curSeason === 'spring' && isWind) {
+          particleMat.color.setHex(0xF472B6); // Cherry blossom pink petals during spring breeze
+          particleMat.size = 0.28;
+          particleMat.opacity = 0.7;
         } else {
-          particleMat.color.setHex(0xFEF08A); // Golden pollen
-          particleMat.size = 0.26;
-          particleMat.opacity = 0.65;
+          // Clear sunny day: Crisp clean farm view without flying speckles
+          particleMat.opacity = 0.0;
         }
       }
 

@@ -228,6 +228,51 @@ function createShorelineDetails(random: () => number) {
   return group;
 }
 
+function createGrassTuftGeometry(): THREE.BufferGeometry {
+  const geometries: THREE.BufferGeometry[] = [];
+  const bladeAngles = [0, 1.25, 2.5, 3.75, 5.0];
+  const bladeHeights = [0.65, 0.55, 0.72, 0.58, 0.62];
+  const bladeLeans = [0.18, 0.22, 0.15, 0.24, 0.20];
+
+  bladeAngles.forEach((angle, idx) => {
+    const ht = bladeHeights[idx];
+    const lean = bladeLeans[idx];
+    const bGeo = new THREE.ConeGeometry(0.045, ht, 4);
+    bGeo.translate(0, ht / 2, 0); // Pivot at the base
+    bGeo.rotateZ(lean);
+    bGeo.rotateY(angle);
+    geometries.push(bGeo);
+  });
+
+  const posArr: number[] = [];
+  const normArr: number[] = [];
+  const indArr: number[] = [];
+  let vertOffset = 0;
+
+  geometries.forEach(geo => {
+    const pos = geo.attributes.position;
+    const norm = geo.attributes.normal;
+    const ind = geo.index;
+    for (let i = 0; i < pos.count; i++) {
+      posArr.push(pos.getX(i), pos.getY(i), pos.getZ(i));
+      normArr.push(norm.getX(i), norm.getY(i), norm.getZ(i));
+    }
+    if (ind) {
+      for (let i = 0; i < ind.count; i++) {
+        indArr.push(ind.getX(i) + vertOffset);
+      }
+    }
+    vertOffset += pos.count;
+    geo.dispose();
+  });
+
+  const mergedGeo = new THREE.BufferGeometry();
+  mergedGeo.setAttribute('position', new THREE.Float32BufferAttribute(posArr, 3));
+  mergedGeo.setAttribute('normal', new THREE.Float32BufferAttribute(normArr, 3));
+  mergedGeo.setIndex(indArr);
+  return mergedGeo;
+}
+
 function createMeadowDetails(season: SeasonType, random: () => number) {
   const palette = SEASON_PALETTES[season];
   const group = new THREE.Group();
@@ -245,26 +290,43 @@ function createMeadowDetails(season: SeasonType, random: () => number) {
   const bloomGeometry = new THREE.OctahedronGeometry(0.095, 0);
   const blooms = new THREE.InstancedMesh(bloomGeometry, makeMaterial(palette.flower, 0.65), positions.length * 2);
   blooms.name = 'meadow_flower_blooms';
+  const flowerInstances: Array<{ x: number; y: number; z: number; scale: number; rotY: number; height: number }> = [];
+
   positions.forEach(([baseX, baseZ], index) => {
     for (let offset = 0; offset < 2; offset++) {
       const i = index * 2 + offset;
       const x = baseX + (random() - 0.5) * 1.6;
       const z = baseZ + (random() - 0.5) * 1.6;
       const height = 0.7 + random() * 0.55;
-      setInstance(stems, i, x, height * 0.2, z, new THREE.Vector3(1, height, 1), random());
-      setInstance(blooms, i, x, 0.41 + height * 0.18, z, 0.72 + random() * 0.45, random() * Math.PI);
+      const rotY = random() * Math.PI * 2;
+      const scale = 0.72 + random() * 0.45;
+      setInstance(stems, i, x, height * 0.2, z, new THREE.Vector3(1, height, 1), rotY);
+      setInstance(blooms, i, x, 0.41 + height * 0.18, z, scale, rotY);
+      flowerInstances.push({ x, y: 0, z, scale, rotY, height });
     }
   });
+  stems.userData.instances = flowerInstances;
+  blooms.userData.instances = flowerInstances;
 
-  const grassGeometry = new THREE.ConeGeometry(0.11, 0.7, 4);
-  const grass = new THREE.InstancedMesh(grassGeometry, makeMaterial(palette.grassDark, 0.96), 46);
+  const grassGeometry = createGrassTuftGeometry();
+  const grassCount = 130;
+  const grass = new THREE.InstancedMesh(grassGeometry, makeMaterial(palette.grassDark, 0.88), grassCount);
   grass.name = 'meadow_grass_tufts';
-  for (let i = 0; i < grass.count; i++) {
+  const grassInstances: Array<{ x: number; y: number; z: number; scale: THREE.Vector3; rotY: number }> = [];
+
+  for (let i = 0; i < grassCount; i++) {
     const east = i % 3 === 0;
     const x = east ? 24.5 + random() * 8 : -31 + random() * 38;
     const z = -28 + random() * 56;
-    setInstance(grass, i, x, 0.25, z, new THREE.Vector3(0.75 + random() * 0.5, 0.7 + random() * 0.8, 0.75 + random() * 0.5), random() * Math.PI);
+    const scX = 0.85 + random() * 0.55;
+    const scY = 0.75 + random() * 0.7;
+    const scZ = 0.85 + random() * 0.55;
+    const scale = new THREE.Vector3(scX, scY, scZ);
+    const rotY = random() * Math.PI * 2;
+    setInstance(grass, i, x, 0.02, z, scale, rotY);
+    grassInstances.push({ x, y: 0.02, z, scale, rotY });
   }
+  grass.userData.instances = grassInstances;
 
   const fenceSegments: Array<readonly [number, number, number, number]> = [
     [-24, -12.1, 5.2, -0.05], [-18.4, -11.7, 5.2, -0.08], [-12.8, -11.25, 4.6, -0.08],
