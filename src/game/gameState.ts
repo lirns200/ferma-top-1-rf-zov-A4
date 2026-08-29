@@ -65,6 +65,9 @@ export interface GameStore {
   activeTool: ActiveTool | null;
   placingBuildingConfigId: string | null;
   placingRotation: 0 | 1 | 2 | 3;
+  movingEntityId: string | null;
+  movingPos: { x: number; z: number } | null;
+  movingRotation: 0 | 1 | 2 | 3;
   
   // Expansions
   expansions: MapChunkExpansion[];
@@ -129,6 +132,12 @@ export interface GameStore {
   isAreaInsideUnlockedTerritory: (x: number, z: number, width: number, depth: number) => boolean;
   placeBuilding: (configId: string, x: number, z: number, rotation: 0 | 1 | 2 | 3) => boolean;
   moveEntity: (id: string, x: number, z: number, rotation: 0 | 1 | 2 | 3) => boolean;
+  startMovingEntity: (id: string) => void;
+  setMovingPos: (x: number, z: number) => void;
+  rotateMovingEntity: () => void;
+  confirmMoveEntity: () => boolean;
+  cancelMoveEntity: () => void;
+  deleteEntity: (id: string) => boolean;
   storeDecoration: (id: string) => boolean;
   
   // Crops & Farming Actions
@@ -194,6 +203,9 @@ export const useGameStore = create<GameStore>((set, get) => ({
   activeTool: null,
   placingBuildingConfigId: null,
   placingRotation: 0,
+  movingEntityId: null,
+  movingPos: null,
+  movingRotation: 0,
   
   expansions: [...INITIAL_MAP_EXPANSIONS],
   
@@ -738,22 +750,131 @@ export const useGameStore = create<GameStore>((set, get) => ({
     set(s => ({
       entities: s.entities.map(e => e.id === id ? { ...e, x, z, rotation, width, depth } : e),
       selectedEntityId: null,
+      movingEntityId: null,
+      movingPos: null,
     }));
     sounds.playClick();
     return true;
   },
 
-  storeDecoration: (id) => {
+  startMovingEntity: (id) => {
     const state = get();
     const ent = state.entities.find(e => e.id === id);
-    if (!ent || ent.type !== 'decoration') return false;
+    if (!ent) return;
+    set({
+      movingEntityId: id,
+      movingPos: { x: ent.x, z: ent.z },
+      movingRotation: ((ent.rotation || 0) % 4) as 0 | 1 | 2 | 3,
+      selectedEntityId: id,
+      activeTool: null,
+      placingBuildingConfigId: null,
+    });
+    sounds.playLevelUp();
+    state.addFloatingText('Режим перемещения 🔄', 0, 0, '#F59E0B');
+  },
+
+  setMovingPos: (x, z) => {
+    set({ movingPos: { x, z } });
+  },
+
+  rotateMovingEntity: () => {
+    const current = get().movingRotation;
+    const next = ((current + 1) % 4) as 0 | 1 | 2 | 3;
+    set({ movingRotation: next });
+    sounds.playClick();
+  },
+
+  confirmMoveEntity: () => {
+    const state = get();
+    const { movingEntityId, movingPos, movingRotation } = state;
+    if (!movingEntityId || !movingPos) return false;
+
+    const ent = state.entities.find(e => e.id === movingEntityId);
+    if (!ent) return false;
+
+    const width = (movingRotation % 2 === 1) ? ent.depth : ent.width;
+    const depth = (movingRotation % 2 === 1) ? ent.width : ent.depth;
+
+    if (!state.isAreaAvailable(movingPos.x, movingPos.z, width, depth, movingEntityId)) {
+      state.addFloatingText('Здесь нельзя поставить!', 0, 0, '#EF4444');
+      sounds.playClick();
+      return false;
+    }
+
+    if (!state.isAreaInsideUnlockedTerritory(movingPos.x, movingPos.z, width, depth)) {
+      state.addFloatingText('Вне территории фермы!', 0, 0, '#EF4444');
+      sounds.playClick();
+      return false;
+    }
+
+    set(s => ({
+      entities: s.entities.map(e => e.id === movingEntityId ? {
+        ...e,
+        x: movingPos.x,
+        z: movingPos.z,
+        rotation: movingRotation,
+        width,
+        depth
+      } : e),
+      movingEntityId: null,
+      movingPos: null,
+      selectedEntityId: null,
+    }));
+
+    sounds.playCraftStart();
+    state.addFloatingText('Перемещено! ✨', 0, 0, '#22C55E');
+    return true;
+  },
+
+  cancelMoveEntity: () => {
+    set({
+      movingEntityId: null,
+      movingPos: null,
+      selectedEntityId: null,
+    });
+    sounds.playClick();
+  },
+
+  deleteEntity: (id) => {
+    const state = get();
+    const ent = state.entities.find(e => e.id === id);
+    if (!ent) return false;
+
+    // Special central core building guard (farmhouse can be moved, but not deleted)
+    if (ent.type === 'special' && (ent.configId === 'farmhouse' || ent.configId === 'order_board' || ent.configId === 'roadside_shop' || ent.configId === 'fishing_dock')) {
+      state.addFloatingText('Главные здания нельзя удалить (только переместить)', 0, 0, '#EF4444');
+      return false;
+    }
+
+    // Storage buildings guard
+    if (ent.type === 'storage' && (ent.configId === 'silo' || ent.configId === 'barn')) {
+      state.addFloatingText('Склады нельзя удалить (только переместить)', 0, 0, '#EF4444');
+      return false;
+    }
+
+    // Refund 50% coins if building or decoration had a cost
+    const bConfig = BUILDINGS[ent.configId] || DECORATIONS[ent.configId] || TREES_BUSHES[ent.configId];
+    const refundCoins = bConfig ? Math.floor(bConfig.cost * 0.5) : 0;
 
     set(s => ({
       entities: s.entities.filter(e => e.id !== id),
+      coins: s.coins + refundCoins,
+      movingEntityId: null,
+      movingPos: null,
       selectedEntityId: null,
     }));
-    state.addFloatingText('Убрано', 0, 0, '#94A3B8');
+
+    sounds.playCoin();
+    if (refundCoins > 0) {
+      state.addFloatingText(`Удалено (+🪙 ${refundCoins})`, 0, 0, '#F59E0B');
+    } else {
+      state.addFloatingText('Удалено 🗑️', 0, 0, '#94A3B8');
+    }
     return true;
+  },
+
+  storeDecoration: (id) => {
+    return get().deleteEntity(id);
   },
 
   plantCrop: (fieldEntityId, cropId) => {

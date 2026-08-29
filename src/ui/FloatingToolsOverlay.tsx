@@ -57,13 +57,133 @@ const PixelPopup: React.FC<{ children: React.ReactNode; className?: string }> = 
 export const FloatingToolsOverlay: React.FC = () => {
   const {
     entities, selectedEntityId, activeTool, placingBuildingConfigId,
+    movingEntityId, movingRotation,
     inventory, level,
     setActiveTool, setPlacingBuilding, rotatePlacingBuilding, setSelectedEntity,
+    startMovingEntity, rotateMovingEntity, confirmMoveEntity, cancelMoveEntity, deleteEntity,
     startProduction, collectProduct, speedUpProductionWithGems,
     harvestCrop, plantCrop, feedAnimal, collectAnimalProduct, storeDecoration,
   } = useGameStore();
 
   const selectedEntity = entities.find(e => e.id === selectedEntityId);
+  const movingEntity = entities.find(e => e.id === movingEntityId);
+
+  /* ── Moving / Relocating Mode ── */
+  if (movingEntityId && movingEntity) {
+    const bConfig = BUILDINGS[movingEntity.configId] || DECORATIONS[movingEntity.configId] || TREES_BUSHES[movingEntity.configId];
+    const isSpecialCore = movingEntity.type === 'special' || movingEntity.type === 'storage';
+    const refundCoins = bConfig?.cost ? Math.floor(bConfig.cost * 0.5) : 0;
+
+    return (
+      <div
+        className="absolute bottom-24 left-1/2 -translate-x-1/2 z-40 flex items-center gap-3 px-4 py-3 rounded-2xl shadow-2xl animate-bounce-short"
+        style={{
+          background: 'rgba(26, 12, 4, 0.95)',
+          backdropFilter: 'blur(8px)',
+          border: '2px solid #F59E0B',
+          boxShadow: '0 12px 36px rgba(0,0,0,0.75)',
+          fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+        }}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <span style={{ fontSize: 26 }}>{bConfig?.icon || '📦'}</span>
+          <div>
+            <div style={{ fontSize: 13, fontWeight: 800, color: '#FEF08A' }}>
+              {bConfig?.name || 'Перемещение'}
+            </div>
+            <div style={{ fontSize: 11, color: '#FBBF24' }}>
+              Перетащите на зеленую клетку
+            </div>
+          </div>
+        </div>
+
+        {/* Rotate Button */}
+        <button
+          onClick={rotateMovingEntity}
+          style={{
+            padding: '8px 14px',
+            borderRadius: 10,
+            fontSize: 12,
+            fontWeight: 700,
+            color: '#FFF',
+            background: 'linear-gradient(180deg, #D97706 0%, #B45309 100%)',
+            border: '1px solid #78350F',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 4,
+            boxShadow: '0 2px 6px rgba(0,0,0,0.3)',
+          }}
+          title="Повернуть на 90 градусов"
+        >
+          <span>↻</span> Повернуть
+        </button>
+
+        {/* Delete / Refund Button (If not core special building) */}
+        {!isSpecialCore && (
+          <button
+            onClick={() => deleteEntity(movingEntityId)}
+            style={{
+              padding: '8px 12px',
+              borderRadius: 10,
+              fontSize: 12,
+              fontWeight: 700,
+              color: '#FFF',
+              background: 'linear-gradient(180deg, #DC2626 0%, #991B1B 100%)',
+              border: '1px solid #7F1D1D',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 4,
+              boxShadow: '0 2px 6px rgba(0,0,0,0.3)',
+            }}
+            title={refundCoins > 0 ? `Удалить и вернуть 🪙 ${refundCoins}` : 'Удалить'}
+          >
+            <span>🗑️</span> {refundCoins > 0 ? `+🪙${refundCoins}` : 'Удалить'}
+          </button>
+        )}
+
+        {/* Confirm Placement Button */}
+        <button
+          onClick={() => confirmMoveEntity()}
+          style={{
+            padding: '8px 16px',
+            borderRadius: 10,
+            fontSize: 12,
+            fontWeight: 800,
+            color: '#FFF',
+            background: 'linear-gradient(180deg, #22C55E 0%, #15803D 100%)',
+            border: '1px solid #14532D',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 4,
+            boxShadow: '0 2px 8px rgba(34,197,94,0.4)',
+          }}
+        >
+          <span>✓</span> Поставить
+        </button>
+
+        {/* Cancel Button */}
+        <button
+          onClick={cancelMoveEntity}
+          style={{
+            padding: '8px 12px',
+            borderRadius: 10,
+            fontSize: 12,
+            fontWeight: 700,
+            color: '#CBD5E1',
+            background: 'rgba(255,255,255,0.1)',
+            border: '1px solid rgba(255,255,255,0.2)',
+            cursor: 'pointer',
+          }}
+          title="Отменить перемещение"
+        >
+          ✕
+        </button>
+      </div>
+    );
+  }
 
   /* ── Placing building ── */
   if (placingBuildingConfigId) {

@@ -55,6 +55,16 @@ export const GameScene: React.FC = () => {
     isAreaInsideUnlockedTerritory,
     placeBuilding,
     unlockExpansionChunk,
+    movingEntityId,
+    movingPos,
+    movingRotation,
+    setPlacingBuilding,
+    rotatePlacingBuilding,
+    startMovingEntity,
+    setMovingPos,
+    confirmMoveEntity,
+    cancelMoveEntity,
+    rotateMovingEntity,
   } = useGameStore();
 
   // Smooth Camera Coordinates & Target
@@ -82,6 +92,10 @@ export const GameScene: React.FC = () => {
 
   const placingRef = useRef({ configId: placingBuildingConfigId, rotation: placingRotation });
   placingRef.current = { configId: placingBuildingConfigId, rotation: placingRotation };
+
+  const movingRef = useRef({ id: movingEntityId, pos: movingPos, rot: movingRotation });
+  movingRef.current = { id: movingEntityId, pos: movingPos, rot: movingRotation };
+  const longPressTimerRef = useRef<number | null>(null);
 
   const activeSeasonRef = useRef(activeSeason);
   activeSeasonRef.current = activeSeason;
@@ -1593,9 +1607,15 @@ export const GameScene: React.FC = () => {
     const weatherMult = activeEvent?.growthSpeedMultiplier || 1.0;
 
     entities.forEach(ent => {
+      const isMovingThis = ent.id === movingEntityId;
+      const currentPos = isMovingThis && movingPos ? movingPos : { x: ent.x, z: ent.z };
+      const currentRot = isMovingThis ? movingRotation : ent.rotation;
+      const curW = (currentRot % 2 === 1) ? ent.depth : ent.width;
+      const curD = (currentRot % 2 === 1) ? ent.width : ent.depth;
+
       const entGroup = new THREE.Group();
-      entGroup.position.set(ent.x + ent.width / 2, 0, ent.z + ent.depth / 2);
-      entGroup.rotation.y = (ent.rotation * Math.PI) / 2;
+      entGroup.position.set(currentPos.x + curW / 2, isMovingThis ? 0.35 : 0, currentPos.z + curD / 2);
+      entGroup.rotation.y = (currentRot * Math.PI) / 2;
       entGroup.userData = { entityId: ent.id, entity: ent };
 
       if (ent.type === 'special') {
@@ -1662,11 +1682,11 @@ export const GameScene: React.FC = () => {
         entGroup.add(createDecorationMesh(ent.configId));
       }
 
-      // Selection highlight ring
-      if (selectedEntityId === ent.id) {
-        const selGeo = new THREE.RingGeometry(ent.width * 0.55, ent.width * 0.68, 32);
+      // Selection or Relocation highlight ring
+      if (selectedEntityId === ent.id || isMovingThis) {
+        const selGeo = new THREE.RingGeometry(curW * 0.55, curW * 0.68, 32);
         const selMat = new THREE.MeshBasicMaterial({ 
-          color: 0xFACC15, 
+          color: isMovingThis ? 0xF59E0B : 0xFACC15, 
           side: THREE.DoubleSide,
           transparent: true,
           opacity: 0.85
@@ -1679,7 +1699,7 @@ export const GameScene: React.FC = () => {
 
       entitiesGroup.add(entGroup);
     });
-  }, [entities, selectedEntityId, activeEvent, activeSeason]);
+  }, [entities, selectedEntityId, activeEvent, activeSeason, movingEntityId, movingPos, movingRotation]);
 
   // Update placement preview grid without React re-renders
   const updatePlacementPreview = useCallback((tile: { x: number; z: number } | null) => {
@@ -1689,6 +1709,37 @@ export const GameScene: React.FC = () => {
       previewGridGroup.remove(previewGridGroup.children[0]);
     }
 
+    // 1. Moving Entity Preview
+    const { id: mId, pos: mPos, rot: mRot } = movingRef.current;
+    if (mId && (tile || mPos)) {
+      const activeTile = tile || mPos;
+      const mEnt = entities.find(e => e.id === mId);
+      if (mEnt && activeTile) {
+        const pW = (mRot % 2 === 1) ? mEnt.depth : mEnt.width;
+        const pD = (mRot % 2 === 1) ? mEnt.width : mEnt.depth;
+        const valid = isAreaAvailable(activeTile.x, activeTile.z, pW, pD, mId) &&
+                      isAreaInsideUnlockedTerritory(activeTile.x, activeTile.z, pW, pD);
+
+        const pGeo = new THREE.PlaneGeometry(pW, pD);
+        const pMat = new THREE.MeshBasicMaterial({
+          color: valid ? 0x22C55E : 0xEF4444,
+          transparent: true,
+          opacity: 0.6,
+          side: THREE.DoubleSide,
+        });
+        const pMesh = new THREE.Mesh(pGeo, pMat);
+        pMesh.rotation.x = -Math.PI / 2;
+        pMesh.position.set(activeTile.x + pW / 2, 0.1, activeTile.z + pD / 2);
+        previewGridGroup.add(pMesh);
+
+        const gridHelper = new THREE.GridHelper(Math.max(pW, pD), Math.max(pW, pD), valid ? 0x16A34A : 0xDC2626, valid ? 0x16A34A : 0xDC2626);
+        gridHelper.position.set(activeTile.x + pW / 2, 0.12, activeTile.z + pD / 2);
+        previewGridGroup.add(gridHelper);
+        return;
+      }
+    }
+
+    // 2. Placing Building Preview
     const { configId, rotation } = placingRef.current;
     if (!configId || !tile) return;
 
@@ -1715,11 +1766,11 @@ export const GameScene: React.FC = () => {
       gridHelper.position.set(tile.x + pW / 2, 0.12, tile.z + pD / 2);
       previewGridGroup.add(gridHelper);
     }
-  }, [isAreaAvailable, isAreaInsideUnlockedTerritory]);
+  }, [entities, isAreaAvailable, isAreaInsideUnlockedTerritory]);
 
   useEffect(() => {
     updatePlacementPreview(hoveredTileRef.current);
-  }, [placingBuildingConfigId, placingRotation, updatePlacementPreview]);
+  }, [placingBuildingConfigId, placingRotation, movingEntityId, movingPos, movingRotation, updatePlacementPreview]);
 
   // Continuous Swipe Action for rapid farming
   const executeSwipeActionOnTile = useCallback((tileX: number, tileZ: number) => {
@@ -1772,6 +1823,19 @@ export const GameScene: React.FC = () => {
     const tile = getTileIntersection(e.clientX, e.clientY);
     if (tile && activeTool) {
       executeSwipeActionOnTile(tile.x, tile.z);
+    } else if (tile && !placingBuildingConfigId && !movingEntityId) {
+      // Long-press detection to trigger building move/relocate mode!
+      const hitEntity = entities.find(ent => 
+        tile.x >= ent.x && tile.x < ent.x + ent.width &&
+        tile.z >= ent.z && tile.z < ent.z + ent.depth
+      );
+      if (hitEntity) {
+        if (longPressTimerRef.current) clearTimeout(longPressTimerRef.current);
+        longPressTimerRef.current = window.setTimeout(() => {
+          startMovingEntity(hitEntity.id);
+          longPressTimerRef.current = null;
+        }, 340);
+      }
     }
   };
 
@@ -1779,7 +1843,7 @@ export const GameScene: React.FC = () => {
     const tile = getTileIntersection(e.clientX, e.clientY);
     if (tile) {
       hoveredTileRef.current = tile;
-      if (placingRef.current.configId) {
+      if (placingRef.current.configId || movingRef.current.id) {
         updatePlacementPreview(tile);
       }
     }
@@ -1789,13 +1853,24 @@ export const GameScene: React.FC = () => {
     const dx = e.clientX - dragStartScreenRef.current.x;
     const dy = e.clientY - dragStartScreenRef.current.y;
 
-    if (Math.abs(dx) > 4 || Math.abs(dy) > 4) {
+    if (Math.abs(dx) > 6 || Math.abs(dy) > 6) {
       hasMovedRef.current = true;
+      if (longPressTimerRef.current) {
+        clearTimeout(longPressTimerRef.current);
+        longPressTimerRef.current = null;
+      }
+    }
+
+    // Direct Drag Relocation of Moving Entity
+    if (movingRef.current.id && tile) {
+      setMovingPos(tile.x, tile.z);
+      updatePlacementPreview(tile);
+      return;
     }
 
     if (activeTool && tile) {
       executeSwipeActionOnTile(tile.x, tile.z);
-    } else if (!placingRef.current.configId && containerRef.current) {
+    } else if (!placingRef.current.configId && !movingRef.current.id && containerRef.current) {
       const viewportHeight = containerRef.current.clientHeight;
       const zoom = currentZoomRef.current;
       
@@ -1813,6 +1888,16 @@ export const GameScene: React.FC = () => {
     isDraggingRef.current = false;
     touchDistanceRef.current = null;
     swipedEntitiesRef.current.clear();
+
+    if (longPressTimerRef.current) {
+      clearTimeout(longPressTimerRef.current);
+      longPressTimerRef.current = null;
+    }
+
+    // If currently moving an entity, let user confirm via button or click
+    if (movingEntityId) {
+      return;
+    }
 
     if (!hasMovedRef.current) {
       const tile = getTileIntersection(e.clientX, e.clientY);
@@ -1861,6 +1946,23 @@ export const GameScene: React.FC = () => {
       }
     }
   };
+
+  // Keyboard Shortcuts (R to rotate, Escape to cancel, Enter to confirm)
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'r' || e.key === 'R' || e.key === 'к' || e.key === 'К') {
+        if (movingRef.current.id) rotateMovingEntity();
+        else if (placingRef.current.configId) rotatePlacingBuilding();
+      } else if (e.key === 'Escape') {
+        if (movingRef.current.id) cancelMoveEntity();
+        else if (placingRef.current.configId) setPlacingBuilding(null);
+      } else if (e.key === 'Enter') {
+        if (movingRef.current.id) confirmMoveEntity();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [rotateMovingEntity, rotatePlacingBuilding, cancelMoveEntity, confirmMoveEntity, setPlacingBuilding]);
 
   const onWheel = (e: React.WheelEvent) => {
     e.preventDefault();
