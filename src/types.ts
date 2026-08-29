@@ -139,6 +139,35 @@ export type WeatherType =
   | 'fog'
   | string;
 
+export interface MarketToastNotification {
+  id: string;
+  type: 'sale_success' | 'delivery_arrived' | 'price_surge';
+  title: string;
+  message: string;
+  icon: string;
+  coins?: number;
+  timestamp: number;
+}
+
+export interface HourlyWeatherForecast {
+  timeLabel: string; // e.g. "12:00", "15:00"
+  weatherName: string;
+  icon: string;
+  tempCelsius: number;
+  precipChancePercent: number; // 0..100%
+  growthBonusLabel: string;
+  isCurrent?: boolean;
+}
+
+export interface DailyBonusDay {
+  dayNumber: number;
+  coins: number;
+  gems: number;
+  tools?: { name: string; icon: string; count: number };
+  isClaimed: boolean;
+  isToday: boolean;
+}
+
 export interface LevelConfig {
   level: number;
   xpRequired: number;

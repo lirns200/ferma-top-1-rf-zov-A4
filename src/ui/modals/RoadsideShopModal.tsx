@@ -165,7 +165,7 @@ export const RoadsideShopModal: React.FC = () => {
   // Sell form state
   const [sellItemKey, setSellItemKey] = useState<string>('wheat');
   const [sellCount, setSellCount] = useState<number>(1);
-  const [sellPrice, setSellPrice] = useState<number>(10);
+  const [sellPricePerUnit, setSellPricePerUnit] = useState<number>(5);
 
   const tgProfile = getTelegramUserProfile();
 
@@ -210,8 +210,8 @@ export const RoadsideShopModal: React.FC = () => {
     triggerTelegramHaptic('light');
     setSellItemKey(itemKey);
     setSellCount(Math.min(5, availableCount));
-    const base = PRODUCTS[itemKey]?.basePrice || 10;
-    setSellPrice(Math.round(base * Math.min(5, availableCount) * 1.2));
+    const base = PRODUCTS[itemKey]?.basePrice || 5;
+    setSellPricePerUnit(base);
   };
 
   const handlePublishListing = () => {
@@ -228,9 +228,10 @@ export const RoadsideShopModal: React.FC = () => {
       return;
     }
 
+    const totalPrice = sellCount * sellPricePerUnit;
     sounds.playCoin();
     triggerTelegramHaptic('success');
-    createRoadsideSale(freeSlot.id, sellItemKey, sellCount, sellPrice);
+    createRoadsideSale(freeSlot.id, sellItemKey, sellCount, totalPrice);
 
     const prod = PRODUCTS[sellItemKey];
     setHistoryList(prev => [
@@ -240,14 +241,14 @@ export const RoadsideShopModal: React.FC = () => {
         itemName: prod?.name || sellItemKey,
         itemIcon: prod?.icon || '📦',
         count: sellCount,
-        price: sellPrice,
+        price: totalPrice,
         timestamp: 'Только что',
         otherUser: 'Торговая площадка',
       },
       ...prev,
     ]);
 
-    addFloatingText(`Лот выставлен за ${sellPrice} 🪙!`, window.innerWidth / 2, window.innerHeight / 2, '#4ADE80');
+    addFloatingText(`Лот выставлен: ${sellCount} шт. за ${totalPrice} 🪙 (${sellPricePerUnit} 🪙/шт.)!`, window.innerWidth / 2, window.innerHeight / 2, '#4ADE80');
     setActiveTab('my_listings');
   };
 
@@ -1139,12 +1140,12 @@ export const RoadsideShopModal: React.FC = () => {
                   </div>
                 </div>
 
-                {/* Price Setting Stepper & Multipliers */}
+                {/* Price Setting Stepper & Multipliers: Цена за одну штуку */}
                 <div className="flex flex-col gap-1.5">
                   <div className="flex items-center justify-between text-xs font-bold">
-                    <span className="text-[#8E939D]">Цена продажи лота:</span>
+                    <span className="text-[#8E939D]">Цена за одну штуку:</span>
                     <span className="text-amber-300 font-black text-sm flex items-center gap-1">
-                      <CoinSvg /> {sellPrice}
+                      <CoinSvg /> {sellPricePerUnit} / шт.
                     </span>
                   </div>
 
@@ -1152,7 +1153,7 @@ export const RoadsideShopModal: React.FC = () => {
                     <button
                       onClick={() => {
                         sounds.playClick();
-                        setSellPrice(Math.max(1, sellPrice - 1));
+                        setSellPricePerUnit(Math.max(1, sellPricePerUnit - 1));
                       }}
                       className="w-9 h-9 rounded-xl bg-[#242A35] hover:bg-[#353D4C] text-white font-black text-base flex items-center justify-center cursor-pointer border border-[#353D4C] active:scale-95 transition-transform shrink-0"
                     >
@@ -1160,16 +1161,16 @@ export const RoadsideShopModal: React.FC = () => {
                     </button>
                     <input
                       type="range"
-                      min={Math.max(1, Math.round((PRODUCTS[sellItemKey]?.basePrice || 5) * sellCount * 0.5))}
-                      max={Math.round((PRODUCTS[sellItemKey]?.basePrice || 5) * sellCount * 3)}
-                      value={sellPrice}
-                      onChange={e => setSellPrice(Number(e.target.value))}
+                      min={Math.max(1, Math.round((PRODUCTS[sellItemKey]?.basePrice || 5) * 0.5))}
+                      max={Math.round((PRODUCTS[sellItemKey]?.basePrice || 5) * 3)}
+                      value={sellPricePerUnit}
+                      onChange={e => setSellPricePerUnit(Number(e.target.value))}
                       className="flex-1 accent-amber-500 cursor-pointer"
                     />
                     <button
                       onClick={() => {
                         sounds.playClick();
-                        setSellPrice(sellPrice + 1);
+                        setSellPricePerUnit(sellPricePerUnit + 1);
                       }}
                       className="w-9 h-9 rounded-xl bg-[#242A35] hover:bg-[#353D4C] text-white font-black text-base flex items-center justify-center cursor-pointer border border-[#353D4C] active:scale-95 transition-transform shrink-0"
                     >
@@ -1184,16 +1185,16 @@ export const RoadsideShopModal: React.FC = () => {
                       { label: 'Рыночная', mul: 1.0 },
                       { label: '+25% (выгодно)', mul: 1.25 },
                     ].map((preset, idx) => {
-                      const targetP = Math.max(1, Math.round((PRODUCTS[sellItemKey]?.basePrice || 10) * sellCount * preset.mul));
+                      const targetP = Math.max(1, Math.round((PRODUCTS[sellItemKey]?.basePrice || 10) * preset.mul));
                       return (
                         <button
                           key={idx}
                           onClick={() => {
                             sounds.playClick();
-                            setSellPrice(targetP);
+                            setSellPricePerUnit(targetP);
                           }}
                           className={`flex-1 py-1 rounded-lg text-[10px] font-black border transition-all cursor-pointer ${
-                            sellPrice === targetP
+                            sellPricePerUnit === targetP
                               ? 'bg-amber-500/20 text-amber-300 border-amber-400'
                               : 'bg-black/20 text-[#8E939D] border-white/5 hover:text-white'
                           }`}
@@ -1203,16 +1204,26 @@ export const RoadsideShopModal: React.FC = () => {
                       );
                     })}
                   </div>
+
+                  {/* Last Sold Price Benchmark */}
+                  <div className="flex items-center justify-between px-2 py-1 rounded-xl bg-black/20 border border-white/5 text-[11px] text-[#8E939D] mt-0.5">
+                    <span>Последний товар был продан за:</span>
+                    <span className="font-extrabold text-amber-300 flex items-center gap-1">
+                      <CoinSvg /> {Math.max(1, Math.round((PRODUCTS[sellItemKey]?.basePrice || 5) * 1.15))} / шт.
+                    </span>
+                  </div>
                 </div>
 
-                {/* Clean Payout Summary Card (0% Fee) */}
+                {/* Total Payout Summary */}
                 <div className="flex justify-between items-center p-3.5 rounded-2xl bg-black/35 border border-white/10 shadow-inner">
                   <div className="flex flex-col">
-                    <span className="text-xs font-black text-[#8E939D]">Вы получите за продажу:</span>
-                    <span className="text-[10px] text-emerald-400 font-bold mt-0.5">Без комиссии рынка (0%)</span>
+                    <span className="text-xs font-black text-[#8E939D]">Итого к получению:</span>
+                    <span className="text-[11px] text-white/70 font-semibold mt-0.5">
+                      {sellCount} шт. × {sellPricePerUnit} 🪙
+                    </span>
                   </div>
                   <div className="flex items-center gap-1.5 font-black text-emerald-400 text-lg">
-                    <span>+{sellPrice}</span>
+                    <span>+{sellCount * sellPricePerUnit}</span>
                     <CoinSvg />
                   </div>
                 </div>

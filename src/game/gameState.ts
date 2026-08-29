@@ -12,6 +12,9 @@ import {
   FishSpecies,
   ProductionQueueItem,
   MailboxDeal,
+  MarketToastNotification,
+  HourlyWeatherForecast,
+  DailyBonusDay,
 } from '../types';
 import { CROPS, TREES_BUSHES } from '../config/crops';
 import { PRODUCTS } from '../config/products';
@@ -34,6 +37,65 @@ import {
 import { StorageService, SavedGameState } from '../save/StorageService';
 import { sounds } from '../audio/SoundManager';
 import confetti from 'canvas-confetti';
+
+export const DAILY_REWARDS_SCHEDULE = [
+  { day: 1, coins: 500, gems: 5, tool: undefined },
+  { day: 2, coins: 1200, gems: 8, tool: { id: 'plank', name: 'Доски', icon: '🪵', count: 2 } },
+  { day: 3, coins: 2500, gems: 12, tool: { id: 'bolt', name: 'Болты', icon: '🔩', count: 2 } },
+  { day: 4, coins: 4000, gems: 15, tool: { id: 'saw', name: 'Пилы', icon: '🪚', count: 3 } },
+  { day: 5, coins: 6000, gems: 20, tool: { id: 'duct_tape', name: 'Скотч', icon: '🩹', count: 3 } },
+  { day: 6, coins: 8500, gems: 25, tool: { id: 'tnt', name: 'Динамит', icon: '🧨', count: 5 } },
+  { day: 7, coins: 20000, gems: 50, tool: { id: 'fountain', name: 'Фонтан', icon: '⛲', count: 1 } },
+];
+
+export function generateWeatherForecast(currentEvent: GameEventConfig): HourlyWeatherForecast[] {
+  const d = new Date();
+  const currentHour = d.getHours();
+  const slots: HourlyWeatherForecast[] = [];
+
+  const icons = ['☀️', '🌤️', '🌧️', '⛈️', '🌈', '⛅', '🌧️', '☀️'];
+  const names = ['Ясно', 'Облачно с прояснениями', 'Грибной дождь', 'Летняя гроза', 'Радужное сияние', 'Переменная облачность', 'Лёгкий дождь', 'Ясно'];
+  const bonuses = [
+    'Обычный стабильный рост',
+    'Обычный стабильный рост',
+    'Урожай растет на +50% быстрее',
+    'Урожай растет на +80% быстрее',
+    'Двойной опыт (x2 XP)',
+    'Урожай растет на +25% быстрее',
+    'Урожай растет на +50% быстрее',
+    'Обычный стабильный рост'
+  ];
+
+  for (let i = 0; i < 8; i++) {
+    const targetHour = (currentHour + i * 3) % 24;
+    const timeLabel = i === 0 ? 'Сейчас' : `${String(targetHour).padStart(2, '0')}:00`;
+
+    if (i === 0) {
+      slots.push({
+        timeLabel: 'Сейчас',
+        weatherName: currentEvent.name,
+        icon: currentEvent.icon,
+        tempCelsius: 22,
+        precipChancePercent: currentEvent.type === 'rain' ? 85 : currentEvent.type === 'thunderstorm' ? 95 : 10,
+        growthBonusLabel: currentEvent.bonusEffect || 'Стабильный рост',
+        isCurrent: true,
+      });
+    } else {
+      const idx = (currentHour + i) % names.length;
+      const isRainy = idx === 2 || idx === 3 || idx === 6;
+      slots.push({
+        timeLabel,
+        weatherName: names[idx],
+        icon: icons[idx],
+        tempCelsius: 18 + ((targetHour >= 11 && targetHour <= 17) ? 6 : 0) - ((targetHour >= 0 && targetHour <= 5) ? 5 : 0),
+        precipChancePercent: isRainy ? 80 : Math.round(((targetHour * 7) % 30)),
+        growthBonusLabel: bonuses[idx],
+      });
+    }
+  }
+
+  return slots;
+}
 
 export function generateMailboxDeals(): MailboxDeal[] {
   return [
@@ -187,12 +249,20 @@ export interface GameStore {
   tutorialCompleted: boolean;
   
   // UI & Notifications
-  activeModal: 'shop' | 'silo' | 'barn' | 'orders' | 'roadside' | 'market' | 'fishing' | 'events' | 'settings' | 'levelup' | 'expansion' | 'mailbox' | 'friends' | null;
+  activeModal: 'shop' | 'silo' | 'barn' | 'orders' | 'roadside' | 'market' | 'fishing' | 'events' | 'settings' | 'levelup' | 'expansion' | 'mailbox' | 'friends' | 'daily_bonus' | 'weather_forecast' | null;
   unlockedLevelInfo: LevelConfig | null;
   floatingTexts: FloatingText[];
   soundMuted: boolean;
   isActionStripOpen: boolean;
   isDesign2026: boolean;
+  
+  // Daily Login Bonus & Market Toasts
+  dailyBonusStreak: number;
+  lastDailyBonusClaimTime: number;
+  marketNotifications: MarketToastNotification[];
+  claimDailyLoginBonus: () => boolean;
+  dismissMarketNotification: (id: string) => void;
+  pushMarketNotification: (toast: Omit<MarketToastNotification, 'id' | 'timestamp'>) => void;
   
   // Actions
   initGame: () => void;
@@ -360,6 +430,10 @@ export const useGameStore = create<GameStore>((set, get) => ({
   tutorialStep: 1,
   tutorialCompleted: false,
   
+  dailyBonusStreak: 1,
+  lastDailyBonusClaimTime: 0,
+  marketNotifications: [],
+
   activeModal: null,
   unlockedLevelInfo: null,
   floatingTexts: [],
@@ -571,6 +645,75 @@ export const useGameStore = create<GameStore>((set, get) => ({
       });
       state.addFloatingText(`Погода: ${nextEvent.name}`, 0, 0, nextEvent.color);
     }
+
+    // Check roadside shop slot sales simulation & send toast notifications
+    const hasAdvertised = state.shopSlots.some(slot => slot.itemId && !slot.isSold && (slot.isAdvertised || slot.advertised));
+    if (hasAdvertised && Math.random() < 0.05) {
+      const unsoldSlots = state.shopSlots.filter(s => s.itemId && !s.isSold && (s.isAdvertised || s.advertised));
+      if (unsoldSlots.length > 0) {
+        const targetSlot = unsoldSlots[Math.floor(Math.random() * unsoldSlots.length)];
+        const prod = PRODUCTS[targetSlot.itemId!];
+        const prodName = prod?.name || targetSlot.itemId!;
+        const prodIcon = prod?.icon || '📦';
+
+        const newToast: MarketToastNotification = {
+          id: `toast_${Date.now()}_${Math.random()}`,
+          type: 'sale_success',
+          title: '🎉 Куплен ваш товар на рынке!',
+          message: `Игрок купил ${prodName} ×${targetSlot.count} шт. за ${targetSlot.price} 🪙! Заберите выручку в Лавке.`,
+          icon: prodIcon,
+          coins: targetSlot.price,
+          timestamp: Date.now(),
+        };
+
+        sounds.playCoin();
+        set(s => ({
+          shopSlots: s.shopSlots.map(sl => sl.id === targetSlot.id ? { ...sl, isSold: true, soldAt: Date.now() } : sl),
+          marketNotifications: [newToast, ...s.marketNotifications.slice(0, 3)],
+        }));
+      }
+    }
+  },
+
+  claimDailyLoginBonus: () => {
+    const state = get();
+    const now = Date.now();
+    const currentDayIdx = Math.max(0, Math.min(6, (state.dailyBonusStreak || 1) - 1));
+    const reward = DAILY_REWARDS_SCHEDULE[currentDayIdx];
+
+    state.addCoins(reward.coins);
+    state.addGems(reward.gems);
+    if (reward.tool) {
+      state.addItem(reward.tool.id, reward.tool.count);
+    }
+
+    sounds.playLevelUp();
+    confetti({ particleCount: 75, spread: 80, origin: { y: 0.55 } });
+    state.addFloatingText(`🎁 Получен бонус Дня ${reward.day}: +${reward.coins} 🪙 +${reward.gems} ⚡!`, 0, 0, '#22C55E');
+
+    const nextStreak = (state.dailyBonusStreak || 1) >= 7 ? 1 : (state.dailyBonusStreak || 1) + 1;
+    set({
+      lastDailyBonusClaimTime: now,
+      dailyBonusStreak: nextStreak,
+    });
+    return true;
+  },
+
+  dismissMarketNotification: (id) => {
+    set(s => ({
+      marketNotifications: s.marketNotifications.filter(n => n.id !== id),
+    }));
+  },
+
+  pushMarketNotification: (toast) => {
+    const newToast: MarketToastNotification = {
+      ...toast,
+      id: `toast_${Date.now()}_${Math.random()}`,
+      timestamp: Date.now(),
+    };
+    set(s => ({
+      marketNotifications: [newToast, ...s.marketNotifications.slice(0, 3)],
+    }));
   },
 
   setSoundMuted: (muted) => {

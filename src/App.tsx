@@ -8,6 +8,9 @@ import { TutorialOverlay } from './ui/TutorialOverlay';
 import { CinematicIntroOverlay } from './ui/CinematicIntroOverlay';
 import { FloatingTextsOverlay } from './ui/FloatingTextsOverlay';
 import { MarketDeliveryBanner } from './ui/MarketDeliveryBanner';
+import { WeatherForecastWidget } from './ui/WeatherForecastWidget';
+import { HudSideWidgets } from './ui/HudSideWidgets';
+import { MarketNotificationToasts } from './ui/MarketNotificationToasts';
 
 // Modals
 import { BuildShopModal } from './ui/modals/BuildShopModal';
@@ -20,6 +23,8 @@ import { EventsModal } from './ui/modals/EventsModal';
 import { SettingsModal } from './ui/modals/SettingsModal';
 import { MailboxModal } from './ui/modals/MailboxModal';
 import { FriendsModal } from './ui/modals/FriendsModal';
+import { DailyBonusModal } from './ui/modals/DailyBonusModal';
+import { WeatherForecastModal } from './ui/modals/WeatherForecastModal';
 
 export function App() {
   const { initGame, tickGameLoop, saveCurrentState, activeModal } = useGameStore();
@@ -51,12 +56,15 @@ export function App() {
 
       {/* Heads Up Display Overlay */}
       <TopBar />
+      <WeatherForecastWidget />
+      <HudSideWidgets />
       <BottomActionDock />
       <FloatingToolsOverlay />
       <TutorialOverlay />
       <CinematicIntroOverlay />
       <FloatingTextsOverlay />
       <MarketDeliveryBanner />
+      <MarketNotificationToasts />
 
       {/* Interactive Pop-up Modals */}
       <BuildShopModal />
@@ -68,6 +76,8 @@ export function App() {
       <EventsModal />
       <SettingsModal />
       <FriendsModal />
+      <DailyBonusModal />
+      <WeatherForecastModal />
       {activeModal === 'mailbox' && <MailboxModal />}
     </main>
   );
