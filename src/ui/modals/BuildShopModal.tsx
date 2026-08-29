@@ -171,12 +171,6 @@ export const BuildShopModal: React.FC = () => {
             Магазин Доната и Банк
           </span>
         </div>
-
-        {/* Telegram Stars Balance Badge */}
-        <div className="flex items-center gap-1.5 px-3 py-1 rounded-xl bg-amber-500/15 border border-amber-400/40 text-yellow-300 text-xs font-black shadow">
-          <Star size={13} className="fill-yellow-400 text-yellow-400" />
-          <span>Telegram Stars</span>
-        </div>
       </div>
 
       {/* ── SCROLLABLE CONTENT AREA ── */}
