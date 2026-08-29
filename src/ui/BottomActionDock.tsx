@@ -6,13 +6,12 @@ import { triggerTelegramHaptic } from '../utils/telegram';
 export const BottomActionDock: React.FC = () => {
   const {
     activeModal, openModal, closeModal,
-    truckState, shopSlots, orders,
+    shopSlots,
     isActionStripOpen, toggleActionStrip,
     isDesign2026,
   } = useGameStore();
 
   const hasSoldItems = shopSlots.some(s => s.isSold);
-  const readyOrders = orders.length;
   const isInsideTab = activeModal !== null;
 
   return (
@@ -20,7 +19,7 @@ export const BottomActionDock: React.FC = () => {
       isDesign2026 ? 'p-2 sm:p-3' : 'p-0'
     }`}>
       
-      {/* ── Dynamic Bottom Dock: Floating Island (2026) OR Flush Bottom Dock (Wood) ── */}
+      {/* ── Dynamic Bottom Dock: [Магазин] [Рынок] [Строить/Ферма] [Друзья] [Настройки] ── */}
       <div
         className={`pointer-events-auto w-full grid grid-cols-5 items-center justify-items-center relative transition-all duration-300 ${
           isDesign2026
@@ -29,7 +28,7 @@ export const BottomActionDock: React.FC = () => {
         }`}
       >
 
-        {/* 1. 🎪 Магазин */}
+        {/* 1. 🎪 Магазин (Магазин строительства и декораций) */}
         <button
           onClick={() => {
             sounds.playClick();
@@ -41,11 +40,6 @@ export const BottomActionDock: React.FC = () => {
             activeModal === 'shop' ? 'scale-105' : ''
           }`}
         >
-          {hasSoldItems && (
-            <span className="absolute -top-1 right-2 sm:right-3 w-4 h-4 bg-green-500 border border-white rounded-full text-white text-[9px] font-black flex items-center justify-center shadow-lg animate-bounce">
-              🪙
-            </span>
-          )}
           <div className={`w-11 h-11 sm:w-12 sm:h-12 rounded-2xl flex items-center justify-center text-2xl transition-all shadow-inner ${
             activeModal === 'shop'
               ? 'bg-yellow-400 border-2 border-yellow-200 shadow-lg text-[#3B1F0D]'
@@ -62,35 +56,40 @@ export const BottomActionDock: React.FC = () => {
           </span>
         </button>
 
-        {/* 2. 📦 Склад */}
+        {/* 2. 🏪 Рынок (Придорожная лавка и Газета объявлений) */}
         <button
           onClick={() => {
             sounds.playClick();
             triggerTelegramHaptic('light');
-            if (activeModal === 'barn' || activeModal === 'silo') closeModal();
-            else openModal('barn');
+            if (activeModal === 'roadside' || activeModal === 'market') closeModal();
+            else openModal('roadside');
           }}
-          className={`flex flex-col items-center justify-center gap-0.5 group active:scale-95 transition-transform cursor-pointer w-full ${
-            activeModal === 'barn' || activeModal === 'silo' ? 'scale-105' : ''
+          className={`flex flex-col items-center justify-center gap-0.5 group active:scale-95 transition-transform cursor-pointer relative w-full ${
+            activeModal === 'roadside' || activeModal === 'market' ? 'scale-105' : ''
           }`}
         >
+          {hasSoldItems && (
+            <span className="absolute -top-1 right-2 sm:right-3 w-4 h-4 bg-emerald-500 border border-white rounded-full text-white text-[9px] font-black flex items-center justify-center shadow-lg animate-bounce">
+              🪙
+            </span>
+          )}
           <div className={`w-11 h-11 sm:w-12 sm:h-12 rounded-2xl flex items-center justify-center text-2xl transition-all shadow-inner ${
-            activeModal === 'barn' || activeModal === 'silo'
+            activeModal === 'roadside' || activeModal === 'market'
               ? 'bg-yellow-400 border-2 border-yellow-200 shadow-lg text-[#3B1F0D]'
               : isDesign2026
               ? 'bg-white/10 border border-white/15 hover:bg-white/15'
               : 'bg-amber-950/70 border border-amber-700/80'
           }`}>
-            📦
+            🏪
           </div>
           <span className={`text-[10px] sm:text-xs font-bold tracking-tight ${
-            activeModal === 'barn' || activeModal === 'silo' ? 'text-yellow-300' : isDesign2026 ? 'text-zinc-300' : 'text-amber-200'
+            activeModal === 'roadside' || activeModal === 'market' ? 'text-yellow-300' : isDesign2026 ? 'text-zinc-300' : 'text-amber-200'
           }`}>
-            Склад
+            Рынок
           </span>
         </button>
 
-        {/* 3. 🏡 СТРОИТЬ / 🌾 ФЕРМА */}
+        {/* 3. 🏡 СТРОИТЬ / 🌾 ФЕРМА (Центральная динамическая кнопка) */}
         <button
           id={isInsideTab ? 'btn-return-farm' : 'btn-build-action'}
           onClick={() => {
@@ -133,40 +132,35 @@ export const BottomActionDock: React.FC = () => {
           )}
         </button>
 
-        {/* 4. 📜 Задания */}
+        {/* 4. 👥 Друзья (Соседи, подарки и рейтинг в Telegram) */}
         <button
           onClick={() => {
             sounds.playClick();
             triggerTelegramHaptic('light');
-            if (activeModal === 'orders') closeModal();
-            else openModal('orders');
+            if (activeModal === 'friends') closeModal();
+            else openModal('friends');
           }}
           className={`flex flex-col items-center justify-center gap-0.5 group active:scale-95 transition-transform cursor-pointer relative w-full ${
-            activeModal === 'orders' ? 'scale-105' : ''
+            activeModal === 'friends' ? 'scale-105' : ''
           }`}
         >
-          {!truckState.isDelivering && readyOrders > 0 && (
-            <span className="absolute -top-1 right-2 sm:right-3 min-w-[18px] h-4 px-1 bg-red-600 border border-white rounded-full text-white text-[9px] font-black flex items-center justify-center shadow-lg animate-bounce">
-              {readyOrders}
-            </span>
-          )}
           <div className={`w-11 h-11 sm:w-12 sm:h-12 rounded-2xl flex items-center justify-center text-2xl transition-all shadow-inner ${
-            activeModal === 'orders'
+            activeModal === 'friends'
               ? 'bg-yellow-400 border-2 border-yellow-200 shadow-lg text-[#3B1F0D]'
               : isDesign2026
               ? 'bg-white/10 border border-white/15 hover:bg-white/15'
               : 'bg-amber-950/70 border border-amber-700/80'
           }`}>
-            📜
+            👥
           </div>
           <span className={`text-[10px] sm:text-xs font-bold tracking-tight ${
-            activeModal === 'orders' ? 'text-yellow-300' : isDesign2026 ? 'text-zinc-300' : 'text-amber-200'
+            activeModal === 'friends' ? 'text-yellow-300' : isDesign2026 ? 'text-zinc-300' : 'text-amber-200'
           }`}>
-            Задания
+            Друзья
           </span>
         </button>
 
-        {/* 5. ⚙️ Настройки */}
+        {/* 5. ⚙️ Настройки (Профиль и настройки) */}
         <button
           onClick={() => {
             sounds.playClick();

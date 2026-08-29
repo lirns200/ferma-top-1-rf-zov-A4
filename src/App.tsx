@@ -18,6 +18,7 @@ import { LevelUpModal } from './ui/modals/LevelUpModal';
 import { EventsModal } from './ui/modals/EventsModal';
 import { SettingsModal } from './ui/modals/SettingsModal';
 import { MailboxModal } from './ui/modals/MailboxModal';
+import { FriendsModal } from './ui/modals/FriendsModal';
 
 export function App() {
   const { initGame, tickGameLoop, saveCurrentState, activeModal } = useGameStore();
@@ -64,6 +65,7 @@ export function App() {
       <LevelUpModal />
       <EventsModal />
       <SettingsModal />
+      <FriendsModal />
       {activeModal === 'mailbox' && <MailboxModal />}
     </main>
   );

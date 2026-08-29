@@ -186,7 +186,7 @@ export interface GameStore {
   tutorialCompleted: boolean;
   
   // UI & Notifications
-  activeModal: 'shop' | 'silo' | 'barn' | 'orders' | 'roadside' | 'market' | 'fishing' | 'events' | 'settings' | 'levelup' | 'expansion' | 'mailbox' | null;
+  activeModal: 'shop' | 'silo' | 'barn' | 'orders' | 'roadside' | 'market' | 'fishing' | 'events' | 'settings' | 'levelup' | 'expansion' | 'mailbox' | 'friends' | null;
   unlockedLevelInfo: LevelConfig | null;
   floatingTexts: FloatingText[];
   soundMuted: boolean;
