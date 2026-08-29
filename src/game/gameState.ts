@@ -191,6 +191,7 @@ export interface GameStore {
   floatingTexts: FloatingText[];
   soundMuted: boolean;
   isActionStripOpen: boolean;
+  isDesign2026: boolean;
   
   // Actions
   initGame: () => void;
@@ -198,6 +199,8 @@ export interface GameStore {
   setSoundMuted: (muted: boolean) => void;
   toggleActionStrip: () => void;
   setActionStripOpen: (open: boolean) => void;
+  toggleDesign2026: () => void;
+  setDesign2026: (enabled: boolean) => void;
   openModal: (modal: GameStore['activeModal']) => void;
   closeModal: () => void;
   addFloatingText: (text: string, x: number, y: number, color?: string) => void;
@@ -360,6 +363,16 @@ export const useGameStore = create<GameStore>((set, get) => ({
   isActionStripOpen: false,
   toggleActionStrip: () => set(state => ({ isActionStripOpen: !state.isActionStripOpen })),
   setActionStripOpen: (open: boolean) => set({ isActionStripOpen: open }),
+  isDesign2026: typeof localStorage !== 'undefined' ? localStorage.getItem('farm_design_2026') === 'true' : false,
+  toggleDesign2026: () => set(state => {
+    const next = !state.isDesign2026;
+    try { localStorage.setItem('farm_design_2026', String(next)); } catch {}
+    return { isDesign2026: next };
+  }),
+  setDesign2026: (enabled: boolean) => {
+    try { localStorage.setItem('farm_design_2026', String(enabled)); } catch {}
+    set({ isDesign2026: enabled });
+  },
 
   initGame: () => {
     const saved = StorageService.loadGame();

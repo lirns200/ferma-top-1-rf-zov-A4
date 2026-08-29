@@ -1,4 +1,4 @@
-﻿import React, { useState } from 'react';
+import React, { useState } from 'react';
 import { useGameStore } from '../../game/gameState';
 import { sounds } from '../../audio/SoundManager';
 import { getTelegramUserProfile, triggerTelegramHaptic } from '../../utils/telegram';
@@ -229,6 +229,36 @@ export const SettingsModal: React.FC = () => {
 
             <div className="w-full bg-[#181C24] border border-[#242A35] rounded-2xl overflow-hidden shadow-lg flex flex-col">
               
+              {/* 🔮 Дизайн 2026 (iOS 26 Стекло & Прозрачный фон) */}
+              <div className="flex items-center justify-between p-3.5 border-b border-[#242A35]/60 bg-gradient-to-r from-blue-950/30 to-purple-950/30">
+                <div className="flex items-center gap-3">
+                  <div className="w-9 h-9 rounded-xl bg-purple-900/60 border border-purple-500/50 flex items-center justify-center text-purple-300 text-lg shadow">
+                    🔮
+                  </div>
+                  <div className="flex flex-col">
+                    <span className="text-sm font-bold text-white flex items-center gap-1.5">
+                      <span>Дизайн 2026 (iOS Стекло)</span>
+                      <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-purple-500 text-black font-black uppercase">Новинка</span>
+                    </span>
+                    <span className="text-[11px] text-[#8E939D]">Овальное парящее стекло и прозрачный док</span>
+                  </div>
+                </div>
+                <button
+                  onClick={() => {
+                    sounds.playClick();
+                    triggerTelegramHaptic('medium');
+                    useGameStore.getState().toggleDesign2026();
+                  }}
+                  className={`px-3.5 py-1.5 rounded-xl text-xs font-black transition-all cursor-pointer shadow ${
+                    useGameStore.getState().isDesign2026
+                      ? 'bg-gradient-to-r from-purple-500 to-indigo-500 text-white border border-purple-300 shadow-lg scale-105'
+                      : 'bg-[#242A35] text-[#8E939D]'
+                  }`}
+                >
+                  {useGameStore.getState().isDesign2026 ? 'ВКЛ' : 'ВЫКЛ'}
+                </button>
+              </div>
+
               {/* Sound Setting */}
               <div className="flex items-center justify-between p-3.5 border-b border-[#242A35]/60">
                 <div className="flex items-center gap-3">

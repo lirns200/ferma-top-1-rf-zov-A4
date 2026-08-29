@@ -1,7 +1,8 @@
-import React from 'react';
+﻿import React from 'react';
 import { useGameStore } from '../game/gameState';
 import { LEVELS } from '../config/levels';
 import { sounds } from '../audio/SoundManager';
+import { triggerTelegramHaptic } from '../utils/telegram';
 
 function fmtNumber(n: number): string {
   if (n >= 1_000_000) return (n / 1_000_000).toFixed(1) + 'M';
@@ -52,12 +53,17 @@ export const TopBar: React.FC = () => {
     level, xp, coins, gems,
     getStorageUsed,
     openModal,
+    isDesign2026,
   } = useGameStore();
 
   const currentLevelConfig = LEVELS[level - 1];
   const xpNeeded = currentLevelConfig ? currentLevelConfig.xpRequired : 1000;
   const xpPercent = Math.min(100, Math.round((xp / xpNeeded) * 100));
   const barnUsed = getStorageUsed('barn');
+
+  const pillClass = isDesign2026
+    ? 'hud-ios26-pill text-white'
+    : 'hud-parchment text-[#3B1F0D]';
 
   return (
     <header className="fixed top-0 left-0 right-0 z-50 pointer-events-none p-2 sm:p-3 select-none">
@@ -67,9 +73,10 @@ export const TopBar: React.FC = () => {
         <div 
           onClick={() => {
             sounds.playClick();
+            triggerTelegramHaptic('light');
             openModal('settings');
           }}
-          className="pointer-events-auto cursor-pointer hud-parchment flex items-center gap-2 px-2.5 py-1.5 active:scale-95 transition-transform"
+          className={`pointer-events-auto cursor-pointer flex items-center gap-2 px-2.5 py-1.5 active:scale-95 transition-all ${pillClass}`}
         >
           {/* Sprout Icon */}
           <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-amber-200/90 border border-amber-700/60 flex items-center justify-center shadow-inner shrink-0">
@@ -79,7 +86,7 @@ export const TopBar: React.FC = () => {
           {/* Farm Name & Level Info */}
           <div className="flex flex-col">
             <div className="flex items-center gap-2">
-              <span className="font-extrabold text-xs sm:text-sm text-[#3B1F0D] tracking-tight">
+              <span className={`font-extrabold text-xs sm:text-sm tracking-tight ${isDesign2026 ? 'text-white' : 'text-[#3B1F0D]'}`}>
                 Ферма Репка
               </span>
 
@@ -103,9 +110,9 @@ export const TopBar: React.FC = () => {
         <div className="flex items-center gap-1.5 sm:gap-2">
           
           {/* 1. Coins Badge */}
-          <div className="pointer-events-auto hud-parchment flex items-center gap-1.5 px-2.5 py-1 sm:py-1.5">
+          <div className={`pointer-events-auto flex items-center gap-1.5 px-2.5 py-1 sm:py-1.5 ${pillClass}`}>
             <CoinSvg />
-            <span className="font-extrabold text-xs sm:text-sm text-[#3B1F0D] min-w-[28px] sm:min-w-[36px]">
+            <span className={`font-extrabold text-xs sm:text-sm min-w-[28px] sm:min-w-[36px] ${isDesign2026 ? 'text-yellow-300' : 'text-[#3B1F0D]'}`}>
               {fmtNumber(coins)}
             </span>
           </div>
@@ -114,25 +121,27 @@ export const TopBar: React.FC = () => {
           <div 
             onClick={() => {
               sounds.playClick();
+              triggerTelegramHaptic('light');
               openModal('barn');
             }}
-            className="pointer-events-auto cursor-pointer hud-parchment flex items-center gap-1.5 px-2.5 py-1 sm:py-1.5 hover:brightness-105 active:scale-95 transition-all"
+            className={`pointer-events-auto cursor-pointer flex items-center gap-1.5 px-2.5 py-1 sm:py-1.5 hover:brightness-105 active:scale-95 transition-all ${pillClass}`}
           >
             <WoodSvg />
-            <span className="font-extrabold text-xs sm:text-sm text-[#3B1F0D]">
+            <span className={`font-extrabold text-xs sm:text-sm ${isDesign2026 ? 'text-amber-200' : 'text-[#3B1F0D]'}`}>
               {barnUsed}
             </span>
           </div>
 
           {/* 3. Gems / Energy Badge with [+] Button */}
-          <div className="pointer-events-auto hud-parchment flex items-center gap-1.5 pl-2.5 pr-1 py-1 sm:py-1.5">
+          <div className={`pointer-events-auto flex items-center gap-1.5 pl-2.5 pr-1 py-1 sm:py-1.5 ${pillClass}`}>
             <EnergySvg />
-            <span className="font-extrabold text-xs sm:text-sm text-[#1E3A8A]">
+            <span className={`font-extrabold text-xs sm:text-sm ${isDesign2026 ? 'text-cyan-300' : 'text-[#1E3A8A]'}`}>
               {gems}/30
             </span>
             <button
               onClick={() => {
                 sounds.playClick();
+                triggerTelegramHaptic('light');
                 openModal('events');
               }}
               className="w-5 h-5 sm:w-6 sm:h-6 rounded-lg bg-green-600 hover:bg-green-500 border border-green-300 text-white flex items-center justify-center text-xs font-black shadow active:scale-90 transition-transform cursor-pointer"
