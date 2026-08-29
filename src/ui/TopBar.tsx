@@ -2,7 +2,6 @@
 import { useGameStore } from '../game/gameState';
 import { LEVELS } from '../config/levels';
 import { sounds } from '../audio/SoundManager';
-import { Plus } from 'lucide-react';
 
 function fmtNumber(n: number): string {
   if (n >= 1_000_000) return (n / 1_000_000).toFixed(1) + 'M';
@@ -10,10 +9,48 @@ function fmtNumber(n: number): string {
   return n.toLocaleString('ru-RU');
 }
 
+// ── CRISP VECTOR ICONS (Никогда не превращаются в квадратики []) ──
+const CoinSvg = () => (
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" className="shrink-0">
+    <circle cx="12" cy="12" r="10" fill="url(#coin_g)" stroke="#92400E" strokeWidth="1.5" />
+    <circle cx="12" cy="12" r="7.5" stroke="#FEF08A" strokeWidth="1" strokeDasharray="2.5 1" />
+    <text x="12" y="16" fontSize="11" fontWeight="900" fill="#78350F" textAnchor="middle" fontFamily="sans-serif">🪙</text>
+    <defs>
+      <linearGradient id="coin_g" x1="0" y1="0" x2="24" y2="24">
+        <stop offset="0%" stopColor="#FDE047" />
+        <stop offset="100%" stopColor="#D97706" />
+      </linearGradient>
+    </defs>
+  </svg>
+);
+
+const WoodSvg = () => (
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" className="shrink-0">
+    <rect x="2" y="6" width="20" height="12" rx="3" fill="#854D0E" stroke="#451A03" strokeWidth="1.5" />
+    <ellipse cx="6" cy="12" rx="2" ry="4" fill="#A16207" />
+    <line x1="6" y1="9" x2="20" y2="9" stroke="#542D0C" strokeWidth="1" />
+    <line x1="6" y1="15" x2="20" y2="15" stroke="#542D0C" strokeWidth="1" />
+  </svg>
+);
+
+const EnergySvg = () => (
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" className="shrink-0">
+    <path d="M13 2L3 14H12L11 22L21 10H12L13 2Z" fill="#FACC15" stroke="#854D0E" strokeWidth="1.5" strokeLinejoin="round" />
+  </svg>
+);
+
+const SproutSvg = () => (
+  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" className="shrink-0">
+    <path d="M12 22V11C12 7 8 4 4 4C4 8 7 12 11 12" stroke="#15803D" strokeWidth="2.2" strokeLinecap="round" />
+    <path d="M12 13C16 13 19 11 20 7C16 6 13 8 12 11" fill="#4ADE80" stroke="#15803D" strokeWidth="1.5" />
+    <circle cx="12" cy="21" r="2" fill="#78350F" />
+  </svg>
+);
+
 export const TopBar: React.FC = () => {
   const {
     level, xp, coins, gems,
-    getStorageUsed, barnCapacity,
+    getStorageUsed,
     openModal,
   } = useGameStore();
 
@@ -23,7 +60,7 @@ export const TopBar: React.FC = () => {
   const barnUsed = getStorageUsed('barn');
 
   return (
-    <header className="fixed top-0 left-0 right-0 z-30 pointer-events-none p-2 sm:p-3 select-none">
+    <header className="fixed top-0 left-0 right-0 z-50 pointer-events-none p-2 sm:p-3 select-none">
       <div className="max-w-4xl mx-auto flex items-center justify-between gap-1.5 sm:gap-3">
 
         {/* ── LEFT: Farm Badge + Level Shield + XP Bar ── */}
@@ -34,9 +71,9 @@ export const TopBar: React.FC = () => {
           }}
           className="pointer-events-auto cursor-pointer hud-parchment flex items-center gap-2 px-2.5 py-1.5 active:scale-95 transition-transform"
         >
-          {/* Farm Sprout Icon */}
-          <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-amber-200/80 border border-amber-700/60 flex items-center justify-center text-lg sm:text-xl shadow-inner shrink-0">
-            🌱
+          {/* Sprout Icon */}
+          <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-amber-200/90 border border-amber-700/60 flex items-center justify-center shadow-inner shrink-0">
+            <SproutSvg />
           </div>
 
           {/* Farm Name & Level Info */}
@@ -66,8 +103,8 @@ export const TopBar: React.FC = () => {
         <div className="flex items-center gap-1.5 sm:gap-2">
           
           {/* 1. Coins Badge */}
-          <div className="pointer-events-auto hud-parchment flex items-center gap-1 px-2.5 py-1 sm:py-1.5">
-            <span className="text-base sm:text-lg">🪙</span>
+          <div className="pointer-events-auto hud-parchment flex items-center gap-1.5 px-2.5 py-1 sm:py-1.5">
+            <CoinSvg />
             <span className="font-extrabold text-xs sm:text-sm text-[#3B1F0D] min-w-[28px] sm:min-w-[36px]">
               {fmtNumber(coins)}
             </span>
@@ -79,9 +116,9 @@ export const TopBar: React.FC = () => {
               sounds.playClick();
               openModal('barn');
             }}
-            className="pointer-events-auto cursor-pointer hud-parchment flex items-center gap-1 px-2.5 py-1 sm:py-1.5 hover:brightness-105 active:scale-95 transition-all"
+            className="pointer-events-auto cursor-pointer hud-parchment flex items-center gap-1.5 px-2.5 py-1 sm:py-1.5 hover:brightness-105 active:scale-95 transition-all"
           >
-            <span className="text-base sm:text-lg">🪵</span>
+            <WoodSvg />
             <span className="font-extrabold text-xs sm:text-sm text-[#3B1F0D]">
               {barnUsed}
             </span>
@@ -89,7 +126,7 @@ export const TopBar: React.FC = () => {
 
           {/* 3. Gems / Energy Badge with [+] Button */}
           <div className="pointer-events-auto hud-parchment flex items-center gap-1.5 pl-2.5 pr-1 py-1 sm:py-1.5">
-            <span className="text-base sm:text-lg">⚡</span>
+            <EnergySvg />
             <span className="font-extrabold text-xs sm:text-sm text-[#1E3A8A]">
               {gems}/30
             </span>

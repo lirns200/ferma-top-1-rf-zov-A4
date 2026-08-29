@@ -54,38 +54,8 @@ export const RoadsideShopModal: React.FC = () => {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex flex-col bg-[#2A1406] select-none animate-pop-in text-[#3B1F0D] overflow-hidden">
+    <div className="fixed inset-0 pt-14 sm:pt-16 pb-20 sm:pb-24 z-40 flex flex-col bg-[#2A1406] select-none animate-pop-in text-[#3B1F0D] overflow-hidden">
       
-      {/* ── TOP HEADER (Назад + Заголовок) ── */}
-      <header className="hud-wood-dock px-3 sm:px-6 py-3 flex items-center justify-between gap-2 shrink-0 shadow-md">
-        <div className="flex items-center gap-3">
-          <button
-            onClick={() => {
-              sounds.playClick();
-              closeModal();
-            }}
-            className="hud-parchment flex items-center gap-1.5 px-3 py-1.5 text-xs sm:text-sm font-extrabold shadow cursor-pointer active:scale-95 transition-transform"
-          >
-            <ArrowLeft size={16} />
-            <span>Назад</span>
-          </button>
-          
-          <div className="flex items-center gap-2">
-            <span className="text-2xl">{activeTab === 'stand' ? '🏪' : '📰'}</span>
-            <div>
-              <h1 className="font-extrabold text-sm sm:text-lg text-yellow-300 tracking-tight leading-tight">
-                {activeTab === 'stand' ? 'Придорожный киоск' : 'Газета объявлений Долины'}
-              </h1>
-              <p className="text-[10px] sm:text-xs text-amber-200/80">
-                {activeTab === 'stand' 
-                  ? 'Продавайте излишки урожая и продуктов соседям'
-                  : 'Покупайте редкие товары и стройматериалы у других фермеров'}
-              </p>
-            </div>
-          </div>
-        </div>
-      </header>
-
       {/* ── TAB SWITCHER ── */}
       <div className="bg-[#3D2008] px-3 sm:px-6 py-2.5 flex items-center justify-between gap-2 border-b-2 border-[#5C3718] shrink-0">
         <div className="flex items-center gap-2">

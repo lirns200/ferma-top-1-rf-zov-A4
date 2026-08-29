@@ -1,4 +1,4 @@
-﻿import React from 'react';
+import React from 'react';
 import { useGameStore } from '../../game/gameState';
 import { sounds } from '../../audio/SoundManager';
 import { ArrowLeft, Volume2, VolumeX, Save, RotateCcw, Award, Info, Heart } from 'lucide-react';
@@ -22,36 +22,8 @@ export const SettingsModal: React.FC = () => {
   const buildingsCount = entities.filter(e => e.type === 'production' || e.type === 'animal_pen').length;
 
   return (
-    <div className="fixed inset-0 z-50 flex flex-col bg-[#2A1406] select-none animate-pop-in text-[#3B1F0D] overflow-hidden">
+    <div className="fixed inset-0 pt-14 sm:pt-16 pb-20 sm:pb-24 z-40 flex flex-col bg-[#2A1406] select-none animate-pop-in text-[#3B1F0D] overflow-hidden">
       
-      {/* ── TOP HEADER (Назад + Заголовок) ── */}
-      <header className="hud-wood-dock px-3 sm:px-6 py-3 flex items-center justify-between gap-2 shrink-0 shadow-md">
-        <div className="flex items-center gap-3">
-          <button
-            onClick={() => {
-              sounds.playClick();
-              closeModal();
-            }}
-            className="hud-parchment flex items-center gap-1.5 px-3 py-1.5 text-xs sm:text-sm font-extrabold shadow cursor-pointer active:scale-95 transition-transform"
-          >
-            <ArrowLeft size={16} />
-            <span>Назад</span>
-          </button>
-          
-          <div className="flex items-center gap-2">
-            <span className="text-2xl">🏡</span>
-            <div>
-              <h1 className="font-extrabold text-sm sm:text-lg text-yellow-300 tracking-tight leading-tight">
-                Усадьба и Настройки
-              </h1>
-              <p className="text-[10px] sm:text-xs text-amber-200/80">
-                Статистика фермы, звук и управление игрой
-              </p>
-            </div>
-          </div>
-        </div>
-      </header>
-
       {/* ── SETTINGS & STATS BODY ── */}
       <div className="flex-1 overflow-y-auto p-4 sm:p-6">
         <div className="max-w-2xl mx-auto flex flex-col gap-4 pb-12">
