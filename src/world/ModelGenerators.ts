@@ -3013,18 +3013,9 @@ export function createDecorationMesh(configId: string): THREE.Group {
 
     group.add(seat, back, legL, legR);
 
-  } else if (configId.includes('lamp') || configId.includes('light')) {
-    // Victorian street lantern on iron post
-    const ironMat = getCachedColorMaterial('#1E293B', 0.6);
-    const post = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.08, 1.6, 8), ironMat);
-    post.position.y = 0.8;
-    post.castShadow = true;
-
-    const lantern = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.4, 0.3), getCachedColorMaterial('#FEF08A', 0.1));
-    lantern.position.y = 1.65;
-    lantern.castShadow = true;
-
-    group.add(post, lantern);
+  } else if (configId.includes('lamp') || configId.includes('lantern') || configId.includes('light')) {
+    // Return high-quality Street Lamp Post with hanging vintage lantern, glowing bulb, halo sprite, PointLight & ground light pool
+    return createStreetLampPostMesh();
 
   } else {
     // Flowerbed / potted topiary

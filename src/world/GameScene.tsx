@@ -1472,23 +1472,6 @@ export const GameScene: React.FC = () => {
     mbGroup.add(mbPost, mbBox, mbFlag);
     terrainGroup.add(mbGroup);
 
-    // Country Street Lamp Posts placed on grass verges with arms reaching over the Road
-    const roadLampPositions: [number, number, number][] = [
-      [-22.5, -12.6, -Math.PI / 2], // North grass hill behind fence (arm reaches +Z over road)
-      [-13.0, -12.6, -Math.PI / 2], // North grass hill behind fence (arm reaches +Z over road)
-      [-6.5, -6.0, Math.PI / 2],    // South farm lawn verge near mailbox & farmhouse (arm reaches -Z over road)
-      [2.5, -6.0, Math.PI / 2],     // South farm lawn verge near roadside shop (arm reaches -Z over road)
-      [8.2, -6.0, Math.PI / 2],     // South shore lawn at bridge entrance (arm reaches -Z over road)
-      [23.6, -6.0, Math.PI / 2],    // South shore lawn at bridge exit (arm reaches -Z over road)
-      [28.5, -3.8, Math.PI / 2 + 0.35], // South lawn approach to East Tunnel (arm reaches over road curve)
-    ];
-    roadLampPositions.forEach(([lx, lz, rotY]) => {
-      const lamp = createStreetLampPostMesh();
-      lamp.position.set(lx, 0.02, lz);
-      lamp.rotation.y = rotY;
-      terrainGroup.add(lamp);
-    });
-
     // Stepping stones
     const pathMat = getCachedColorMaterial('#94A3B8', 0.9);
     const stoneGeo = new THREE.CylinderGeometry(0.35, 0.4, 0.03, 6);
