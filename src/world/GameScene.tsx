@@ -97,6 +97,9 @@ export const GameScene: React.FC = () => {
   movingRef.current = { id: movingEntityId, pos: movingPos, rot: movingRotation };
   const longPressTimerRef = useRef<number | null>(null);
 
+  // AFK & Activity tracking for idle cloud spawner
+  const lastActivityTimeRef = useRef<number>(performance.now());
+
   const activeSeasonRef = useRef(activeSeason);
   activeSeasonRef.current = activeSeason;
 
@@ -273,22 +276,27 @@ export const GameScene: React.FC = () => {
       { x: -45, y: 23, z: 10, scaleX: 7.0, scaleY: 2.3, scaleZ: 4.8, speed: 0.8 },
     ];
 
-    const activeCloudPairs: Array<{
+    interface CloudPair {
       cloud3D: THREE.Group;
       shadow: THREE.Group;
       speed: number;
       initialY: number;
-    }> = [];
+      isFlying: boolean;
+    }
+
+    const activeCloudPairs: CloudPair[] = [];
 
     cloudsConfigData.forEach((cs) => {
-      // 3D Puffy Sky Cloud
+      // 3D Puffy Sky Cloud (starts hidden/dormant on standby)
       const cloud3D = create3DPuffyCloudMesh(cs.scaleX, cs.scaleY, cs.scaleZ);
-      cloud3D.position.set(cs.x, cs.y, cs.z);
+      cloud3D.position.set(-999, cs.y, cs.z);
+      cloud3D.visible = false;
       skyCloudsGroup.add(cloud3D);
 
       // Ground Soft Shadow
       const shadowGroup = new THREE.Group();
-      shadowGroup.position.set(cs.x, 0.035, cs.z);
+      shadowGroup.position.set(-999, 0.035, cs.z);
+      shadowGroup.visible = false;
       const cGeo1 = new THREE.CircleGeometry(cs.scaleX * 0.45, 16);
       const cGeo2 = new THREE.CircleGeometry(cs.scaleX * 0.35, 16);
       const cGeo3 = new THREE.CircleGeometry(cs.scaleX * 0.30, 16);
@@ -308,6 +316,7 @@ export const GameScene: React.FC = () => {
         shadow: shadowGroup,
         speed: cs.speed,
         initialY: cs.y,
+        isFlying: false,
       });
     });
 
@@ -512,6 +521,9 @@ export const GameScene: React.FC = () => {
       }, 260);
     };
 
+    // AFK Cloud Spawner timer
+    let cloudSpawnTimer = 0.8;
+
     // 10. ANIMATION LOOP (Smooth 60/120 FPS)
     let animFrameId: number;
     const clock = new THREE.Clock();
@@ -633,21 +645,47 @@ export const GameScene: React.FC = () => {
       const isWind = curWeather === 'windy' || curSeason === 'autumn';
       const isFog = curWeather === 'fog';
 
-      const cloudDriftSpeed = isStrongWind ? 3.4 : isRain ? 2.0 : 1.4;
+      const cloudDriftSpeed = isStrongWind ? 3.6 : isRain ? 2.2 : 1.5;
 
-      activeCloudPairs.forEach(({ cloud3D, shadow, speed, initialY }, i) => {
-        cloud3D.position.x += delta * speed * cloudDriftSpeed;
-        cloud3D.position.z += delta * speed * (cloudDriftSpeed * 0.35);
-        cloud3D.position.y = initialY + Math.sin(elapsed * 0.8 + i * 1.2) * 0.35;
+      // Check if user is currently AFK / Idle (no input for > 3.5 seconds)
+      const isAfk = (performance.now() - lastActivityTimeRef.current) > 3500;
 
-        shadow.position.x = cloud3D.position.x;
-        shadow.position.z = cloud3D.position.z;
+      // When player is AFK / Idle, launch dormant standby clouds one by one
+      if (isAfk) {
+        cloudSpawnTimer -= delta;
+        if (cloudSpawnTimer <= 0) {
+          const dormantCloud = activeCloudPairs.find(c => !c.isFlying);
+          if (dormantCloud) {
+            dormantCloud.isFlying = true;
+            const startX = -48 - Math.random() * 8;
+            const startZ = (Math.random() - 0.5) * 44;
+            dormantCloud.cloud3D.position.set(startX, dormantCloud.initialY, startZ);
+            dormantCloud.shadow.position.set(startX, 0.035, startZ);
+            dormantCloud.cloud3D.visible = true;
+            dormantCloud.shadow.visible = true;
+          }
+          cloudSpawnTimer = 3.2 + Math.random() * 3.8;
+        }
+      }
 
-        if (cloud3D.position.x > 45) {
-          cloud3D.position.x = -45;
-          cloud3D.position.z = (Math.random() - 0.5) * 44;
-          shadow.position.x = cloud3D.position.x;
-          shadow.position.z = cloud3D.position.z;
+      // Smoothly drift all currently flying clouds across the sky
+      activeCloudPairs.forEach((pair, i) => {
+        if (pair.isFlying) {
+          pair.cloud3D.position.x += delta * pair.speed * cloudDriftSpeed;
+          pair.cloud3D.position.z += delta * pair.speed * (cloudDriftSpeed * 0.35);
+          pair.cloud3D.position.y = pair.initialY + Math.sin(elapsed * 0.8 + i * 1.2) * 0.35;
+
+          pair.shadow.position.x = pair.cloud3D.position.x;
+          pair.shadow.position.z = pair.cloud3D.position.z;
+
+          // When cloud crosses the eastern edge / horizon (> 48), finish flight!
+          if (pair.cloud3D.position.x > 48) {
+            pair.isFlying = false;
+            pair.cloud3D.visible = false;
+            pair.shadow.visible = false;
+            pair.cloud3D.position.set(-999, pair.initialY, 0);
+            pair.shadow.position.set(-999, 0.035, 0);
+          }
         }
       });
 
@@ -1034,9 +1072,25 @@ export const GameScene: React.FC = () => {
 
     window.addEventListener('resize', handleResize);
 
+    const recordActivity = () => {
+      lastActivityTimeRef.current = performance.now();
+    };
+    window.addEventListener('pointerdown', recordActivity);
+    window.addEventListener('pointermove', recordActivity);
+    window.addEventListener('keydown', recordActivity);
+    window.addEventListener('wheel', recordActivity, { passive: true });
+    window.addEventListener('touchstart', recordActivity, { passive: true });
+    window.addEventListener('touchmove', recordActivity, { passive: true });
+
     return () => {
       cancelAnimationFrame(animFrameId);
       window.removeEventListener('resize', handleResize);
+      window.removeEventListener('pointerdown', recordActivity);
+      window.removeEventListener('pointermove', recordActivity);
+      window.removeEventListener('keydown', recordActivity);
+      window.removeEventListener('wheel', recordActivity);
+      window.removeEventListener('touchstart', recordActivity);
+      window.removeEventListener('touchmove', recordActivity);
       renderer.dispose();
     };
   }, []); // Run ONCE on mount!
