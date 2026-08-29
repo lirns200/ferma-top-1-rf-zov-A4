@@ -9,7 +9,8 @@ import {
   WeatherType, 
   LevelConfig,
   FishSpecies,
-  ProductionQueueItem
+  ProductionQueueItem,
+  MailboxDeal,
 } from '../types';
 import { CROPS, TREES_BUSHES } from '../config/crops';
 import { PRODUCTS } from '../config/products';
@@ -32,6 +33,86 @@ import {
 import { StorageService, SavedGameState } from '../save/StorageService';
 import { sounds } from '../audio/SoundManager';
 import confetti from 'canvas-confetti';
+
+export function generateMailboxDeals(): MailboxDeal[] {
+  return [
+    {
+      id: `deal_${Date.now()}_1`,
+      senderName: 'Фермер Мария',
+      senderAvatar: '👩‍🌾',
+      letterTitle: 'Привет, сосед! Нужна пшеница',
+      letterMessage: 'Мы печём праздничные пироги, закончилась пшеница! Готова отдать пару новеньких топоров.',
+      requiredItemId: 'wheat',
+      requiredCount: 8,
+      rewardItemId: 'axe',
+      rewardCount: 2,
+      rewardCoins: 45,
+      rewardXP: 18,
+      isCompleted: false,
+      expiresAt: Date.now() + 86400000,
+    },
+    {
+      id: `deal_${Date.now()}_2`,
+      senderName: 'Деревенский пекарь',
+      senderAvatar: '👨‍🍳',
+      letterTitle: 'Срочно требуются яйца',
+      letterMessage: 'Для свежего бисквита нужны свежие куриные яйца. Взамен поделюсь прочной пилой!',
+      requiredItemId: 'egg',
+      requiredCount: 4,
+      rewardItemId: 'saw',
+      rewardCount: 2,
+      rewardCoins: 60,
+      rewardXP: 25,
+      isCompleted: false,
+      expiresAt: Date.now() + 86400000,
+    },
+    {
+      id: `deal_${Date.now()}_3`,
+      senderName: 'Плотник Грег',
+      senderAvatar: '🪵',
+      letterTitle: 'Обмен на стройматериалы',
+      letterMessage: 'Строю новый навес для коров! Обменяю кукурузу на гвозди и доски.',
+      requiredItemId: 'corn',
+      requiredCount: 6,
+      rewardItemId: 'nail',
+      rewardCount: 2,
+      rewardCoins: 50,
+      rewardXP: 20,
+      isCompleted: false,
+      expiresAt: Date.now() + 86400000,
+    },
+    {
+      id: `deal_${Date.now()}_4`,
+      senderName: 'Горный рудокоп',
+      senderAvatar: '⛏️',
+      letterTitle: 'Запасы моркови для кроликов',
+      letterMessage: 'Мои рудокопные кролики просят хрустящую морковь. Отдам динамит для расчистки скал!',
+      requiredItemId: 'carrot',
+      requiredCount: 5,
+      rewardItemId: 'dynamite',
+      rewardCount: 1,
+      rewardCoins: 75,
+      rewardXP: 30,
+      isCompleted: false,
+      expiresAt: Date.now() + 86400000,
+    },
+    {
+      id: `deal_${Date.now()}_5`,
+      senderName: 'Землемер округа',
+      senderAvatar: '📜',
+      letterTitle: 'Документы на расширение',
+      letterMessage: 'Привези мне свежий горячий хлеб к чаю, и я выпишу тебе официальную купчую на землю!',
+      requiredItemId: 'bread',
+      requiredCount: 3,
+      rewardItemId: 'deed',
+      rewardCount: 1,
+      rewardCoins: 90,
+      rewardXP: 35,
+      isCompleted: false,
+      expiresAt: Date.now() + 86400000,
+    }
+  ];
+}
 
 export interface FloatingText {
   id: string;
@@ -84,6 +165,11 @@ export interface GameStore {
   shopSlots: RoadsideSaleSlot[];
   marketListings: MarketListing[];
   
+  // Mailbox & Neighbor Deals
+  mailboxDeals: MailboxDeal[];
+  mailboxGiftClaimed: boolean;
+  mailboxGiftClaimedAt: number;
+  
   // Seasons & Weather
   activeSeason: SeasonType;
   activeEvent: GameEventConfig | null;
@@ -100,7 +186,7 @@ export interface GameStore {
   tutorialCompleted: boolean;
   
   // UI & Notifications
-  activeModal: 'shop' | 'silo' | 'barn' | 'orders' | 'roadside' | 'market' | 'fishing' | 'events' | 'settings' | 'levelup' | 'expansion' | null;
+  activeModal: 'shop' | 'silo' | 'barn' | 'orders' | 'roadside' | 'market' | 'fishing' | 'events' | 'settings' | 'levelup' | 'expansion' | 'mailbox' | null;
   unlockedLevelInfo: LevelConfig | null;
   floatingTexts: FloatingText[];
   soundMuted: boolean;
@@ -112,6 +198,9 @@ export interface GameStore {
   openModal: (modal: GameStore['activeModal']) => void;
   closeModal: () => void;
   addFloatingText: (text: string, x: number, y: number, color?: string) => void;
+  acceptMailboxDeal: (dealId: string) => boolean;
+  claimMailboxGift: () => boolean;
+  refreshMailboxDeals: () => void;
   
   // Economy & Inventory
   addCoins: (amount: number) => void;
@@ -217,6 +306,9 @@ export const useGameStore = create<GameStore>((set, get) => ({
   
   shopSlots: [...INITIAL_SHOP_SLOTS],
   marketListings: generateMarketListings(),
+  mailboxDeals: generateMailboxDeals(),
+  mailboxGiftClaimed: false,
+  mailboxGiftClaimedAt: 0,
   
   activeSeason: getCurrentRealSeason(),
   activeEvent: GAME_EVENTS.sunny_day,
@@ -432,6 +524,75 @@ export const useGameStore = create<GameStore>((set, get) => ({
         floatingTexts: s.floatingTexts.filter(ft => ft.id !== id),
       }));
     }, 1800);
+  },
+
+  acceptMailboxDeal: (dealId: string) => {
+    const state = get();
+    const deal = state.mailboxDeals.find(d => d.id === dealId);
+    if (!deal || deal.isCompleted) return false;
+
+    const hasCount = state.inventory[deal.requiredItemId] || 0;
+    if (hasCount < deal.requiredCount) {
+      return false;
+    }
+
+    if (deal.rewardItemId && deal.rewardCount) {
+      const isSilo = Boolean(CROPS[deal.rewardItemId] || TREES_BUSHES[deal.rewardItemId]);
+      const storageType: 'silo' | 'barn' = isSilo ? 'silo' : 'barn';
+      const cap = storageType === 'silo' ? state.siloCapacity : state.barnCapacity;
+      const used = state.getStorageUsed(storageType);
+      if (used + deal.rewardCount > cap) {
+        return false;
+      }
+    }
+
+    state.removeItem(deal.requiredItemId, deal.requiredCount);
+
+    if (deal.rewardItemId && deal.rewardCount) {
+      state.addItem(deal.rewardItemId, deal.rewardCount);
+    }
+    if (deal.rewardCoins) {
+      state.addCoins(deal.rewardCoins);
+    }
+    if (deal.rewardXP) {
+      state.addXP(deal.rewardXP);
+    }
+
+    sounds.playCoin();
+    confetti({ particleCount: 35, spread: 60, origin: { y: 0.6 } });
+
+    set(s => ({
+      mailboxDeals: s.mailboxDeals.map(d => d.id === dealId ? { ...d, isCompleted: true } : d),
+    }));
+    return true;
+  },
+
+  claimMailboxGift: () => {
+    const state = get();
+    if (state.mailboxGiftClaimed) return false;
+
+    state.addCoins(150);
+    state.addGems(3);
+    state.addXP(45);
+    state.addItem('axe', 1);
+    state.addItem('nail', 1);
+
+    sounds.playCoin();
+    confetti({ particleCount: 60, spread: 80, origin: { y: 0.5 } });
+
+    set({
+      mailboxGiftClaimed: true,
+      mailboxGiftClaimedAt: Date.now(),
+    });
+    return true;
+  },
+
+  refreshMailboxDeals: () => {
+    sounds.playClick();
+    set({
+      mailboxDeals: generateMailboxDeals(),
+      mailboxGiftClaimed: false,
+    });
   },
 
   addCoins: (amount) => {

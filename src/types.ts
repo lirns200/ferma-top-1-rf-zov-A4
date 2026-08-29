@@ -277,3 +277,19 @@ export interface ObstacleConfig {
 }
 
 export type TutorialStep = number;
+
+export interface MailboxDeal {
+  id: string;
+  senderName: string;
+  senderAvatar: string;
+  letterTitle: string;
+  letterMessage: string;
+  requiredItemId: string;
+  requiredCount: number;
+  rewardItemId?: string;
+  rewardCount?: number;
+  rewardCoins?: number;
+  rewardXP?: number;
+  isCompleted: boolean;
+  expiresAt: number;
+}

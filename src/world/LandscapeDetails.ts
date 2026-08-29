@@ -309,7 +309,7 @@ function createMeadowDetails(season: SeasonType, random: () => number) {
   blooms.userData.instances = flowerInstances;
 
   const grassGeometry = createGrassTuftGeometry();
-  const grassCount = 360;
+  const grassCount = 680;
   const grass = new THREE.InstancedMesh(grassGeometry, makeMaterial(palette.grassDark, 0.88), grassCount);
   grass.name = 'meadow_grass_tufts';
   const grassInstances: Array<{ x: number; y: number; z: number; scale: THREE.Vector3; rotY: number }> = [];

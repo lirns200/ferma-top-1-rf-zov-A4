@@ -23,6 +23,7 @@ import {
   createMountainWaterfallGroup,
   createWindingRiverMesh,
   createStylizedDeliveryTruck,
+  createStreetLampPostMesh,
   getCachedColorMaterial
 } from './ModelGenerators';
 import { createLandscapeDetailGroup } from './LandscapeDetails';
@@ -927,6 +928,26 @@ export const GameScene: React.FC = () => {
         }
       }
 
+      // ── Headlights and Road Spotlights (turn ON at Dusk / Night / Dawn) ──
+      const isNightOrTwilight = isNightMode || hourVal >= 18.0 || hourVal < 8.5;
+      truckGroup.traverse(child => {
+        if (child.name === 'truck_headlight_beam') {
+          child.visible = isNightOrTwilight;
+        }
+      });
+
+      scene.traverse(child => {
+        if (child.name === 'lamp_light_cone') {
+          child.visible = isNightOrTwilight;
+        }
+        if (child.name === 'lantern_glow') {
+          const mat = (child as THREE.Mesh).material as THREE.MeshStandardMaterial;
+          if (mat && mat.emissiveIntensity !== undefined) {
+            mat.emissiveIntensity = isNightOrTwilight ? 1.4 + Math.sin(elapsed * 2) * 0.2 : 0.05;
+          }
+        }
+      });
+
       // Multi-Pulse Lightning Ambient & Sun Flash
       if (isFlashing) {
         const flashElapsed = clock.getElapsedTime() - flashStartTime;
@@ -1432,14 +1453,34 @@ export const GameScene: React.FC = () => {
 
     // Mailbox (x = -4, z = -8)
     const mbGroup = new THREE.Group();
+    mbGroup.name = 'farm_mailbox';
     const mbPost = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, 1.0, 6), archWoodMat);
     mbPost.position.set(-4, 0.5, -8);
-    const mbBox = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.3, 0.5), getCachedColorMaterial('#DC2626', 0.6));
+    mbPost.castShadow = true;
+    const mbBox = new THREE.Mesh(new THREE.BoxGeometry(0.32, 0.32, 0.52), getCachedColorMaterial('#DC2626', 0.5));
     mbBox.position.set(-4, 1.0, -8);
-    const mbFlag = new THREE.Mesh(new THREE.BoxGeometry(0.02, 0.2, 0.1), getCachedColorMaterial('#FBBF24', 0.4));
-    mbFlag.position.set(-3.84, 1.1, -8);
+    mbBox.castShadow = true;
+    const mbFlag = new THREE.Mesh(new THREE.BoxGeometry(0.03, 0.22, 0.12), getCachedColorMaterial('#FBBF24', 0.3));
+    mbFlag.name = 'mailbox_flag';
+    mbFlag.position.set(-3.83, 1.12, -8);
     mbGroup.add(mbPost, mbBox, mbFlag);
     terrainGroup.add(mbGroup);
+
+    // 6 Country Street Lamp Posts with lanterns along the Road & Wooden Bridge
+    const roadLampPositions: [number, number, number][] = [
+      [-23.0, -10.5, 0],
+      [-13.0, -10.5, 0],
+      [-2.5, -10.5, 0],
+      [7.5, -10.5, 0],
+      [16.0, -10.6, 0], // On the wooden bridge
+      [25.5, -10.5, 0],
+    ];
+    roadLampPositions.forEach(([lx, lz, rotY]) => {
+      const lamp = createStreetLampPostMesh();
+      lamp.position.set(lx, 0.02, lz);
+      lamp.rotation.y = rotY;
+      terrainGroup.add(lamp);
+    });
 
     // Stepping stones
     const pathMat = getCachedColorMaterial('#94A3B8', 0.9);
@@ -2156,6 +2197,7 @@ export const GameScene: React.FC = () => {
           else if (clickedEntity.configId === 'roadside_shop') openModal('roadside');
           else if (clickedEntity.configId === 'fishing_dock') openModal('fishing');
           else if (clickedEntity.configId === 'farmhouse') openModal('settings');
+          else if (clickedEntity.configId === 'mailbox') openModal('mailbox');
         } else if (clickedEntity.type === 'storage') {
           if (clickedEntity.configId === 'silo') openModal('silo');
           else openModal('barn');
@@ -2166,6 +2208,9 @@ export const GameScene: React.FC = () => {
             collectProduct(clickedEntity.id, 0);
           }
         }
+      } else if (tile && Math.abs(tile.x - (-4)) <= 1.2 && Math.abs(tile.z - (-8)) <= 1.2) {
+        // Direct click on roadside Mailbox
+        openModal('mailbox');
       } else {
         setSelectedEntity(null);
       }

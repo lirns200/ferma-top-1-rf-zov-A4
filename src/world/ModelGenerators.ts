@@ -705,13 +705,33 @@ export function createStylizedDeliveryTruck(): THREE.Group {
   const hlR = hlL.clone();
   hlR.position.z = 0.42;
 
+  // Volumetric Headlight Light Beams (shine on road in dusk/night)
+  const beamMat = new THREE.MeshBasicMaterial({
+    color: 0xFEF08A,
+    transparent: true,
+    opacity: 0.40,
+    side: THREE.DoubleSide,
+    depthWrite: false,
+  });
+  const beamGeo = new THREE.ConeGeometry(0.55, 3.4, 8, 1, true);
+  beamGeo.translate(0, 1.7, 0);
+  beamGeo.rotateZ(-Math.PI / 2);
+
+  const beamL = new THREE.Mesh(beamGeo, beamMat);
+  beamL.name = 'truck_headlight_beam';
+  beamL.position.set(1.15, 0.64, -0.42);
+
+  const beamR = new THREE.Mesh(beamGeo, beamMat);
+  beamR.name = 'truck_headlight_beam';
+  beamR.position.set(1.15, 0.64, 0.42);
+
   // Amber turn signals
   const blinkerGeo = new THREE.BoxGeometry(0.04, 0.06, 0.1);
   const blkL = new THREE.Mesh(blinkerGeo, amberMat);
   blkL.position.set(1.1, 0.48, -0.48);
   const blkR = blkL.clone();
   blkR.position.z = 0.48;
-  truck.add(hlL, hlR, blkL, blkR);
+  truck.add(hlL, hlR, beamL, beamR, blkL, blkR);
 
   // Glass Windows (Front Windshield, Side Windows, Rear Window)
   const windshield = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.36, 0.9), glassMat);
@@ -2909,5 +2929,65 @@ export function createDecorationMesh(configId: string): THREE.Group {
     group.add(pot, bush, flw);
   }
 
+  return group;
+}
+
+/**
+ * Country Street Lamp Post with hanging lantern and volumetric light cone pool
+ */
+export function createStreetLampPostMesh(): THREE.Group {
+  const group = new THREE.Group();
+  group.name = 'road_street_lamp';
+
+  const ironMat = getCachedColorMaterial('#1E293B', 0.6, 0.8);
+  const woodMat = getCachedColorMaterial('#78350F', 0.85);
+  const lanternGlassMat = new THREE.MeshStandardMaterial({
+    color: 0xFEF08A,
+    emissive: new THREE.Color(0xF59E0B),
+    emissiveIntensity: 0.85,
+    roughness: 0.2,
+  });
+
+  // Base Pedestal
+  const base = new THREE.Mesh(new THREE.CylinderGeometry(0.18, 0.24, 0.3, 8), ironMat);
+  base.position.y = 0.15;
+  base.castShadow = true;
+
+  // Main Wooden/Iron Pole
+  const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.11, 2.6, 8), woodMat);
+  pole.position.y = 1.45;
+  pole.castShadow = true;
+
+  // Curved Iron Bracket Arm
+  const arm = new THREE.Mesh(new THREE.BoxGeometry(0.55, 0.08, 0.08), ironMat);
+  arm.position.set(0.22, 2.65, 0);
+
+  const brace = new THREE.Mesh(new THREE.BoxGeometry(0.35, 0.06, 0.06), ironMat);
+  brace.position.set(0.15, 2.45, 0);
+  brace.rotation.z = Math.PI / 4;
+
+  // Lantern Cap & Housing
+  const cap = new THREE.Mesh(new THREE.ConeGeometry(0.24, 0.18, 6), ironMat);
+  cap.position.set(0.44, 2.78, 0);
+
+  const lantern = new THREE.Mesh(new THREE.CylinderGeometry(0.14, 0.1, 0.32, 6), lanternGlassMat);
+  lantern.name = 'lantern_glow';
+  lantern.position.set(0.44, 2.52, 0);
+
+  // Volumetric Downward Light Cone Pool
+  const lightConeGeo = new THREE.ConeGeometry(1.6, 2.8, 8, 1, true);
+  lightConeGeo.translate(0, -1.4, 0);
+  const lightConeMat = new THREE.MeshBasicMaterial({
+    color: 0xFDE047,
+    transparent: true,
+    opacity: 0.22,
+    depthWrite: false,
+    side: THREE.DoubleSide,
+  });
+  const lightCone = new THREE.Mesh(lightConeGeo, lightConeMat);
+  lightCone.name = 'lamp_light_cone';
+  lightCone.position.set(0.44, 2.4, 0);
+
+  group.add(base, pole, arm, brace, cap, lantern, lightCone);
   return group;
 }
