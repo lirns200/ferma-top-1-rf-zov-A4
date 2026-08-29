@@ -40,12 +40,35 @@ import confetti from 'canvas-confetti';
 
 export const DAILY_REWARDS_SCHEDULE = [
   { day: 1, coins: 500, gems: 5, tool: undefined },
-  { day: 2, coins: 1200, gems: 8, tool: { id: 'plank', name: 'Доски', icon: '🪵', count: 2 } },
-  { day: 3, coins: 2500, gems: 12, tool: { id: 'bolt', name: 'Болты', icon: '🔩', count: 2 } },
-  { day: 4, coins: 4000, gems: 15, tool: { id: 'saw', name: 'Пилы', icon: '🪚', count: 3 } },
-  { day: 5, coins: 6000, gems: 20, tool: { id: 'duct_tape', name: 'Скотч', icon: '🩹', count: 3 } },
-  { day: 6, coins: 8500, gems: 25, tool: { id: 'tnt', name: 'Динамит', icon: '🧨', count: 5 } },
-  { day: 7, coins: 20000, gems: 50, tool: { id: 'fountain', name: 'Фонтан', icon: '⛲', count: 1 } },
+  { day: 2, coins: 800, gems: 6, tool: { id: 'plank', name: 'Доски', icon: '🪵', count: 2 } },
+  { day: 3, coins: 1200, gems: 8, tool: { id: 'bolt', name: 'Болты', icon: '🔩', count: 2 } },
+  { day: 4, coins: 1500, gems: 8, tool: { id: 'saw', name: 'Пилы', icon: '🪚', count: 2 } },
+  { day: 5, coins: 2000, gems: 10, tool: { id: 'duct_tape', name: 'Скотч', icon: '🩹', count: 2 } },
+  { day: 6, coins: 2500, gems: 10, tool: { id: 'axe', name: 'Топоры', icon: '🪓', count: 3 } },
+  { day: 7, coins: 6000, gems: 20, tool: { id: 'fountain', name: 'Фонтан', icon: '⛲', count: 1 } },
+  { day: 8, coins: 3000, gems: 10, tool: { id: 'wood_panel', name: 'Панели', icon: '🪵', count: 3 } },
+  { day: 9, coins: 3500, gems: 12, tool: { id: 'screw', name: 'Шурупы', icon: '🪛', count: 3 } },
+  { day: 10, coins: 4000, gems: 12, tool: { id: 'nail', name: 'Гвозди', icon: '🔩', count: 3 } },
+  { day: 11, coins: 4500, gems: 15, tool: { id: 'saw', name: 'Пилы', icon: '🪚', count: 3 } },
+  { day: 12, coins: 5000, gems: 15, tool: { id: 'plank', name: 'Доски', icon: '🪵', count: 4 } },
+  { day: 13, coins: 5500, gems: 15, tool: { id: 'bolt', name: 'Болты', icon: '🔩', count: 4 } },
+  { day: 14, coins: 12000, gems: 30, tool: { id: 'tnt', name: 'Динамит', icon: '🧨', count: 5 } },
+  { day: 15, coins: 6000, gems: 15, tool: { id: 'land_deed', name: 'Купчие', icon: '📜', count: 2 } },
+  { day: 16, coins: 6500, gems: 18, tool: { id: 'mallet', name: 'Молотки', icon: '🔨', count: 2 } },
+  { day: 17, coins: 7000, gems: 18, tool: { id: 'marking_stake', name: 'Колышки', icon: '📍', count: 2 } },
+  { day: 18, coins: 7500, gems: 20, tool: { id: 'duct_tape', name: 'Скотч', icon: '🩹', count: 4 } },
+  { day: 19, coins: 8000, gems: 20, tool: { id: 'axe', name: 'Топоры', icon: '🪓', count: 4 } },
+  { day: 20, coins: 8500, gems: 22, tool: { id: 'shovel', name: 'Лопаты', icon: '⛏️', count: 3 } },
+  { day: 21, coins: 20000, gems: 40, tool: { id: 'golden_egg', name: 'Золотое яйцо', icon: '🥚', count: 3 } },
+  { day: 22, coins: 9000, gems: 22, tool: { id: 'plank', name: 'Доски', icon: '🪵', count: 5 } },
+  { day: 23, coins: 9500, gems: 25, tool: { id: 'bolt', name: 'Болты', icon: '🔩', count: 5 } },
+  { day: 24, coins: 10000, gems: 25, tool: { id: 'saw', name: 'Пилы', icon: '🪚', count: 5 } },
+  { day: 25, coins: 11000, gems: 25, tool: { id: 'wood_panel', name: 'Панели', icon: '🪵', count: 5 } },
+  { day: 26, coins: 12000, gems: 28, tool: { id: 'tnt', name: 'Динамит', icon: '🧨', count: 6 } },
+  { day: 27, coins: 13000, gems: 28, tool: { id: 'land_deed', name: 'Купчие', icon: '📜', count: 3 } },
+  { day: 28, coins: 30000, gems: 50, tool: { id: 'golden_statue', name: 'Золотая статуя', icon: '🏆', count: 1 } },
+  { day: 29, coins: 35000, gems: 60, tool: { id: 'tnt', name: 'Динамит', icon: '🧨', count: 10 } },
+  { day: 30, coins: 75000, gems: 100, tool: { id: 'royal_pavilion', name: 'Королевский Павильон', icon: '👑', count: 1 } },
 ];
 
 export function generateWeatherForecast(currentEvent: GameEventConfig): HourlyWeatherForecast[] {
@@ -678,7 +701,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
   claimDailyLoginBonus: () => {
     const state = get();
     const now = Date.now();
-    const currentDayIdx = Math.max(0, Math.min(6, (state.dailyBonusStreak || 1) - 1));
+    const currentDayIdx = Math.max(0, Math.min(29, (state.dailyBonusStreak || 1) - 1));
     const reward = DAILY_REWARDS_SCHEDULE[currentDayIdx];
 
     state.addCoins(reward.coins);
@@ -691,7 +714,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
     confetti({ particleCount: 75, spread: 80, origin: { y: 0.55 } });
     state.addFloatingText(`🎁 Получен бонус Дня ${reward.day}: +${reward.coins} 🪙 +${reward.gems} ⚡!`, 0, 0, '#22C55E');
 
-    const nextStreak = (state.dailyBonusStreak || 1) >= 7 ? 1 : (state.dailyBonusStreak || 1) + 1;
+    const nextStreak = (state.dailyBonusStreak || 1) >= 30 ? 1 : (state.dailyBonusStreak || 1) + 1;
     set({
       lastDailyBonusClaimTime: now,
       dailyBonusStreak: nextStreak,
