@@ -58,22 +58,22 @@ export const TopBar: React.FC = () => {
   const barnUsed = getStorageUsed('barn');
 
   const badgeBoxClass = isDesign2026
-    ? 'bg-[#181C24]/90 border border-[#242A35] shadow-lg rounded-xl text-white px-2 py-1 sm:px-2.5 sm:py-1.5'
-    : 'hud-parchment rounded-xl px-2 py-1 sm:px-2.5 sm:py-1.5 text-[#3B1F0D]';
+    ? 'bg-[#181C24]/90 border border-[#283244] shadow-lg rounded-2xl text-white px-2.5 py-1.5 sm:px-3 sm:py-2'
+    : 'hud-parchment rounded-2xl px-2.5 py-1.5 sm:px-3 sm:py-2 text-[#3B1F0D]';
 
   return (
-    <header className="fixed top-0 left-0 right-0 z-50 pointer-events-none p-1.5 sm:p-3 select-none">
-      <div className="max-w-4xl mx-auto flex items-center justify-between gap-1 sm:gap-2.5">
+    <header className="fixed top-0 left-0 right-0 z-50 pointer-events-none p-2 sm:p-3 select-none">
+      <div className="max-w-4xl mx-auto flex items-start justify-between gap-2 sm:gap-3">
 
         {/* ── LEFT: Telegram Profile & Daily Missions under Level ── */}
-        <div className="flex flex-col items-start pointer-events-auto">
+        <div className="flex flex-col items-stretch pointer-events-auto gap-1.5 min-w-[145px] sm:min-w-[165px]">
           <div 
             onClick={() => {
               sounds.playClick();
               triggerTelegramHaptic('light');
               openModal('settings');
             }}
-            className={`cursor-pointer flex items-center gap-1.5 sm:gap-2.5 active:scale-95 transition-all ${badgeBoxClass}`}
+            className={`cursor-pointer flex items-center gap-2 sm:gap-2.5 active:scale-95 transition-all ${badgeBoxClass}`}
           >
             {/* Telegram User Avatar */}
             <div className="relative shrink-0">
@@ -81,34 +81,34 @@ export const TopBar: React.FC = () => {
                 <img
                   src={tgProfile.photoUrl}
                   alt={tgProfile.name}
-                  className="w-7 h-7 sm:w-8.5 sm:h-8.5 rounded-lg object-cover border border-white/20 shadow"
+                  className="w-7.5 h-7.5 sm:w-8.5 sm:h-8.5 rounded-xl object-cover border border-white/20 shadow"
                 />
               ) : (
-                <div className="w-7 h-7 sm:w-8.5 sm:h-8.5 rounded-lg bg-gradient-to-tr from-purple-600 to-indigo-500 border border-white/30 flex items-center justify-center font-black text-white text-[11px] sm:text-xs shadow">
+                <div className="w-7.5 h-7.5 sm:w-8.5 sm:h-8.5 rounded-xl bg-gradient-to-tr from-purple-600 to-indigo-500 border border-white/30 flex items-center justify-center font-black text-white text-xs shadow">
                   {tgProfile.name.charAt(0)}
                 </div>
               )}
               {/* Online Green Dot */}
-              <span className="absolute -bottom-0.5 -right-0.5 w-2 h-2 sm:w-2.5 sm:h-2.5 bg-emerald-500 border border-black rounded-full" />
+              <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 bg-emerald-500 border-2 border-[#181C24] rounded-full" />
             </div>
 
             {/* User Name & Level */}
-            <div className="flex flex-col min-w-[55px] sm:min-w-[80px]">
+            <div className="flex flex-col flex-1 min-w-0">
               <div className="flex items-center gap-1.5 justify-between">
-                <span className={`font-bold text-[11px] sm:text-xs tracking-tight truncate max-w-[55px] sm:max-w-[90px] ${
+                <span className={`font-bold text-[11px] sm:text-xs tracking-tight truncate ${
                   isDesign2026 ? 'text-white' : 'text-[#3B1F0D]'
                 }`}>
                   {tgProfile.name}
                 </span>
 
                 {/* Level Badge */}
-                <div className="flex items-center justify-center w-4.5 h-4.5 sm:w-5 sm:h-5 bg-[#3B1F0D] border border-amber-400 rounded-md font-black text-[9px] sm:text-[10px] text-yellow-300 shadow">
+                <div className="flex items-center justify-center w-5 h-5 bg-[#2B1B0F] border border-amber-400/80 rounded-lg font-black text-[10px] text-yellow-300 shadow">
                   {level}
                 </div>
               </div>
 
               {/* XP Bar */}
-              <div className="w-full h-1 sm:h-1.5 bg-black/50 rounded-full overflow-hidden border border-white/10 mt-0.5 sm:mt-1">
+              <div className="w-full h-1.5 bg-black/50 rounded-full overflow-hidden border border-white/10 mt-1">
                 <div 
                   className="h-full bg-gradient-to-r from-amber-400 to-yellow-300 rounded-full transition-all duration-300"
                   style={{ width: `${xpPercent}%` }}
@@ -122,10 +122,10 @@ export const TopBar: React.FC = () => {
         </div>
 
         {/* ── RIGHT: 3 Currency Badges & Weather Widget below them ── */}
-        <div className="flex flex-col items-end pointer-events-auto">
+        <div className="flex flex-col items-end pointer-events-auto gap-1.5">
           <div className="flex items-center gap-1 sm:gap-1.5">
             {/* 1. Coins Badge */}
-            <div className={`flex items-center gap-1 sm:gap-1.5 ${badgeBoxClass}`}>
+            <div className={`flex items-center gap-1.5 ${badgeBoxClass}`}>
               <CoinSvg />
               <span className={`font-extrabold text-[11px] sm:text-xs md:text-sm min-w-[24px] sm:min-w-[32px] ${
                 isDesign2026 ? 'text-amber-300' : 'text-[#3B1F0D]'
@@ -141,7 +141,7 @@ export const TopBar: React.FC = () => {
                 triggerTelegramHaptic('light');
                 openModal('barn');
               }}
-              className={`cursor-pointer flex items-center gap-1 sm:gap-1.5 hover:brightness-105 active:scale-95 transition-all ${badgeBoxClass}`}
+              className={`cursor-pointer flex items-center gap-1.5 hover:brightness-105 active:scale-95 transition-all ${badgeBoxClass}`}
             >
               <WoodSvg />
               <span className={`font-extrabold text-[11px] sm:text-xs md:text-sm ${
@@ -152,7 +152,7 @@ export const TopBar: React.FC = () => {
             </div>
 
             {/* 3. Gems / Energy Badge with [+] Button */}
-            <div className={`flex items-center gap-1 sm:gap-1.5 pl-1.5 pr-1 py-0.5 sm:pl-2.5 sm:pr-1 sm:py-1.5 ${badgeBoxClass}`}>
+            <div className={`flex items-center gap-1.5 pl-2 pr-1.5 py-1 sm:pl-2.5 sm:pr-1.5 sm:py-1.5 ${badgeBoxClass}`}>
               <EnergySvg />
               <span className={`font-extrabold text-[11px] sm:text-xs md:text-sm ${
                 isDesign2026 ? 'text-sky-300' : 'text-[#1E3A8A]'
@@ -165,7 +165,7 @@ export const TopBar: React.FC = () => {
                   triggerTelegramHaptic('light');
                   openModal('events');
                 }}
-                className="w-4.5 h-4.5 sm:w-5.5 sm:h-5.5 rounded-md sm:rounded-lg bg-emerald-600 hover:bg-emerald-500 border border-emerald-300 text-white flex items-center justify-center text-[10px] sm:text-xs font-black shadow active:scale-90 transition-transform cursor-pointer"
+                className="w-5 h-5 sm:w-5.5 sm:h-5.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 border border-emerald-300 text-white flex items-center justify-center text-[10px] sm:text-xs font-black shadow active:scale-90 transition-transform cursor-pointer"
               >
                 +
               </button>

@@ -13,7 +13,7 @@ export const HudSideWidgets: React.FC = () => {
   const isDailyReady = !lastDailyBonusClaimTime || (Date.now() - lastDailyBonusClaimTime >= 60000);
 
   return (
-    <div className="fixed top-20 sm:top-24 left-2 sm:left-3 z-40 pointer-events-auto select-none flex flex-col gap-2 animate-pop-in">
+    <div className="fixed top-[96px] sm:top-[112px] left-2 sm:left-3 z-40 pointer-events-auto select-none flex flex-col gap-2 animate-pop-in">
       
       {/* 1. 🎁 Daily Login Bonus Button */}
       <button

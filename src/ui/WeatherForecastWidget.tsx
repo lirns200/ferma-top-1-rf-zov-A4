@@ -59,7 +59,7 @@ export const WeatherForecastWidget: React.FC = () => {
   const timeFormatted = `${mins}:${String(secs).padStart(2, '0')}`;
 
   return (
-    <div ref={popoverRef} className="relative z-40 pointer-events-auto select-none mt-1">
+    <div ref={popoverRef} className="relative z-40 pointer-events-auto select-none w-full">
       
       {/* ── WEATHER PILL TRIGGER BUTTON ── */}
       <button
@@ -68,39 +68,41 @@ export const WeatherForecastWidget: React.FC = () => {
           triggerTelegramHaptic('light');
           setIsPopoverOpen(prev => !prev);
         }}
-        className={`flex items-center gap-2 p-1.5 sm:p-2 rounded-2xl border shadow-xl backdrop-blur-md transition-all active:scale-95 cursor-pointer group ${
+        className={`w-full flex items-center justify-between gap-2 px-2.5 py-1.5 rounded-2xl border shadow-xl backdrop-blur-md transition-all active:scale-95 cursor-pointer group ${
           isPopoverOpen
             ? 'bg-amber-950/90 border-amber-400 ring-2 ring-amber-400/40 text-white shadow-amber-950/80'
             : isDesign2026
-            ? 'bg-[#181C24]/90 border-[#242A35] text-white shadow-black/50 hover:border-amber-400/50'
+            ? 'bg-[#181C24]/90 border-[#283244] text-white shadow-black/50 hover:border-amber-400/50'
             : 'hud-parchment border-amber-700/70 text-[#3B1F0D]'
         }`}
         title="Нажмите, чтобы открыть прозрачный прогноз погоды"
       >
-        {/* Weather Icon Box */}
-        <div className={`w-8 h-8 sm:w-9 sm:h-9 rounded-xl flex items-center justify-center text-lg sm:text-xl shadow-inner shrink-0 ${
-          isRainy ? 'bg-sky-500/20 text-sky-300 border border-sky-400/30' : 'bg-amber-500/20 text-amber-300 border border-amber-400/30'
-        }`}>
-          {event.icon}
-        </div>
-
-        {/* Time & Precipitation Info */}
-        <div className="flex flex-col text-left pr-1">
-          <div className="flex items-center gap-1.5 leading-tight">
-            <span className="font-extrabold text-[10px] sm:text-xs text-white">
-              {dayPhase.icon} {timeStr}
-            </span>
-            <span className="text-[9px] px-1 py-0.2 rounded bg-white/10 text-[#8E939D] font-bold">
-              {dayPhase.label}
-            </span>
+        <div className="flex items-center gap-2">
+          {/* Weather Icon Box */}
+          <div className={`w-7 h-7 sm:w-8 sm:h-8 rounded-xl flex items-center justify-center text-base sm:text-lg shadow-inner shrink-0 ${
+            isRainy ? 'bg-sky-500/20 text-sky-300 border border-sky-400/30' : 'bg-amber-500/20 text-amber-300 border border-amber-400/30'
+          }`}>
+            {event.icon}
           </div>
 
-          <div className="flex items-center gap-1 mt-0.5 text-[9px] sm:text-[10px]">
-            <span className={isRainy ? 'text-sky-400 font-extrabold' : 'text-amber-300 font-bold'}>
-              {event.name.split(' ')[0]}
-            </span>
-            <span className="text-white/40">•</span>
-            <span className="text-[#8E939D] font-semibold">{precipText}</span>
+          {/* Time & Precipitation Info */}
+          <div className="flex flex-col text-left">
+            <div className="flex items-center gap-1.5 leading-tight">
+              <span className="font-extrabold text-[10px] sm:text-xs text-white">
+                {dayPhase.icon} {timeStr}
+              </span>
+              <span className="text-[8px] px-1 py-0.2 rounded bg-white/10 text-[#8E939D] font-bold">
+                {dayPhase.label}
+              </span>
+            </div>
+
+            <div className="flex items-center gap-1 mt-0.5 text-[9px] sm:text-[10px]">
+              <span className={isRainy ? 'text-sky-400 font-extrabold' : 'text-amber-300 font-bold'}>
+                {event.name.split(' ')[0]}
+              </span>
+              <span className="text-white/40">•</span>
+              <span className="text-[#8E939D] font-semibold">{precipText}</span>
+            </div>
           </div>
         </div>
 

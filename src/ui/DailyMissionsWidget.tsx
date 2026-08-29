@@ -63,7 +63,7 @@ export const DailyMissionsWidget: React.FC = () => {
           triggerTelegramHaptic('light');
           setIsOpen(prev => !prev);
         }}
-        className={`mt-1 flex items-center gap-1.5 px-2.5 py-1 rounded-xl border shadow-lg backdrop-blur-md transition-all active:scale-95 cursor-pointer text-xs font-black group ${
+        className={`w-full flex items-center justify-between px-2.5 py-1.5 rounded-2xl border shadow-lg backdrop-blur-md transition-all active:scale-95 cursor-pointer text-xs font-black group ${
           hasReadyToClaim
             ? 'bg-gradient-to-r from-emerald-950 to-green-950 border-emerald-400 ring-2 ring-emerald-400/50 text-white animate-pulse'
             : isDesign2026
@@ -72,9 +72,11 @@ export const DailyMissionsWidget: React.FC = () => {
         }`}
         title="Ежедневные миссии"
       >
-        <span className="text-xs">{hasReadyToClaim ? '🎁' : '🎯'}</span>
-        <span className="tracking-tight">Миссии</span>
-        <span className={`text-[9px] px-1 py-0.2 rounded-md font-black ${
+        <div className="flex items-center gap-1.5">
+          <span className="text-xs">{hasReadyToClaim ? '🎁' : '🎯'}</span>
+          <span className="tracking-tight text-white/90">Миссии</span>
+        </div>
+        <span className={`text-[9px] px-1.5 py-0.5 rounded-md font-black ${
           hasReadyToClaim ? 'bg-emerald-500 text-white' : 'bg-white/10 text-white/70'
         }`}>
           {completedCount}/3
