@@ -1,19 +1,88 @@
-﻿import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useGameStore } from '../../game/gameState';
 import { PRODUCTS } from '../../config/products';
-import { CROPS } from '../../config/crops';
 import { sounds } from '../../audio/SoundManager';
-import { triggerTelegramHaptic } from '../../utils/telegram';
-import { RefreshCw, Plus, CheckCircle2, Sprout, Sparkles, Store, Newspaper } from 'lucide-react';
+import { triggerTelegramHaptic, getTelegramUserProfile } from '../../utils/telegram';
+import {
+  Search,
+  SlidersHorizontal,
+  TrendingUp,
+  Store,
+  Plus,
+  CheckCircle2,
+  XCircle,
+  Clock,
+  ArrowUpDown,
+  ShoppingBag,
+  History,
+  Tag,
+  Sparkles,
+  ArrowRight,
+  Filter,
+  Check,
+  ChevronRight,
+} from 'lucide-react';
 
-const FERTILIZERS_AND_TOOLS = [
-  { id: 'speed_grow', name: 'Быстророст 50%', icon: '🧪', desc: 'Ускоряет созревание всех грядок на 50%', cost: 45, type: 'fertilizer' },
-  { id: 'double_yield', name: 'Супер-Урожай ×2', icon: '💧', desc: 'Удваивает количество собранного урожая', cost: 75, type: 'fertilizer' },
-  { id: 'axe', name: 'Топор дровосека', icon: '🪓', desc: 'Для спила засохших деревьев и добычи древесины', cost: 35, type: 'tool' },
-  { id: 'dynamite', name: 'Динамит', icon: '🧨', desc: 'Для взрыва скал и расчистки территории', cost: 50, type: 'tool' },
-  { id: 'saw', name: 'Ручная пила', icon: '🪚', desc: 'Для расчистки густых кустарников', cost: 30, type: 'tool' },
-  { id: 'shovel', name: 'Лопата', icon: '🪵', desc: 'Для перекопки и выкорчевывания пней', cost: 25, type: 'tool' },
+type MarketTab = 'browse' | 'sell' | 'my_listings' | 'history';
+type MarketCategory = 'all' | 'crop' | 'product' | 'material' | 'animal' | 'fish';
+
+interface TransactionHistoryItem {
+  id: string;
+  type: 'buy' | 'sell';
+  itemName: string;
+  itemIcon: string;
+  count: number;
+  price: number;
+  timestamp: string;
+  otherUser: string;
+}
+
+const INITIAL_HISTORY: TransactionHistoryItem[] = [
+  {
+    id: 'tx_1',
+    type: 'sell',
+    itemName: 'Хлеб',
+    itemIcon: '🍞',
+    count: 3,
+    price: 60,
+    timestamp: '5 мин. назад',
+    otherUser: '@pavel_durov',
+  },
+  {
+    id: 'tx_2',
+    type: 'buy',
+    itemName: 'Доски',
+    itemIcon: '🪵',
+    count: 5,
+    price: 150,
+    timestamp: '25 мин. назад',
+    otherUser: '@farmer_ivan',
+  },
+  {
+    id: 'tx_3',
+    type: 'sell',
+    itemName: 'Морковь',
+    itemIcon: '🥕',
+    count: 10,
+    price: 100,
+    timestamp: '1 ч. назад',
+    otherUser: '@alice_green',
+  },
 ];
+
+const CoinSvg = () => (
+  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" className="shrink-0 inline-block">
+    <circle cx="12" cy="12" r="10" fill="url(#coin_m_g)" stroke="#92400E" strokeWidth="1.5" />
+    <circle cx="12" cy="12" r="7.5" stroke="#FEF08A" strokeWidth="1" strokeDasharray="2.5 1" />
+    <text x="12" y="16" fontSize="11" fontWeight="900" fill="#78350F" textAnchor="middle" fontFamily="sans-serif">🪙</text>
+    <defs>
+      <linearGradient id="coin_m_g" x1="0" y1="0" x2="24" y2="24">
+        <stop offset="0%" stopColor="#FDE047" />
+        <stop offset="100%" stopColor="#D97706" />
+      </linearGradient>
+    </defs>
+  </svg>
+);
 
 export const RoadsideShopModal: React.FC = () => {
   const {
@@ -22,84 +91,130 @@ export const RoadsideShopModal: React.FC = () => {
     marketListings,
     inventory,
     coins,
-    level,
     createRoadsideSale,
     collectRoadsideCoins,
     buyFromMarket,
-    refreshMarket,
     addFloatingText,
     isDesign2026,
   } = useGameStore();
 
-  const [activeTab, setActiveTab] = useState<'seeds' | 'tools' | 'stand' | 'newspaper'>('seeds');
-  const [selectedSlotId, setSelectedSlotId] = useState<string | null>(null);
-  const [sellingItemId, setSellingItemId] = useState<string | null>(null);
-  const [sellingCount, setSellingCount] = useState<number>(1);
-  const [sellingPrice, setSellingPrice] = useState<number>(10);
+  const [activeTab, setActiveTab] = useState<MarketTab>('browse');
+  const [selectedCategory, setSelectedCategory] = useState<MarketCategory>('all');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedItemId, setSelectedItemId] = useState<string | null>(null);
+  const [historyList, setHistoryList] = useState<TransactionHistoryItem[]>(INITIAL_HISTORY);
+
+  // Sell form state
+  const [sellItemKey, setSellItemKey] = useState<string>('wheat');
+  const [sellCount, setSellCount] = useState<number>(1);
+  const [sellPrice, setSellPrice] = useState<number>(10);
 
   if (activeModal !== 'roadside' && activeModal !== 'market') return null;
 
-  // Available inventory items that can be sold
-  const sellableItems = Object.entries(inventory)
-    .filter(([_, count]) => count > 0)
-    .map(([itemId, count]) => ({
-      item: PRODUCTS[itemId],
-      count,
-    }))
-    .filter(i => !!i.item);
+  const tgProfile = getTelegramUserProfile();
 
-  const handleOpenSaleDialog = (slotId: string) => {
+  const allTradableItems = useMemo(() => {
+    return Object.values(PRODUCTS);
+  }, []);
+
+  const filteredTradableItems = useMemo(() => {
+    return allTradableItems.filter(item => {
+      if (selectedCategory !== 'all') {
+        if (selectedCategory === 'crop' && item.category !== 'crop') return false;
+        if (selectedCategory === 'product' && item.category !== 'product') return false;
+        if (selectedCategory === 'material' && item.category !== 'material') return false;
+        if (selectedCategory === 'animal' && item.category !== 'animal_feed' && item.category !== 'animal_produce') return false;
+      }
+      if (searchQuery.trim()) {
+        const q = searchQuery.toLowerCase();
+        return item.name.toLowerCase().includes(q) || item.id.toLowerCase().includes(q);
+      }
+      return true;
+    });
+  }, [allTradableItems, selectedCategory, searchQuery]);
+
+  const userInventoryItems = useMemo(() => {
+    return Object.entries(inventory)
+      .filter(([_, count]) => count > 0)
+      .map(([id, count]) => ({
+        item: PRODUCTS[id] || { id, name: id, icon: '📦', basePrice: 10, category: 'product' },
+        count,
+      }));
+  }, [inventory]);
+
+  const selectedItem = selectedItemId ? PRODUCTS[selectedItemId] : null;
+
+  const handleSelectSellItem = (itemKey: string, availableCount: number) => {
     sounds.playClick();
     triggerTelegramHaptic('light');
-    setSelectedSlotId(slotId);
-    if (sellableItems.length > 0) {
-      const first = sellableItems[0];
-      setSellingItemId(first.item.id);
-      setSellingCount(Math.min(first.count, 5));
-      setSellingPrice(Math.round(first.item.basePrice * Math.min(first.count, 5)));
-    }
+    setSellItemKey(itemKey);
+    setSellCount(Math.min(5, availableCount));
+    const base = PRODUCTS[itemKey]?.basePrice || 10;
+    setSellPrice(Math.round(base * Math.min(5, availableCount) * 1.2));
   };
 
-  const handleConfirmSale = () => {
-    if (!selectedSlotId || !sellingItemId) return;
-    sounds.playCoin();
-    triggerTelegramHaptic('success');
-    createRoadsideSale(selectedSlotId, sellingItemId, sellingCount, sellingPrice);
-    setSelectedSlotId(null);
-  };
-
-  const handleBuySeed = (cropId: string, cost: number, name: string) => {
-    if (coins < cost) {
-      alert('Недостаточно монет!');
+  const handlePublishListing = () => {
+    if (!sellItemKey || sellCount <= 0) return;
+    const available = inventory[sellItemKey] || 0;
+    if (available < sellCount) {
+      alert('Недостаточно предметов на складе!');
       return;
     }
-    sounds.playCoin();
-    triggerTelegramHaptic('success');
-    useGameStore.setState(state => ({
-      coins: state.coins - cost,
-      inventory: {
-        ...state.inventory,
-        [cropId]: (state.inventory[cropId] || 0) + 3,
-      },
-    }));
-    addFloatingText(`+3 ${name} куплено!`, window.innerWidth / 2, window.innerHeight / 2, '#4ADE80');
-  };
 
-  const handleBuyTool = (tool: typeof FERTILIZERS_AND_TOOLS[0]) => {
-    if (coins < tool.cost) {
-      alert('Недостаточно монет!');
+    const freeSlot = shopSlots.find(s => !s.itemId);
+    if (!freeSlot) {
+      alert('Все торговые слоты заняты! Освободите место или дождитесь продажи.');
       return;
     }
+
     sounds.playCoin();
     triggerTelegramHaptic('success');
-    useGameStore.setState(state => ({
-      coins: state.coins - tool.cost,
-      inventory: {
-        ...state.inventory,
-        [tool.id]: (state.inventory[tool.id] || 0) + 1,
+    createRoadsideSale(freeSlot.id, sellItemKey, sellCount, sellPrice);
+
+    const prod = PRODUCTS[sellItemKey];
+    setHistoryList(prev => [
+      {
+        id: `tx_${Date.now()}`,
+        type: 'sell',
+        itemName: prod?.name || sellItemKey,
+        itemIcon: prod?.icon || '📦',
+        count: sellCount,
+        price: sellPrice,
+        timestamp: 'Только что',
+        otherUser: 'Торговая площадка',
       },
-    }));
-    addFloatingText(`+1 ${tool.name} куплено!`, window.innerWidth / 2, window.innerHeight / 2, '#38BDF8');
+      ...prev,
+    ]);
+
+    addFloatingText(`Лот выставлен за ${sellPrice} 🪙!`, window.innerWidth / 2, window.innerHeight / 2, '#4ADE80');
+    setActiveTab('my_listings');
+  };
+
+  const handleBuyMarketListing = (listingId: string, itemName: string, price: number, count: number) => {
+    if (coins < price) {
+      alert('Недостаточно монет для покупки!');
+      return;
+    }
+
+    sounds.playCoin();
+    triggerTelegramHaptic('success');
+    buyFromMarket(listingId);
+
+    setHistoryList(prev => [
+      {
+        id: `tx_${Date.now()}`,
+        type: 'buy',
+        itemName,
+        itemIcon: PRODUCTS[selectedItemId || '']?.icon || '📦',
+        count,
+        price,
+        timestamp: 'Только что',
+        otherUser: '@valley_trader',
+      },
+      ...prev,
+    ]);
+
+    addFloatingText(`Куплено: ${itemName} ×${count}!`, window.innerWidth / 2, window.innerHeight / 2, '#38BDF8');
   };
 
   return (
@@ -107,330 +222,612 @@ export const RoadsideShopModal: React.FC = () => {
       isDesign2026 ? 'bg-[#0F1115] text-white' : 'bg-[#2A1406] text-[#3B1F0D]'
     }`}>
       
-      {/* ── TOP TABS BAR ── */}
-      <div className={`px-3 sm:px-6 py-2.5 flex items-center justify-between gap-2 border-b shrink-0 ${
+      {/* ── TOP STEAM MARKET HEADER ── */}
+      <div className={`px-3 sm:px-6 py-2.5 flex flex-col gap-2.5 border-b shrink-0 ${
         isDesign2026 ? 'bg-[#181C24] border-[#242A35]' : 'bg-[#3D2008] border-[#5C3718]'
       }`}>
-        <div className="flex items-center gap-1.5 sm:gap-2 overflow-x-auto">
+        <div className="flex items-center justify-between gap-3">
           
-          {/* 1. Семена */}
-          <button
-            onClick={() => {
-              sounds.playClick();
-              triggerTelegramHaptic('light');
-              setActiveTab('seeds');
-            }}
-            className={`flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-extrabold transition-all cursor-pointer shrink-0 ${
-              activeTab === 'seeds'
-                ? isDesign2026
-                  ? 'bg-emerald-600 text-white shadow-lg border border-emerald-400 scale-105'
-                  : 'hud-parchment shadow-lg border-2 border-yellow-400 scale-105 text-[#3B1F0D]'
-                : isDesign2026
-                ? 'bg-[#242A35] text-[#8E939D] hover:text-white'
-                : 'bg-[#2A1406]/80 text-amber-200 border border-amber-900 hover:bg-[#2A1406]'
-            }`}
-          >
-            <Sprout size={15} />
-            <span>Семена</span>
-          </button>
+          {/* Market Title Badge */}
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-sky-600 to-indigo-600 flex items-center justify-center text-base shadow border border-sky-400/40">
+              🏪
+            </div>
+            <div className="flex flex-col">
+              <span className="font-black text-sm tracking-wide uppercase flex items-center gap-1.5">
+                <span>Рынок Долины</span>
+                <span className="text-[9px] px-2 py-0.5 rounded-full bg-sky-500/20 text-sky-300 font-bold border border-sky-400/30 uppercase">
+                  Steam Market
+                </span>
+              </span>
+              <span className={`text-[11px] ${isDesign2026 ? 'text-[#8E939D]' : 'text-amber-200'}`}>
+                Торговая площадка между игроками
+              </span>
+            </div>
+          </div>
 
-          {/* 2. Удобрения */}
-          <button
-            onClick={() => {
-              sounds.playClick();
-              triggerTelegramHaptic('light');
-              setActiveTab('tools');
-            }}
-            className={`flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-extrabold transition-all cursor-pointer shrink-0 ${
-              activeTab === 'tools'
-                ? isDesign2026
-                  ? 'bg-emerald-600 text-white shadow-lg border border-emerald-400 scale-105'
-                  : 'hud-parchment shadow-lg border-2 border-yellow-400 scale-105 text-[#3B1F0D]'
-                : isDesign2026
-                ? 'bg-[#242A35] text-[#8E939D] hover:text-white'
-                : 'bg-[#2A1406]/80 text-amber-200 border border-amber-900 hover:bg-[#2A1406]'
-            }`}
-          >
-            <Sparkles size={15} />
-            <span>Удобрения и Инструменты</span>
-          </button>
-
-          {/* 3. Мой киоск */}
-          <button
-            onClick={() => {
-              sounds.playClick();
-              triggerTelegramHaptic('light');
-              setActiveTab('stand');
-            }}
-            className={`flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-extrabold transition-all cursor-pointer shrink-0 ${
-              activeTab === 'stand'
-                ? isDesign2026
-                  ? 'bg-purple-600 text-white shadow-lg border border-purple-400 scale-105'
-                  : 'hud-parchment shadow-lg border-2 border-yellow-400 scale-105 text-[#3B1F0D]'
-                : isDesign2026
-                ? 'bg-[#242A35] text-[#8E939D] hover:text-white'
-                : 'bg-[#2A1406]/80 text-amber-200 border border-amber-900 hover:bg-[#2A1406]'
-            }`}
-          >
-            <Store size={15} />
-            <span>Мой киоск</span>
-          </button>
-
-          {/* 4. Газета Долины */}
-          <button
-            onClick={() => {
-              sounds.playClick();
-              triggerTelegramHaptic('light');
-              setActiveTab('newspaper');
-            }}
-            className={`flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-extrabold transition-all cursor-pointer shrink-0 ${
-              activeTab === 'newspaper'
-                ? isDesign2026
-                  ? 'bg-purple-600 text-white shadow-lg border border-purple-400 scale-105'
-                  : 'hud-parchment shadow-lg border-2 border-yellow-400 scale-105 text-[#3B1F0D]'
-                : isDesign2026
-                ? 'bg-[#242A35] text-[#8E939D] hover:text-white'
-                : 'bg-[#2A1406]/80 text-amber-200 border border-amber-900 hover:bg-[#2A1406]'
-            }`}
-          >
-            <Newspaper size={15} />
-            <span>Газета Долины</span>
-          </button>
+          {/* Player Balance */}
+          <div className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl border shadow font-black text-xs ${
+            isDesign2026 ? 'bg-[#242A35] border-[#353D4C] text-amber-300' : 'bg-amber-100 border-amber-400 text-[#3B1F0D]'
+          }`}>
+            <CoinSvg />
+            <span>{coins.toLocaleString('ru-RU')}</span>
+          </div>
 
         </div>
 
-        {activeTab === 'newspaper' && (
+        {/* ── STEAM MARKET NAVIGATION TABS ── */}
+        <div className="flex items-center gap-1.5 overflow-x-auto pb-0.5">
+          
+          {/* Tab 1: Торговая площадка */}
           <button
             onClick={() => {
               sounds.playClick();
               triggerTelegramHaptic('light');
-              refreshMarket();
+              setActiveTab('browse');
+              setSelectedItemId(null);
             }}
-            className="flex items-center gap-1.5 bg-sky-600 hover:bg-sky-500 text-white font-bold text-xs px-3 py-1.5 rounded-xl shadow active:scale-95 transition-transform cursor-pointer border border-sky-400 shrink-0"
+            className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-extrabold transition-all cursor-pointer shrink-0 ${
+              activeTab === 'browse'
+                ? isDesign2026
+                  ? 'bg-sky-600 text-white shadow-lg border border-sky-400 scale-105'
+                  : 'hud-parchment shadow-lg border-2 border-yellow-400 scale-105 text-[#3B1F0D]'
+                : isDesign2026
+                ? 'bg-[#242A35] text-[#8E939D] hover:text-white'
+                : 'bg-[#2A1406]/80 text-amber-200 border border-amber-900 hover:bg-[#2A1406]'
+            }`}
           >
-            <RefreshCw size={13} />
-            <span>Обновить</span>
+            <ShoppingBag size={14} />
+            <span>Торговая площадка</span>
           </button>
-        )}
+
+          {/* Tab 2: Продать предмет */}
+          <button
+            onClick={() => {
+              sounds.playClick();
+              triggerTelegramHaptic('light');
+              setActiveTab('sell');
+              setSelectedItemId(null);
+            }}
+            className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-extrabold transition-all cursor-pointer shrink-0 ${
+              activeTab === 'sell'
+                ? isDesign2026
+                  ? 'bg-emerald-600 text-white shadow-lg border border-emerald-400 scale-105'
+                  : 'hud-parchment shadow-lg border-2 border-yellow-400 scale-105 text-[#3B1F0D]'
+                : isDesign2026
+                ? 'bg-[#242A35] text-[#8E939D] hover:text-white'
+                : 'bg-[#2A1406]/80 text-amber-200 border border-amber-900 hover:bg-[#2A1406]'
+            }`}
+          >
+            <Plus size={14} />
+            <span>Продать предмет</span>
+          </button>
+
+          {/* Tab 3: Мои активные лоты */}
+          <button
+            onClick={() => {
+              sounds.playClick();
+              triggerTelegramHaptic('light');
+              setActiveTab('my_listings');
+              setSelectedItemId(null);
+            }}
+            className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-extrabold transition-all cursor-pointer shrink-0 relative ${
+              activeTab === 'my_listings'
+                ? isDesign2026
+                  ? 'bg-purple-600 text-white shadow-lg border border-purple-400 scale-105'
+                  : 'hud-parchment shadow-lg border-2 border-yellow-400 scale-105 text-[#3B1F0D]'
+                : isDesign2026
+                ? 'bg-[#242A35] text-[#8E939D] hover:text-white'
+                : 'bg-[#2A1406]/80 text-amber-200 border border-amber-900 hover:bg-[#2A1406]'
+            }`}
+          >
+            <Tag size={14} />
+            <span>Мои лоты</span>
+            {shopSlots.some(s => s.isSold) && (
+              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping absolute top-1 right-1" />
+            )}
+          </button>
+
+          {/* Tab 4: История сделок */}
+          <button
+            onClick={() => {
+              sounds.playClick();
+              triggerTelegramHaptic('light');
+              setActiveTab('history');
+              setSelectedItemId(null);
+            }}
+            className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-extrabold transition-all cursor-pointer shrink-0 ${
+              activeTab === 'history'
+                ? isDesign2026
+                  ? 'bg-amber-600 text-white shadow-lg border border-amber-400 scale-105'
+                  : 'hud-parchment shadow-lg border-2 border-yellow-400 scale-105 text-[#3B1F0D]'
+                : isDesign2026
+                ? 'bg-[#242A35] text-[#8E939D] hover:text-white'
+                : 'bg-[#2A1406]/80 text-amber-200 border border-amber-900 hover:bg-[#2A1406]'
+            }`}
+          >
+            <History size={14} />
+            <span>История</span>
+          </button>
+
+        </div>
       </div>
 
-      {/* ── CONTENT AREA ── */}
-      <div className="flex-1 overflow-y-auto p-3 sm:p-6">
-        <div className="max-w-5xl mx-auto pb-12">
-          
-          {/* ── TAB 1: СЕМЕНА (SEEDS) ── */}
-          {activeTab === 'seeds' && (
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 sm:gap-4">
-              {Object.values(CROPS).map(crop => {
-                const unlocked = level >= crop.unlockLevel;
-                const seedCost = crop.cost * 3;
-                const canAfford = coins >= seedCost;
+      {/* ── SCROLLABLE CONTENT AREA ── */}
+      <div className="flex-1 overflow-y-auto p-3 sm:p-5">
+        <div className="max-w-5xl mx-auto flex flex-col gap-4 pb-12">
 
-                return (
-                  <div
-                    key={crop.id}
-                    className={`p-4 rounded-2xl border shadow-md flex flex-col justify-between items-center text-center gap-2 relative ${
-                      isDesign2026 ? 'bg-[#181C24] border-[#242A35] text-white' : 'hud-parchment border-[#5C3718] text-[#3B1F0D]'
-                    } ${!unlocked ? 'opacity-50 grayscale' : ''}`}
-                  >
-                    {!unlocked && (
-                      <div className="absolute top-2.5 right-2.5 px-2 py-0.5 rounded-lg bg-black/80 text-yellow-300 text-[10px] font-black">
-                        Ур. {crop.unlockLevel}
-                      </div>
-                    )}
+          {/* ════════════════════════════════════════════════════════════
+              TAB 1: ТОРГОВАЯ ПЛОЩАДКА (КАТАЛОГ STEAM MARKET)
+              ════════════════════════════════════════════════════════════ */}
+          {activeTab === 'browse' && !selectedItemId && (
+            <>
+              {/* Search & Category Filter Bar */}
+              <div className="flex flex-col sm:flex-row items-center gap-2.5 justify-between">
+                
+                {/* Search Input */}
+                <div className={`flex items-center gap-2 px-3 py-2 rounded-xl border w-full sm:w-80 ${
+                  isDesign2026 ? 'bg-[#181C24] border-[#242A35] text-white' : 'bg-amber-100 border-[#5C3718] text-[#3B1F0D]'
+                }`}>
+                  <Search size={16} className="text-[#8E939D] shrink-0" />
+                  <input
+                    type="text"
+                    value={searchQuery}
+                    onChange={e => setSearchQuery(e.target.value)}
+                    placeholder="Поиск по рынку..."
+                    className="bg-transparent border-none outline-none text-xs font-bold w-full placeholder:text-[#8E939D]"
+                  />
+                  {searchQuery && (
+                    <button onClick={() => setSearchQuery('')} className="text-xs text-[#8E939D] hover:text-white">✕</button>
+                  )}
+                </div>
 
-                    <span className="text-4xl my-1">{crop.icon}</span>
-                    <div className="flex flex-col">
-                      <span className="font-extrabold text-sm">{crop.name}</span>
-                      <span className={`text-[11px] ${isDesign2026 ? 'text-[#8E939D]' : 'text-[#5C3718]'}`}>
-                        Созревание: {crop.growTimeSeconds} сек.
-                      </span>
-                    </div>
-
+                {/* Category Pills */}
+                <div className="flex items-center gap-1.5 overflow-x-auto w-full sm:w-auto">
+                  {[
+                    { id: 'all', label: 'Все', icon: '🌟' },
+                    { id: 'crop', label: 'Урожай', icon: '🌾' },
+                    { id: 'product', label: 'Продукция', icon: '🍞' },
+                    { id: 'material', label: 'Материалы', icon: '🪵' },
+                    { id: 'animal', label: 'Животные', icon: '🥚' },
+                  ].map(cat => (
                     <button
-                      onClick={() => unlocked && handleBuySeed(crop.id, seedCost, crop.name)}
-                      disabled={!unlocked || !canAfford}
-                      className={`w-full py-2 rounded-xl text-xs font-black shadow transition-transform active:scale-95 cursor-pointer flex items-center justify-center gap-1.5 ${
-                        !unlocked
-                          ? 'bg-zinc-700 text-zinc-400 cursor-not-allowed'
-                          : canAfford
-                          ? 'bg-gradient-to-r from-emerald-500 to-green-600 hover:from-emerald-400 hover:to-green-500 text-white border border-emerald-300'
-                          : 'bg-zinc-800 text-zinc-500 cursor-not-allowed'
+                      key={cat.id}
+                      onClick={() => {
+                        sounds.playClick();
+                        setSelectedCategory(cat.id as MarketCategory);
+                      }}
+                      className={`px-3 py-1.5 rounded-xl text-xs font-extrabold flex items-center gap-1 transition-all cursor-pointer shrink-0 ${
+                        selectedCategory === cat.id
+                          ? 'bg-sky-600 text-white shadow border border-sky-400'
+                          : isDesign2026
+                          ? 'bg-[#181C24] text-[#8E939D] border border-[#242A35] hover:text-white'
+                          : 'bg-amber-100/80 text-[#3B1F0D] border border-amber-300'
                       }`}
                     >
-                      <span>Купить 3 шт. • {seedCost} 🪙</span>
+                      <span>{cat.icon}</span>
+                      <span>{cat.label}</span>
                     </button>
+                  ))}
+                </div>
+
+              </div>
+
+              {/* Items Grid (Steam Catalog Cards) */}
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 sm:gap-4">
+                {filteredTradableItems.map(item => {
+                  const matchingListings = marketListings.filter(l => l.itemId === item.id && !l.sold);
+                  const minPrice = matchingListings.length > 0
+                    ? Math.min(...matchingListings.map(l => l.price))
+                    : item.basePrice;
+                  const totalLots = matchingListings.length > 0
+                    ? matchingListings.reduce((sum, l) => sum + l.count, 0)
+                    : 14;
+
+                  return (
+                    <div
+                      key={item.id}
+                      onClick={() => {
+                        sounds.playClick();
+                        triggerTelegramHaptic('light');
+                        setSelectedItemId(item.id);
+                      }}
+                      className={`p-3.5 rounded-2xl border shadow flex flex-col justify-between items-center text-center gap-2 group cursor-pointer transition-all hover:scale-[1.02] hover:border-sky-500/60 ${
+                        isDesign2026
+                          ? 'bg-[#181C24] border-[#242A35] text-white'
+                          : 'hud-parchment border-[#5C3718] text-[#3B1F0D]'
+                      }`}
+                    >
+                      <div className="w-14 h-14 rounded-2xl flex items-center justify-center text-3xl shadow-inner bg-black/20 my-1 group-hover:scale-110 transition-transform">
+                        {item.icon}
+                      </div>
+
+                      <div className="flex flex-col">
+                        <span className="font-extrabold text-xs sm:text-sm tracking-tight">{item.name}</span>
+                        <span className="text-[11px] text-[#8E939D]">
+                          В продаже: {totalLots} шт.
+                        </span>
+                      </div>
+
+                      <div className="w-full pt-2 border-t border-white/10 flex items-center justify-between">
+                        <div className="flex flex-col text-left">
+                          <span className="text-[9px] text-[#8E939D] uppercase">Начиная с</span>
+                          <span className="text-xs font-black text-amber-400 flex items-center gap-0.5">
+                            <CoinSvg /> {minPrice}
+                          </span>
+                        </div>
+
+                        <div className="p-1.5 rounded-lg bg-sky-600 group-hover:bg-sky-500 text-white shadow">
+                          <ChevronRight size={14} />
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </>
+          )}
+
+          {/* ════════════════════════════════════════════════════════════
+              STEAM ORDER BOOK / ITEM DETAIL VIEW
+              ════════════════════════════════════════════════════════════ */}
+          {activeTab === 'browse' && selectedItem && (
+            <div className="flex flex-col gap-4">
+              
+              {/* Back button */}
+              <button
+                onClick={() => setSelectedItemId(null)}
+                className="flex items-center gap-1.5 text-xs font-bold text-sky-400 hover:text-sky-300 cursor-pointer self-start"
+              >
+                ← Вернуться в каталог рынка
+              </button>
+
+              {/* Item Header Card */}
+              <div className={`p-4 sm:p-5 rounded-2xl border shadow-xl flex flex-col sm:flex-row items-center justify-between gap-4 ${
+                isDesign2026 ? 'bg-[#181C24] border-[#242A35] text-white' : 'hud-parchment border-amber-600 text-[#3B1F0D]'
+              }`}>
+                <div className="flex items-center gap-4">
+                  <div className="w-16 h-16 rounded-2xl bg-black/30 flex items-center justify-center text-4xl shadow-inner shrink-0">
+                    {selectedItem.icon}
                   </div>
-                );
-              })}
+                  <div className="flex flex-col">
+                    <h2 className="font-black text-lg">{selectedItem.name}</h2>
+                    <p className={`text-xs ${isDesign2026 ? 'text-[#8E939D]' : 'text-[#5C3718]'}`}>
+                      {selectedItem.description || 'Популярный фермерский товар на Торговой площадке Долины.'}
+                    </p>
+                    <span className="text-xs font-bold text-emerald-400 mt-1 flex items-center gap-1">
+                      <TrendingUp size={13} />
+                      <span>Медианная цена: {selectedItem.basePrice} 🪙</span>
+                    </span>
+                  </div>
+                </div>
+
+                <button
+                  onClick={() => {
+                    sounds.playClick();
+                    setActiveTab('sell');
+                    setSellItemKey(selectedItem.id);
+                  }}
+                  className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-emerald-600 to-green-600 text-white font-black text-xs shadow-lg active:scale-95 transition-transform cursor-pointer shrink-0 border border-emerald-400"
+                >
+                  + Продать такой товар
+                </button>
+              </div>
+
+              {/* Active Listings Table (Как в Steam) */}
+              <div className="flex flex-col gap-2">
+                <span className="text-xs font-extrabold text-[#8E939D] uppercase tracking-wider px-1">
+                  Предложения игроков на рынке
+                </span>
+
+                <div className="flex flex-col gap-2">
+                  {[
+                    { id: 'lot_1', seller: '@dasha_agro', avatar: '👩‍🌾', count: 5, price: Math.round(selectedItem.basePrice * 5 * 0.9) },
+                    { id: 'lot_2', seller: '@ivan_tractor', avatar: '👨‍🌾', count: 10, price: Math.round(selectedItem.basePrice * 10) },
+                    { id: 'lot_3', seller: '@mikhail_bee', avatar: '🐝', count: 3, price: Math.round(selectedItem.basePrice * 3 * 1.1) },
+                    { id: 'lot_4', seller: '@alex_top1', avatar: '🚜', count: 8, price: Math.round(selectedItem.basePrice * 8 * 1.2) },
+                  ].map(lot => (
+                    <div
+                      key={lot.id}
+                      className={`p-3 sm:p-4 rounded-2xl border shadow flex items-center justify-between gap-3 ${
+                        isDesign2026
+                          ? 'bg-[#181C24] border-[#242A35] text-white'
+                          : 'hud-parchment border-amber-700/60 text-[#3B1F0D]'
+                      }`}
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-xl bg-black/20 flex items-center justify-center text-2xl">
+                          {lot.avatar}
+                        </div>
+                        <div className="flex flex-col">
+                          <span className="font-bold text-xs sm:text-sm">{lot.seller}</span>
+                          <span className="text-xs text-[#8E939D]">
+                            Количество: <b className="text-white font-bold">{lot.count} шт.</b>
+                          </span>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-3">
+                        <div className="flex flex-col text-right">
+                          <span className="text-sm font-black text-amber-400 flex items-center gap-1">
+                            <CoinSvg /> {lot.price}
+                          </span>
+                          <span className="text-[10px] text-[#8E939D]">
+                            {(lot.price / lot.count).toFixed(1)} 🪙 / шт.
+                          </span>
+                        </div>
+
+                        <button
+                          onClick={() => handleBuyMarketListing(lot.id, selectedItem.name, lot.price, lot.count)}
+                          className="px-4 py-2 rounded-xl bg-gradient-to-r from-sky-600 to-blue-600 hover:from-sky-500 hover:to-blue-500 text-white font-black text-xs shadow-lg active:scale-95 transition-transform cursor-pointer border border-sky-400"
+                        >
+                          Купить
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
             </div>
           )}
 
-          {/* ── TAB 2: УДОБРЕНИЯ И ИНСТРУМЕНТЫ (TOOLS) ── */}
-          {activeTab === 'tools' && (
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4">
-              {FERTILIZERS_AND_TOOLS.map(item => {
-                const canAfford = coins >= item.cost;
+          {/* ════════════════════════════════════════════════════════════
+              TAB 2: ПРОДАТЬ ПРЕДМЕТ (ВЫСТАВЛЕНИЕ ЛОТА НА STEAM MARKET)
+              ════════════════════════════════════════════════════════════ */}
+          {activeTab === 'sell' && (
+            <div className="flex flex-col sm:flex-row gap-4">
+              
+              {/* Left Column: Select Item from Inventory */}
+              <div className="flex-1 flex flex-col gap-2">
+                <span className="text-xs font-extrabold text-[#8E939D] uppercase tracking-wider px-1">
+                  Выберите предмет со склада
+                </span>
 
-                return (
+                {userInventoryItems.length === 0 ? (
+                  <div className={`p-8 rounded-2xl border text-center flex flex-col items-center justify-center gap-2 ${
+                    isDesign2026 ? 'bg-[#181C24] border-[#242A35] text-[#8E939D]' : 'hud-parchment text-[#5C3718]'
+                  }`}>
+                    <span className="text-4xl">📦</span>
+                    <span className="font-bold text-sm">Ваш склад пуст!</span>
+                    <span className="text-xs">Соберите урожай или произведите товары, чтобы продавать на рынке.</span>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5 max-h-[380px] overflow-y-auto pr-1">
+                    {userInventoryItems.map(({ item, count }) => (
+                      <div
+                        key={item.id}
+                        onClick={() => handleSelectSellItem(item.id, count)}
+                        className={`p-3 rounded-2xl border shadow flex flex-col items-center justify-between text-center gap-1 cursor-pointer transition-all ${
+                          sellItemKey === item.id
+                            ? 'bg-emerald-950/60 border-emerald-500 ring-2 ring-emerald-400/50 scale-105'
+                            : isDesign2026
+                            ? 'bg-[#181C24] border-[#242A35] text-white hover:border-white/30'
+                            : 'hud-parchment border-amber-700/60 text-[#3B1F0D]'
+                        }`}
+                      >
+                        <span className="text-3xl my-0.5">{item.icon}</span>
+                        <span className="font-bold text-xs truncate max-w-full">{item.name}</span>
+                        <span className="text-[11px] font-black text-emerald-400">×{count} на складе</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Right Column: Pricing & Fee Calculator */}
+              <div className={`w-full sm:w-80 p-4 sm:p-5 rounded-2xl border shadow-xl flex flex-col justify-between gap-4 ${
+                isDesign2026 ? 'bg-[#181C24] border-[#242A35] text-white' : 'hud-parchment border-amber-600 text-[#3B1F0D]'
+              }`}>
+                <div>
+                  <span className="text-xs font-black uppercase text-[#8E939D]">
+                    Параметры лота
+                  </span>
+
+                  {/* Selected Item Info */}
+                  <div className="flex items-center gap-3 my-3 p-3 rounded-xl bg-black/20 border border-white/5">
+                    <span className="text-3xl">{PRODUCTS[sellItemKey]?.icon || '📦'}</span>
+                    <div className="flex flex-col">
+                      <span className="font-extrabold text-sm">{PRODUCTS[sellItemKey]?.name || sellItemKey}</span>
+                      <span className="text-xs text-[#8E939D]">Доступно: {inventory[sellItemKey] || 0} шт.</span>
+                    </div>
+                  </div>
+
+                  {/* Quantity Slider */}
+                  <div className="flex flex-col gap-1.5 mb-3">
+                    <div className="flex items-center justify-between text-xs font-bold">
+                      <span>Количество:</span>
+                      <span className="text-emerald-400 font-black">{sellCount} шт.</span>
+                    </div>
+                    <input
+                      type="range"
+                      min={1}
+                      max={Math.max(1, inventory[sellItemKey] || 1)}
+                      value={sellCount}
+                      onChange={e => setSellCount(Number(e.target.value))}
+                      className="w-full accent-emerald-500 cursor-pointer"
+                    />
+                  </div>
+
+                  {/* Price Setting */}
+                  <div className="flex flex-col gap-1.5 mb-3">
+                    <div className="flex items-center justify-between text-xs font-bold">
+                      <span>Цена продажи:</span>
+                      <span className="text-amber-300 font-black flex items-center gap-1"><CoinSvg /> {sellPrice}</span>
+                    </div>
+                    <input
+                      type="range"
+                      min={Math.max(1, Math.round((PRODUCTS[sellItemKey]?.basePrice || 5) * sellCount * 0.5))}
+                      max={Math.round((PRODUCTS[sellItemKey]?.basePrice || 5) * sellCount * 3)}
+                      value={sellPrice}
+                      onChange={e => setSellPrice(Number(e.target.value))}
+                      className="w-full accent-amber-500 cursor-pointer"
+                    />
+                  </div>
+
+                  {/* Steam Fee Breakdown */}
+                  <div className="flex flex-col gap-1 p-2.5 rounded-xl bg-black/25 text-xs">
+                    <div className="flex justify-between text-[#8E939D]">
+                      <span>Покупатель заплатит:</span>
+                      <span className="font-bold text-white">{sellPrice} 🪙</span>
+                    </div>
+                    <div className="flex justify-between text-[#8E939D]">
+                      <span>Комиссия площадки (5%):</span>
+                      <span className="text-red-400 font-bold">-{Math.round(sellPrice * 0.05)} 🪙</span>
+                    </div>
+                    <div className="flex justify-between font-black text-emerald-400 pt-1 border-t border-white/10">
+                      <span>Вы получите чистыми:</span>
+                      <span>+{Math.round(sellPrice * 0.95)} 🪙</span>
+                    </div>
+                  </div>
+                </div>
+
+                <button
+                  onClick={handlePublishListing}
+                  disabled={(inventory[sellItemKey] || 0) < sellCount}
+                  className="w-full py-3 rounded-xl bg-gradient-to-r from-emerald-500 to-green-600 hover:from-emerald-400 hover:to-green-500 text-white font-black text-xs sm:text-sm shadow-xl flex items-center justify-center gap-1.5 transition-transform active:scale-95 cursor-pointer border border-emerald-300"
+                >
+                  <Tag size={15} />
+                  <span>Выставить на Торговую площадку</span>
+                </button>
+              </div>
+
+            </div>
+          )}
+
+          {/* ════════════════════════════════════════════════════════════
+              TAB 3: МОИ АКТИВНЫЕ ЛОТЫ
+              ════════════════════════════════════════════════════════════ */}
+          {activeTab === 'my_listings' && (
+            <div className="flex flex-col gap-3">
+              <div className="flex items-center justify-between px-1">
+                <span className="text-xs font-extrabold text-[#8E939D] uppercase tracking-wider">
+                  Ваши активные лоты в продаже
+                </span>
+                <span className="text-xs text-sky-400 font-bold">
+                  Занято слотов: {shopSlots.filter(s => !!s.itemId).length} / {shopSlots.length}
+                </span>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
+                {shopSlots.map(slot => {
+                  const item = slot.itemId ? PRODUCTS[slot.itemId] : null;
+
+                  return (
+                    <div
+                      key={slot.id}
+                      className={`p-4 rounded-2xl border shadow-md flex flex-col justify-between items-center text-center min-h-[170px] relative ${
+                        isDesign2026
+                          ? 'bg-[#181C24] border-[#242A35] text-white'
+                          : 'hud-parchment border-[#5C3718] text-[#3B1F0D]'
+                      }`}
+                    >
+                      {slot.itemId && item ? (
+                        slot.isSold ? (
+                          <div className="flex flex-col items-center justify-between h-full w-full">
+                            <div className="flex items-center gap-1 text-emerald-300 font-black text-xs bg-emerald-950/80 px-2.5 py-0.5 rounded-full border border-emerald-500 animate-pulse">
+                              <CheckCircle2 size={13} />
+                              <span>ПРОДАНО!</span>
+                            </div>
+                            <span className="text-4xl my-1">{item.icon}</span>
+                            <button
+                              onClick={() => {
+                                sounds.playCoin();
+                                triggerTelegramHaptic('success');
+                                collectRoadsideCoins(slot.id);
+                              }}
+                              className="w-full py-2 bg-gradient-to-b from-yellow-400 to-amber-500 text-amber-950 font-black text-xs rounded-xl shadow-md hover:scale-105 active:scale-95 transition-transform flex items-center justify-center gap-1 cursor-pointer"
+                            >
+                              <span>Забрать +{slot.price} 🪙</span>
+                            </button>
+                          </div>
+                        ) : (
+                          <div className="flex flex-col items-center justify-between h-full w-full">
+                            <div className="flex items-center gap-1 text-sky-400 font-bold text-xs">
+                              <Clock size={12} />
+                              <span>В продаже</span>
+                            </div>
+                            <span className="text-4xl my-1">{item.icon}</span>
+                            <div className="flex flex-col w-full">
+                              <span className="font-bold text-xs">{item.name} ×{slot.count}</span>
+                              <span className="font-black text-amber-400 text-sm mt-0.5">{slot.price} 🪙</span>
+                            </div>
+                          </div>
+                        )
+                      ) : (
+                        <button
+                          onClick={() => {
+                            sounds.playClick();
+                            setActiveTab('sell');
+                          }}
+                          className="flex flex-col items-center justify-center gap-2 h-full w-full text-[#8E939D] hover:text-white cursor-pointer"
+                        >
+                          <div className={`w-11 h-11 rounded-full border-2 border-dashed flex items-center justify-center text-xl ${
+                            isDesign2026 ? 'bg-[#242A35] border-[#353D4C]' : 'bg-amber-200/80 border-[#5C3718]'
+                          }`}>
+                            <Plus size={22} />
+                          </div>
+                          <span className="text-xs font-extrabold">Свободный слот</span>
+                        </button>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* ════════════════════════════════════════════════════════════
+              TAB 4: ИСТОРИЯ СДЕЛОК (TRANSACTION HISTORY)
+              ════════════════════════════════════════════════════════════ */}
+          {activeTab === 'history' && (
+            <div className="flex flex-col gap-2.5">
+              <span className="text-xs font-extrabold text-[#8E939D] uppercase tracking-wider px-1">
+                История покупок и продаж на рынке
+              </span>
+
+              <div className="flex flex-col gap-2">
+                {historyList.map(tx => (
                   <div
-                    key={item.id}
-                    className={`p-4 rounded-2xl border shadow-md flex items-center justify-between gap-3 ${
-                      isDesign2026 ? 'bg-[#181C24] border-[#242A35] text-white' : 'hud-parchment border-[#5C3718] text-[#3B1F0D]'
+                    key={tx.id}
+                    className={`p-3.5 rounded-2xl border shadow flex items-center justify-between gap-3 ${
+                      isDesign2026
+                        ? 'bg-[#181C24] border-[#242A35] text-white'
+                        : 'hud-parchment border-amber-700/60 text-[#3B1F0D]'
                     }`}
                   >
                     <div className="flex items-center gap-3">
-                      <div className={`w-12 h-12 rounded-2xl flex items-center justify-center text-3xl shadow-inner shrink-0 ${
-                        isDesign2026 ? 'bg-[#242A35]' : 'bg-amber-100'
+                      <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-2xl shadow-inner ${
+                        tx.type === 'sell' ? 'bg-emerald-950/60 border border-emerald-500/40' : 'bg-sky-950/60 border border-sky-500/40'
                       }`}>
-                        {item.icon}
+                        {tx.itemIcon}
                       </div>
+
                       <div className="flex flex-col">
-                        <span className="font-extrabold text-sm">{item.name}</span>
-                        <span className={`text-[11px] line-clamp-1 ${isDesign2026 ? 'text-[#8E939D]' : 'text-[#5C3718]'}`}>
-                          {item.desc}
+                        <span className="font-bold text-xs sm:text-sm flex items-center gap-2">
+                          <span>{tx.itemName} ×{tx.count}</span>
+                          <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold uppercase ${
+                            tx.type === 'sell' ? 'bg-emerald-500/20 text-emerald-300' : 'bg-sky-500/20 text-sky-300'
+                          }`}>
+                            {tx.type === 'sell' ? 'Продано' : 'Куплено'}
+                          </span>
+                        </span>
+                        <span className="text-[11px] text-[#8E939D]">
+                          {tx.otherUser} • {tx.timestamp}
                         </span>
                       </div>
                     </div>
 
-                    <button
-                      onClick={() => handleBuyTool(item)}
-                      disabled={!canAfford}
-                      className={`px-4 py-2 rounded-xl text-xs font-black shadow transition-transform active:scale-95 cursor-pointer shrink-0 ${
-                        canAfford
-                          ? 'bg-gradient-to-r from-sky-500 to-blue-600 text-white hover:brightness-110 border border-sky-300'
-                          : 'bg-zinc-800 text-zinc-500 cursor-not-allowed'
-                      }`}
-                    >
-                      {item.cost} 🪙
-                    </button>
-                  </div>
-                );
-              })}
-            </div>
-          )}
-
-          {/* ── TAB 3: МОЙ КИОСК (STAND) ── */}
-          {activeTab === 'stand' && (
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 sm:gap-4">
-              {shopSlots.map(slot => {
-                const item = slot.itemId ? PRODUCTS[slot.itemId] : null;
-
-                return (
-                  <div
-                    key={slot.id}
-                    className={`relative flex flex-col items-center justify-between p-4 rounded-2xl border shadow-md min-h-[160px] ${
-                      isDesign2026
-                        ? 'bg-[#181C24] border-[#242A35] text-white'
-                        : 'hud-parchment border-[#5C3718] text-[#3B1F0D]'
-                    }`}
-                  >
-                    {slot.itemId && item ? (
-                      slot.isSold ? (
-                        <div className="flex flex-col items-center justify-between h-full w-full">
-                          <div className="flex items-center gap-1 text-emerald-300 font-black text-xs bg-emerald-950/80 px-2.5 py-0.5 rounded-full border border-emerald-500">
-                            <CheckCircle2 size={13} />
-                            <span>ПРОДАНО!</span>
-                          </div>
-                          <span className="text-4xl my-1">{item.icon}</span>
-                          <button
-                            onClick={() => {
-                              sounds.playCoin();
-                              triggerTelegramHaptic('success');
-                              collectRoadsideCoins(slot.id);
-                            }}
-                            className="w-full py-2 bg-gradient-to-b from-yellow-400 to-amber-500 text-amber-950 font-black text-xs rounded-xl shadow-md hover:scale-105 active:scale-95 transition-transform flex items-center justify-center gap-1 cursor-pointer"
-                          >
-                            <span>Забрать +{slot.price} 🪙</span>
-                          </button>
-                        </div>
-                      ) : (
-                        <div className="flex flex-col items-center justify-between h-full w-full">
-                          <span className="text-xs font-bold text-[#8E939D]">{item.name}</span>
-                          <span className="text-4xl my-1">{item.icon}</span>
-                          <div className={`flex items-center justify-between w-full text-xs font-black px-3 py-1 rounded-xl border ${
-                            isDesign2026
-                              ? 'bg-[#242A35] border-[#353D4C] text-white'
-                              : 'bg-amber-100/90 border-amber-300 text-[#3B1F0D]'
-                          }`}>
-                            <span>×{slot.count}</span>
-                            <span>{slot.price} 🪙</span>
-                          </div>
-                        </div>
-                      )
-                    ) : (
-                      <button
-                        onClick={() => handleOpenSaleDialog(slot.id)}
-                        className="flex flex-col items-center justify-center gap-2 h-full w-full text-[#8E939D] hover:text-white cursor-pointer"
-                      >
-                        <div className={`w-11 h-11 rounded-full border-2 border-dashed flex items-center justify-center text-xl ${
-                          isDesign2026 ? 'bg-[#242A35] border-[#353D4C]' : 'bg-amber-200/80 border-[#5C3718]'
-                        }`}>
-                          <Plus size={22} />
-                        </div>
-                        <span className="text-xs font-extrabold">Выставить товар</span>
-                      </button>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-          )}
-
-          {/* ── TAB 4: ГАЗЕТА ДОЛИНЫ (NEWSPAPER) ── */}
-          {activeTab === 'newspaper' && (
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 sm:gap-4">
-              {marketListings.map(listing => {
-                const item = PRODUCTS[listing.itemId];
-                const canBuy = coins >= listing.price && !listing.sold;
-
-                return (
-                  <div
-                    key={listing.id}
-                    className={`flex flex-col justify-between p-3.5 sm:p-4 rounded-2xl border shadow-md relative ${
-                      isDesign2026
-                        ? 'bg-[#181C24] border-[#242A35] text-white'
-                        : 'hud-parchment border-[#5C3718] text-[#3B1F0D]'
-                    } ${listing.sold ? 'opacity-50 grayscale' : ''}`}
-                  >
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="text-xs font-bold text-[#8E939D] truncate max-w-[90px]">
-                        {listing.sellerName}
+                    <div className="text-right">
+                      <span className={`font-black text-sm ${
+                        tx.type === 'sell' ? 'text-emerald-400' : 'text-amber-400'
+                      }`}>
+                        {tx.type === 'sell' ? '+' : '-'}{tx.price} 🪙
                       </span>
-                      <span className="text-xl">{listing.sellerAvatar}</span>
-                    </div>
-
-                    <div className="flex flex-col items-center my-2">
-                      <span className="text-4xl">{item?.icon || '📦'}</span>
-                      <span className="text-xs font-black mt-1">{item?.name}</span>
-                      <span className="text-xs font-bold text-amber-400">Кол-во: ×{listing.count}</span>
-                    </div>
-
-                    <div className="flex items-center justify-between pt-2 border-t border-white/10">
-                      <span className="text-xs font-black text-yellow-300">🪙 {listing.price}</span>
-                      <button
-                        onClick={() => {
-                          if (canBuy) {
-                            sounds.playCoin();
-                            triggerTelegramHaptic('success');
-                            buyFromMarket(listing.id);
-                          }
-                        }}
-                        disabled={!canBuy}
-                        className={`px-3 py-1.5 rounded-xl font-extrabold text-xs shadow transition-transform active:scale-95 ${
-                          listing.sold
-                            ? 'bg-zinc-700 text-zinc-400 cursor-not-allowed'
-                            : canBuy
-                            ? 'bg-gradient-to-b from-emerald-500 to-emerald-700 text-white cursor-pointer hover:brightness-110'
-                            : 'bg-zinc-800 text-zinc-500 cursor-not-allowed'
-                        }`}
-                      >
-                        {listing.sold ? 'Куплено' : 'Купить'}
-                      </button>
                     </div>
                   </div>
-                );
-              })}
+                ))}
+              </div>
             </div>
           )}
 
