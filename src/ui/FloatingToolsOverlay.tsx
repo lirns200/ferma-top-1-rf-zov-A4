@@ -1,4 +1,4 @@
-﻿import React from 'react';
+import React from 'react';
 import { useGameStore } from '../game/gameState';
 import { CROPS, TREES_BUSHES } from '../config/crops';
 import { BUILDINGS } from '../config/buildings';
@@ -319,37 +319,6 @@ export const FloatingToolsOverlay: React.FC = () => {
           >
             <span className="text-xl sm:text-2xl">🔨</span>
             <span className="text-[9px] sm:text-[10px] font-extrabold tracking-tight">Строить</span>
-          </button>
-
-          {/* 💧 5. Вода / Серп */}
-          <button
-            onClick={() => {
-              sounds.playClick();
-              setActiveTool({ type: 'harvest' });
-            }}
-            className={`hud-tool-btn flex-1 py-1.5 sm:py-2 flex flex-col items-center justify-center gap-0.5 relative ${
-              activeTool?.type === 'harvest' ? 'hud-tool-btn-active' : ''
-            }`}
-          >
-            <span className="absolute -top-1.5 right-0.5 px-1 py-0.2 bg-[#4A2810] border border-blue-400 rounded-full text-blue-200 text-[8px] sm:text-[9px] font-black shadow">
-              8
-            </span>
-            <span className="text-xl sm:text-2xl">💧</span>
-            <span className="text-[9px] sm:text-[10px] font-extrabold tracking-tight">Вода</span>
-          </button>
-
-          {/* 🪓 6. Топор */}
-          <button
-            onClick={() => {
-              sounds.playClick();
-              setActiveTool({ type: 'feed' });
-            }}
-            className={`hud-tool-btn flex-1 py-1.5 sm:py-2 flex flex-col items-center justify-center gap-0.5 ${
-              activeTool?.type === 'feed' ? 'hud-tool-btn-active' : ''
-            }`}
-          >
-            <span className="text-xl sm:text-2xl">🪓</span>
-            <span className="text-[9px] sm:text-[10px] font-extrabold tracking-tight">Топор</span>
           </button>
 
         </div>

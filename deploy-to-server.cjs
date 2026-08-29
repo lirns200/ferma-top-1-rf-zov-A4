@@ -1,4 +1,4 @@
-﻿const { Client } = require('ssh2');
+const { Client } = require('ssh2');
 const fs = require('fs');
 const path = require('path');
 
@@ -87,13 +87,13 @@ conn.on('ready', async () => {
       await uploadDirectory(sftp, distPath, '/var/www/farm-game');
       console.log('All files uploaded successfully!');
 
-      // 4. Configure web server on a dedicated port (e.g. 8080) or Nginx
+      // 4. Configure web server on a dedicated port (e.g. 3000) or Nginx
       const setupScript = `
 # Check if nginx is installed
 if command -v nginx >/dev/null 2>&1; then
-  cat << 'EOF' > /etc/nginx/conf.d/farm-game.conf
+  cat << 'EOF' > /etc/nginx/conf.d/farm-game-3000.conf
 server {
-    listen 8080;
+    listen 3000;
     server_name _;
 
     root /var/www/farm-game;
@@ -101,6 +101,12 @@ server {
 
     location / {
         try_files $uri $uri/ /index.html;
+        add_header Cache-Control "no-cache, no-store, must-revalidate, max-age=0";
+    }
+
+    location /assets/ {
+        expires 1y;
+        add_header Cache-Control "public, immutable";
     }
 
     # Enable gzip compression
@@ -109,7 +115,7 @@ server {
 }
 EOF
   nginx -t && nginx -s reload || systemctl reload nginx || systemctl restart nginx
-  echo "NGINX_CONFIGURED_PORT_8080"
+  echo "NGINX_CONFIGURED_PORT_3000"
 fi
 
 # Open firewall port 8080 if ufw/iptables is active
