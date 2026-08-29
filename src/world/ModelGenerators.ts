@@ -3001,24 +3001,24 @@ export function createStreetLampPostMesh(): THREE.Group {
   pole.position.y = 1.45;
   pole.castShadow = true;
 
-  // Curved Iron Bracket Arm
-  const arm = new THREE.Mesh(new THREE.BoxGeometry(0.55, 0.08, 0.08), ironMat);
-  arm.position.set(0.22, 2.65, 0);
+  // Curved Iron Bracket Arm extending over the road
+  const arm = new THREE.Mesh(new THREE.BoxGeometry(0.75, 0.08, 0.08), ironMat);
+  arm.position.set(0.35, 2.65, 0);
 
-  const brace = new THREE.Mesh(new THREE.BoxGeometry(0.35, 0.06, 0.06), ironMat);
-  brace.position.set(0.15, 2.45, 0);
+  const brace = new THREE.Mesh(new THREE.BoxGeometry(0.42, 0.06, 0.06), ironMat);
+  brace.position.set(0.22, 2.45, 0);
   brace.rotation.z = Math.PI / 4;
 
   // Lantern Cap & Housing
   const cap = new THREE.Mesh(new THREE.ConeGeometry(0.24, 0.18, 6), ironMat);
-  cap.position.set(0.44, 2.78, 0);
+  cap.position.set(0.65, 2.78, 0);
 
   const lantern = new THREE.Mesh(new THREE.CylinderGeometry(0.14, 0.1, 0.32, 6), lanternGlassMat);
   lantern.name = 'lantern_glow';
-  lantern.position.set(0.44, 2.52, 0);
+  lantern.position.set(0.65, 2.52, 0);
 
-  // Soft Warm Golden Light Pool on the road / ground (no rigid cones!)
-  const groundLightGeo = new THREE.PlaneGeometry(3.6, 3.6);
+  // Soft Warm Golden Light Pool on the road (covers entire road width)
+  const groundLightGeo = new THREE.PlaneGeometry(4.2, 4.2);
   const groundLightMat = new THREE.MeshBasicMaterial({
     map: getSoftLightPoolTexture(),
     transparent: true,
@@ -3029,7 +3029,7 @@ export function createStreetLampPostMesh(): THREE.Group {
   const groundLight = new THREE.Mesh(groundLightGeo, groundLightMat);
   groundLight.name = 'lamp_light_cone';
   groundLight.rotation.x = -Math.PI / 2;
-  groundLight.position.set(0.44, 0.03, 0);
+  groundLight.position.set(0.65, 0.03, 0);
 
   group.add(base, pole, arm, brace, cap, lantern, groundLight);
   return group;

@@ -1466,15 +1466,15 @@ export const GameScene: React.FC = () => {
     mbGroup.add(mbPost, mbBox, mbFlag);
     terrainGroup.add(mbGroup);
 
-    // Country Street Lamp Posts with soft lanterns along the Roadside Verge
+    // Country Street Lamp Posts with soft lanterns facing the Road
     const roadLampPositions: [number, number, number][] = [
-      [-20.0, -7.5, -Math.PI / 2],
-      [-11.5, -7.5, -Math.PI / 2],
-      [-4.5, -7.5, -Math.PI / 2],
-      [3.5, -7.5, -Math.PI / 2],
-      [8.2, -7.5, -Math.PI / 2],  // Roadside before bridge
-      [23.8, -7.5, -Math.PI / 2], // Roadside after bridge
-      [28.0, -5.2, -Math.PI / 2], // Roadside approach to East Tunnel
+      [-22.0, -10.8, -Math.PI / 2], // North verge at western entrance (points +Z towards road)
+      [-14.5, -7.2, Math.PI / 2],   // South verge before barn/silo (points -Z towards road)
+      [-6.5, -7.2, Math.PI / 2],    // South verge near mailbox & farmhouse path (points -Z towards road)
+      [2.8, -7.2, Math.PI / 2],     // South verge near roadside shop (points -Z towards road)
+      [8.0, -7.2, Math.PI / 2],     // South verge at bridge entrance (points -Z towards road)
+      [23.5, -7.2, Math.PI / 2],    // South verge at bridge exit (points -Z towards road)
+      [28.2, -5.3, Math.PI / 2 + 0.35], // Roadside bend towards East Tunnel (points towards road curve)
     ];
     roadLampPositions.forEach(([lx, lz, rotY]) => {
       const lamp = createStreetLampPostMesh();
