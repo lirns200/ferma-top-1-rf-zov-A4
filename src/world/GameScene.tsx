@@ -934,16 +934,22 @@ export const GameScene: React.FC = () => {
         if (child.name === 'truck_headlight_beam') {
           child.visible = isNightOrTwilight;
         }
+        if (child.name === 'truck_point_light') {
+          (child as THREE.PointLight).intensity = isNightOrTwilight ? (isNightMode ? 4.8 : 3.0) : 0;
+        }
       });
 
       scene.traverse(child => {
-        if (child.name === 'lamp_light_cone') {
+        if (child.name === 'lamp_light_cone' || child.name === 'lamp_glow_sprite') {
           child.visible = isNightOrTwilight;
+        }
+        if (child.name === 'lamp_point_light') {
+          (child as THREE.PointLight).intensity = isNightOrTwilight ? (isNightMode ? 3.4 : 2.0) : 0;
         }
         if (child.name === 'lantern_glow') {
           const mat = (child as THREE.Mesh).material as THREE.MeshStandardMaterial;
           if (mat && mat.emissiveIntensity !== undefined) {
-            mat.emissiveIntensity = isNightOrTwilight ? 1.4 + Math.sin(elapsed * 2) * 0.2 : 0.05;
+            mat.emissiveIntensity = isNightOrTwilight ? 3.0 + Math.sin(elapsed * 2) * 0.4 : 0.05;
           }
         }
       });
@@ -1466,15 +1472,15 @@ export const GameScene: React.FC = () => {
     mbGroup.add(mbPost, mbBox, mbFlag);
     terrainGroup.add(mbGroup);
 
-    // Country Street Lamp Posts with soft lanterns facing the Road
+    // Country Street Lamp Posts placed on grass verges with arms reaching over the Road
     const roadLampPositions: [number, number, number][] = [
-      [-22.0, -10.8, -Math.PI / 2], // North verge at western entrance (points +Z towards road)
-      [-14.5, -7.2, Math.PI / 2],   // South verge before barn/silo (points -Z towards road)
-      [-6.5, -7.2, Math.PI / 2],    // South verge near mailbox & farmhouse path (points -Z towards road)
-      [2.8, -7.2, Math.PI / 2],     // South verge near roadside shop (points -Z towards road)
-      [8.0, -7.2, Math.PI / 2],     // South verge at bridge entrance (points -Z towards road)
-      [23.5, -7.2, Math.PI / 2],    // South verge at bridge exit (points -Z towards road)
-      [28.2, -5.3, Math.PI / 2 + 0.35], // Roadside bend towards East Tunnel (points towards road curve)
+      [-22.5, -12.6, -Math.PI / 2], // North grass hill behind fence (arm reaches +Z over road)
+      [-13.0, -12.6, -Math.PI / 2], // North grass hill behind fence (arm reaches +Z over road)
+      [-6.5, -6.0, Math.PI / 2],    // South farm lawn verge near mailbox & farmhouse (arm reaches -Z over road)
+      [2.5, -6.0, Math.PI / 2],     // South farm lawn verge near roadside shop (arm reaches -Z over road)
+      [8.2, -6.0, Math.PI / 2],     // South shore lawn at bridge entrance (arm reaches -Z over road)
+      [23.6, -6.0, Math.PI / 2],    // South shore lawn at bridge exit (arm reaches -Z over road)
+      [28.5, -3.8, Math.PI / 2 + 0.35], // South lawn approach to East Tunnel (arm reaches over road curve)
     ];
     roadLampPositions.forEach(([lx, lz, rotY]) => {
       const lamp = createStreetLampPostMesh();

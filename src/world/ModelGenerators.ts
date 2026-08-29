@@ -34,17 +34,18 @@ let softLightTexture: THREE.CanvasTexture | null = null;
 function getSoftLightPoolTexture(): THREE.CanvasTexture {
   if (!softLightTexture && typeof document !== 'undefined') {
     const canvas = document.createElement('canvas');
-    canvas.width = 128;
-    canvas.height = 128;
+    canvas.width = 256;
+    canvas.height = 256;
     const ctx = canvas.getContext('2d');
     if (ctx) {
-      const grad = ctx.createRadialGradient(64, 64, 0, 64, 64, 64);
-      grad.addColorStop(0, 'rgba(254, 240, 138, 0.7)');
-      grad.addColorStop(0.35, 'rgba(253, 224, 71, 0.45)');
-      grad.addColorStop(0.7, 'rgba(245, 158, 11, 0.15)');
-      grad.addColorStop(1.0, 'rgba(245, 158, 11, 0)');
+      const grad = ctx.createRadialGradient(128, 128, 0, 128, 128, 128);
+      grad.addColorStop(0, 'rgba(255, 255, 220, 1.0)');
+      grad.addColorStop(0.20, 'rgba(254, 240, 138, 0.90)');
+      grad.addColorStop(0.48, 'rgba(245, 158, 11, 0.55)');
+      grad.addColorStop(0.75, 'rgba(217, 119, 6, 0.20)');
+      grad.addColorStop(1.0, 'rgba(180, 83, 9, 0)');
       ctx.fillStyle = grad;
-      ctx.fillRect(0, 0, 128, 128);
+      ctx.fillRect(0, 0, 256, 256);
     }
     softLightTexture = new THREE.CanvasTexture(canvas);
   }
@@ -55,21 +56,74 @@ let headlightGroundTexture: THREE.CanvasTexture | null = null;
 function getHeadlightGroundTexture(): THREE.CanvasTexture {
   if (!headlightGroundTexture && typeof document !== 'undefined') {
     const canvas = document.createElement('canvas');
-    canvas.width = 256;
-    canvas.height = 256;
+    canvas.width = 512;
+    canvas.height = 512;
     const ctx = canvas.getContext('2d');
     if (ctx) {
-      const grad = ctx.createRadialGradient(128, 20, 10, 128, 140, 120);
-      grad.addColorStop(0, 'rgba(255, 251, 235, 0.75)');
-      grad.addColorStop(0.35, 'rgba(254, 240, 138, 0.45)');
-      grad.addColorStop(0.75, 'rgba(253, 224, 71, 0.15)');
-      grad.addColorStop(1.0, 'rgba(245, 158, 11, 0)');
-      ctx.fillStyle = grad;
-      ctx.fillRect(0, 0, 256, 256);
+      ctx.clearRect(0, 0, 512, 512);
+
+      // Left high-beam hotspot
+      const gradL = ctx.createRadialGradient(210, 440, 15, 160, 150, 280);
+      gradL.addColorStop(0, 'rgba(255, 255, 255, 1.0)');
+      gradL.addColorStop(0.28, 'rgba(254, 240, 138, 0.90)');
+      gradL.addColorStop(0.60, 'rgba(245, 158, 11, 0.40)');
+      gradL.addColorStop(1.0, 'rgba(245, 158, 11, 0)');
+      ctx.fillStyle = gradL;
+      ctx.beginPath();
+      ctx.moveTo(215, 480);
+      ctx.lineTo(60, 40);
+      ctx.lineTo(260, 40);
+      ctx.closePath();
+      ctx.fill();
+
+      // Right high-beam hotspot
+      const gradR = ctx.createRadialGradient(302, 440, 15, 352, 150, 280);
+      gradR.addColorStop(0, 'rgba(255, 255, 255, 1.0)');
+      gradR.addColorStop(0.28, 'rgba(254, 240, 138, 0.90)');
+      gradR.addColorStop(0.60, 'rgba(245, 158, 11, 0.40)');
+      gradR.addColorStop(1.0, 'rgba(245, 158, 11, 0)');
+      ctx.fillStyle = gradR;
+      ctx.beginPath();
+      ctx.moveTo(297, 480);
+      ctx.lineTo(252, 40);
+      ctx.lineTo(452, 40);
+      ctx.closePath();
+      ctx.fill();
+
+      // Overall forward wide glow
+      const wideGrad = ctx.createRadialGradient(256, 380, 25, 256, 180, 300);
+      wideGrad.addColorStop(0, 'rgba(255, 255, 230, 0.65)');
+      wideGrad.addColorStop(0.4, 'rgba(254, 240, 138, 0.35)');
+      wideGrad.addColorStop(1.0, 'rgba(245, 158, 11, 0)');
+      ctx.fillStyle = wideGrad;
+      ctx.beginPath();
+      ctx.ellipse(256, 220, 230, 240, 0, 0, Math.PI * 2);
+      ctx.fill();
     }
     headlightGroundTexture = new THREE.CanvasTexture(canvas);
   }
   return headlightGroundTexture!;
+}
+
+let lampHaloTexture: THREE.CanvasTexture | null = null;
+function getLampHaloTexture(): THREE.CanvasTexture {
+  if (!lampHaloTexture && typeof document !== 'undefined') {
+    const canvas = document.createElement('canvas');
+    canvas.width = 128;
+    canvas.height = 128;
+    const ctx = canvas.getContext('2d');
+    if (ctx) {
+      const grad = ctx.createRadialGradient(64, 64, 0, 64, 64, 64);
+      grad.addColorStop(0, 'rgba(255, 255, 255, 1.0)');
+      grad.addColorStop(0.25, 'rgba(254, 240, 138, 0.85)');
+      grad.addColorStop(0.55, 'rgba(245, 158, 11, 0.35)');
+      grad.addColorStop(1.0, 'rgba(245, 158, 11, 0)');
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, 0, 128, 128);
+    }
+    lampHaloTexture = new THREE.CanvasTexture(canvas);
+  }
+  return lampHaloTexture!;
 }
 
 // -------------------------------------------------------------
@@ -738,35 +792,54 @@ export function createStylizedDeliveryTruck(): THREE.Group {
   grilleMesh.position.set(1.13, 0.62, 0);
   truck.add(grille, grilleMesh);
 
-  // Twin Glowing Round Headlights with Chrome Bezels
-  const headlightLensMat = new THREE.MeshStandardMaterial({
-    color: 0xFFFBEB,
-    emissive: new THREE.Color(0xFEF08A),
-    emissiveIntensity: 2.2,
-    roughness: 0.1,
-  });
-  const headlightGeo = new THREE.CylinderGeometry(0.1, 0.1, 0.08, 12);
-  const hlL = new THREE.Mesh(headlightGeo, headlightLensMat);
-  hlL.position.set(1.1, 0.64, -0.42);
+  // Twin Ultra-Bright Glowing Headlights with Chrome Bezels
+  const headlightLensGeo = new THREE.CylinderGeometry(0.12, 0.12, 0.08, 12);
+  const headlightLensMat = new THREE.MeshBasicMaterial({ color: 0xFFFFFF });
+  const hlL = new THREE.Mesh(headlightLensGeo, headlightLensMat);
+  hlL.position.set(1.11, 0.64, -0.42);
   hlL.rotation.z = Math.PI / 2;
 
-  const hlR = new THREE.Mesh(headlightGeo, headlightLensMat);
-  hlR.position.set(1.1, 0.64, 0.42);
+  const hlR = new THREE.Mesh(headlightLensGeo, headlightLensMat);
+  hlR.position.set(1.11, 0.64, 0.42);
   hlR.rotation.z = Math.PI / 2;
 
-  // Soft Forward Road Illumination Decal Plane (lies flat on road, no stiff 3D cones)
+  // Luminous Lens Corona Sprites
+  const hlCoronaMat = new THREE.SpriteMaterial({
+    map: getLampHaloTexture(),
+    color: 0xFFFBEB,
+    transparent: true,
+    opacity: 0.95,
+    blending: THREE.AdditiveBlending,
+  });
+  const coronaL = new THREE.Sprite(hlCoronaMat);
+  coronaL.name = 'truck_headlight_beam';
+  coronaL.scale.set(1.1, 1.1, 1.1);
+  coronaL.position.set(1.18, 0.64, -0.42);
+
+  const coronaR = new THREE.Sprite(hlCoronaMat);
+  coronaR.name = 'truck_headlight_beam';
+  coronaR.scale.set(1.1, 1.1, 1.1);
+  coronaR.position.set(1.18, 0.64, 0.42);
+
+  // Real Dynamic Forward Headlight PointLight
+  const truckPointLight = new THREE.PointLight(0xFFFBEB, 4.5, 16.0, 1.1);
+  truckPointLight.name = 'truck_point_light';
+  truckPointLight.position.set(1.4, 0.65, 0);
+
+  // High-Vibrancy Forward Road Illumination Beam Decal Plane (lies flat on road)
   const beamMat = new THREE.MeshBasicMaterial({
     map: getHeadlightGroundTexture(),
     transparent: true,
-    opacity: 0.80,
+    opacity: 0.95,
+    blending: THREE.AdditiveBlending,
     depthWrite: false,
     side: THREE.DoubleSide,
   });
-  const roadBeam = new THREE.Mesh(new THREE.PlaneGeometry(3.8, 5.8), beamMat);
+  const roadBeam = new THREE.Mesh(new THREE.PlaneGeometry(6.2, 10.5), beamMat);
   roadBeam.name = 'truck_headlight_beam';
   roadBeam.rotation.x = -Math.PI / 2;
   roadBeam.rotation.z = -Math.PI / 2;
-  roadBeam.position.set(3.4, 0.03, 0);
+  roadBeam.position.set(5.2, 0.04, 0);
 
   // Amber turn signals
   const blinkerGeo = new THREE.BoxGeometry(0.04, 0.06, 0.1);
@@ -774,7 +847,7 @@ export function createStylizedDeliveryTruck(): THREE.Group {
   blkL.position.set(1.1, 0.48, -0.48);
   const blkR = blkL.clone();
   blkR.position.z = 0.48;
-  truck.add(hlL, hlR, roadBeam, blkL, blkR);
+  truck.add(hlL, hlR, coronaL, coronaR, truckPointLight, roadBeam, blkL, blkR);
 
   // Glass Windows (Front Windshield, Side Windows, Rear Window)
   const windshield = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.36, 0.9), glassMat);
@@ -2976,61 +3049,94 @@ export function createDecorationMesh(configId: string): THREE.Group {
 }
 
 /**
- * Country Street Lamp Post with hanging lantern and volumetric light cone pool
+ * Country Street Lamp Post with hanging vintage lantern, halo, real PointLight and bright ground pool
  */
 export function createStreetLampPostMesh(): THREE.Group {
   const group = new THREE.Group();
   group.name = 'road_street_lamp';
 
-  const ironMat = getCachedColorMaterial('#1E293B', 0.6, 0.8);
-  const woodMat = getCachedColorMaterial('#78350F', 0.85);
+  const ironMat = getCachedColorMaterial('#0F172A', 0.5, 0.85);
+  const woodMat = getCachedColorMaterial('#5C2E0B', 0.85);
   const lanternGlassMat = new THREE.MeshStandardMaterial({
     color: 0xFEF08A,
     emissive: new THREE.Color(0xF59E0B),
-    emissiveIntensity: 0.85,
-    roughness: 0.2,
+    emissiveIntensity: 1.5,
+    roughness: 0.1,
   });
 
-  // Base Pedestal
-  const base = new THREE.Mesh(new THREE.CylinderGeometry(0.18, 0.24, 0.3, 8), ironMat);
-  base.position.y = 0.15;
+  // Base Iron Footing
+  const base = new THREE.Mesh(new THREE.CylinderGeometry(0.20, 0.28, 0.35, 8), ironMat);
+  base.position.y = 0.175;
   base.castShadow = true;
 
-  // Main Wooden/Iron Pole
-  const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.11, 2.6, 8), woodMat);
-  pole.position.y = 1.45;
+  // Main Timber Mast (3.1m tall)
+  const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.09, 0.13, 3.0, 8), woodMat);
+  pole.position.y = 1.65;
   pole.castShadow = true;
 
-  // Curved Iron Bracket Arm extending over the road
-  const arm = new THREE.Mesh(new THREE.BoxGeometry(0.75, 0.08, 0.08), ironMat);
-  arm.position.set(0.35, 2.65, 0);
+  // Top Finial
+  const finial = new THREE.Mesh(new THREE.ConeGeometry(0.12, 0.25, 8), ironMat);
+  finial.position.y = 3.25;
 
-  const brace = new THREE.Mesh(new THREE.BoxGeometry(0.42, 0.06, 0.06), ironMat);
-  brace.position.set(0.22, 2.45, 0);
+  // Forged Iron Curved Bracket Arm (extends 1.15m over road)
+  const arm = new THREE.Mesh(new THREE.BoxGeometry(1.15, 0.08, 0.08), ironMat);
+  arm.position.set(0.55, 3.05, 0);
+
+  const brace = new THREE.Mesh(new THREE.BoxGeometry(0.65, 0.06, 0.06), ironMat);
+  brace.position.set(0.35, 2.75, 0);
   brace.rotation.z = Math.PI / 4;
 
-  // Lantern Cap & Housing
-  const cap = new THREE.Mesh(new THREE.ConeGeometry(0.24, 0.18, 6), ironMat);
-  cap.position.set(0.65, 2.78, 0);
+  // Hanging Vintage Lantern Housing
+  const hanger = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.02, 0.22, 6), ironMat);
+  hanger.position.set(1.15, 2.92, 0);
 
-  const lantern = new THREE.Mesh(new THREE.CylinderGeometry(0.14, 0.1, 0.32, 6), lanternGlassMat);
+  const cap = new THREE.Mesh(new THREE.ConeGeometry(0.28, 0.18, 6), ironMat);
+  cap.position.set(1.15, 2.82, 0);
+
+  const lantern = new THREE.Mesh(new THREE.CylinderGeometry(0.16, 0.12, 0.38, 6), lanternGlassMat);
   lantern.name = 'lantern_glow';
-  lantern.position.set(0.65, 2.52, 0);
+  lantern.position.set(1.15, 2.55, 0);
 
-  // Soft Warm Golden Light Pool on the road (covers entire road width)
-  const groundLightGeo = new THREE.PlaneGeometry(4.2, 4.2);
+  // Glowing Filament Bulb Core
+  const bulb = new THREE.Mesh(
+    new THREE.SphereGeometry(0.08, 8, 8),
+    new THREE.MeshBasicMaterial({ color: 0xFFFBEB })
+  );
+  bulb.position.set(1.15, 2.55, 0);
+
+  // Warm Ambient Halo Sprite on the lantern itself
+  const haloMat = new THREE.SpriteMaterial({
+    map: getLampHaloTexture(),
+    color: 0xFEF08A,
+    transparent: true,
+    opacity: 0.85,
+    blending: THREE.AdditiveBlending,
+  });
+  const haloSprite = new THREE.Sprite(haloMat);
+  haloSprite.name = 'lamp_glow_sprite';
+  haloSprite.scale.set(1.6, 1.6, 1.6);
+  haloSprite.position.set(1.15, 2.55, 0);
+
+  // Real Dynamic THREE.PointLight for rich real-time world lighting
+  const pointLight = new THREE.PointLight(0xFDE047, 3.2, 10.5, 1.2);
+  pointLight.name = 'lamp_point_light';
+  pointLight.position.set(1.15, 2.55, 0);
+
+  // Vivid Glowing Ground Light Pool (covers full road width with high vibrancy)
+  const groundLightGeo = new THREE.PlaneGeometry(5.8, 5.8);
   const groundLightMat = new THREE.MeshBasicMaterial({
     map: getSoftLightPoolTexture(),
     transparent: true,
-    opacity: 0.85,
+    opacity: 0.95,
+    blending: THREE.AdditiveBlending,
     depthWrite: false,
     side: THREE.DoubleSide,
   });
   const groundLight = new THREE.Mesh(groundLightGeo, groundLightMat);
   groundLight.name = 'lamp_light_cone';
   groundLight.rotation.x = -Math.PI / 2;
-  groundLight.position.set(0.65, 0.03, 0);
+  groundLight.position.set(1.15, 0.04, 0);
 
-  group.add(base, pole, arm, brace, cap, lantern, groundLight);
+  group.add(base, pole, finial, arm, brace, hanger, cap, lantern, bulb, haloSprite, pointLight, groundLight);
   return group;
 }
