@@ -21,13 +21,12 @@ import { FishingModal } from './ui/modals/FishingModal';
 import { LevelUpModal } from './ui/modals/LevelUpModal';
 import { EventsModal } from './ui/modals/EventsModal';
 import { SettingsModal } from './ui/modals/SettingsModal';
-import { MailboxModal } from './ui/modals/MailboxModal';
 import { FriendsModal } from './ui/modals/FriendsModal';
 import { DailyBonusModal } from './ui/modals/DailyBonusModal';
 import { WeatherForecastModal } from './ui/modals/WeatherForecastModal';
 
 export function App() {
-  const { initGame, tickGameLoop, saveCurrentState, activeModal } = useGameStore();
+  const { initGame, tickGameLoop, saveCurrentState } = useGameStore();
 
   useEffect(() => {
     // Initialize saved progress and start simulation
@@ -78,7 +77,6 @@ export function App() {
       <FriendsModal />
       <DailyBonusModal />
       <WeatherForecastModal />
-      {activeModal === 'mailbox' && <MailboxModal />}
     </main>
   );
 }

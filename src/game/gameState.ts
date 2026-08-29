@@ -11,7 +11,7 @@ import {
   LevelConfig,
   FishSpecies,
   ProductionQueueItem,
-  MailboxDeal,
+  DailyMission,
   MarketToastNotification,
   HourlyWeatherForecast,
   DailyBonusDay,
@@ -120,83 +120,144 @@ export function generateWeatherForecast(currentEvent: GameEventConfig): HourlyWe
   return slots;
 }
 
-export function generateMailboxDeals(): MailboxDeal[] {
+export function generateDailyMissions(): DailyMission[] {
+  const easyPool: Array<Omit<DailyMission, 'id' | 'currentCount' | 'isClaimed'>> = [
+    {
+      tier: 'easy',
+      tierLabel: 'Легко',
+      tierColor: '#22C55E',
+      title: 'Собрать пшеницу',
+      description: 'Соберите 12 снопов спелой пшеницы на полях',
+      icon: '🌾',
+      targetCount: 12,
+      type: 'harvest',
+      targetId: 'wheat',
+      rewardCoins: 250,
+      rewardXP: 50,
+    },
+    {
+      tier: 'easy',
+      tierLabel: 'Легко',
+      tierColor: '#22C55E',
+      title: 'Покормить домашних кур',
+      description: 'Покормите кур на птичьем дворе 4 раза',
+      icon: '🐔',
+      targetCount: 4,
+      type: 'feed',
+      targetId: 'chicken',
+      rewardCoins: 300,
+      rewardXP: 60,
+    },
+    {
+      tier: 'easy',
+      tierLabel: 'Легко',
+      tierColor: '#22C55E',
+      title: 'Собрать кукурузу',
+      description: 'Соберите 8 початков золотой кукурузы',
+      icon: '🌽',
+      targetCount: 8,
+      type: 'harvest',
+      targetId: 'corn',
+      rewardCoins: 280,
+      rewardXP: 55,
+    },
+  ];
+
+  const mediumPool: Array<Omit<DailyMission, 'id' | 'currentCount' | 'isClaimed'>> = [
+    {
+      tier: 'medium',
+      tierLabel: 'Средне',
+      tierColor: '#F59E0B',
+      title: 'Испечь свежий хлеб',
+      description: 'Приготовьте 5 буханок свежего хлеба в пекарне',
+      icon: '🍞',
+      targetCount: 5,
+      type: 'craft',
+      targetId: 'bread',
+      rewardCoins: 650,
+      rewardXP: 120,
+      rewardGems: 2,
+    },
+    {
+      tier: 'medium',
+      tierLabel: 'Средне',
+      tierColor: '#F59E0B',
+      title: 'Собрать коровье молоко',
+      description: 'Соберите 6 кувшинов молока в коровнике',
+      icon: '🥛',
+      targetCount: 6,
+      type: 'craft',
+      targetId: 'cow_milk',
+      rewardCoins: 700,
+      rewardXP: 130,
+      rewardGems: 2,
+    },
+    {
+      tier: 'medium',
+      tierLabel: 'Средне',
+      tierColor: '#F59E0B',
+      title: 'Выполнить заказы с доски',
+      description: 'Отправьте 3 заказа жителям Долины',
+      icon: '📜',
+      targetCount: 3,
+      type: 'order',
+      rewardCoins: 850,
+      rewardXP: 150,
+      rewardGems: 3,
+    },
+  ];
+
+  const hardPool: Array<Omit<DailyMission, 'id' | 'currentCount' | 'isClaimed'>> = [
+    {
+      tier: 'hard',
+      tierLabel: 'Очень тяжело',
+      tierColor: '#EF4444',
+      title: 'Продать товары на рынке',
+      description: 'Выставите и продайте 15 товаров на рынке',
+      icon: '💰',
+      targetCount: 15,
+      type: 'sell',
+      rewardCoins: 2500,
+      rewardXP: 350,
+      rewardGems: 5,
+    },
+    {
+      tier: 'hard',
+      tierLabel: 'Очень тяжело',
+      tierColor: '#EF4444',
+      title: 'Взбить сливочное масло',
+      description: 'Произведите 5 пачек масла на маслобойне',
+      icon: '🧈',
+      targetCount: 5,
+      type: 'craft',
+      targetId: 'butter',
+      rewardCoins: 2800,
+      rewardXP: 380,
+      rewardGems: 6,
+    },
+    {
+      tier: 'hard',
+      tierLabel: 'Очень тяжело',
+      tierColor: '#EF4444',
+      title: 'Поймать рыбу на причале',
+      description: 'Выловите 4 рыбы в бурной реке',
+      icon: '🎣',
+      targetCount: 4,
+      type: 'fish',
+      rewardCoins: 3200,
+      rewardXP: 420,
+      rewardGems: 8,
+    },
+  ];
+
+  const pickEasy = easyPool[Math.floor(Math.random() * easyPool.length)];
+  const pickMedium = mediumPool[Math.floor(Math.random() * mediumPool.length)];
+  const pickHard = hardPool[Math.floor(Math.random() * hardPool.length)];
+
   return [
-    {
-      id: `deal_${Date.now()}_1`,
-      senderName: 'Фермер Мария',
-      senderAvatar: '👩‍🌾',
-      letterTitle: 'Привет, сосед! Нужна пшеница',
-      letterMessage: 'Мы печём праздничные пироги, закончилась пшеница! Готова отдать пару новеньких топоров.',
-      requiredItemId: 'wheat',
-      requiredCount: 8,
-      rewardItemId: 'axe',
-      rewardCount: 2,
-      rewardCoins: 45,
-      rewardXP: 18,
-      isCompleted: false,
-      expiresAt: Date.now() + 86400000,
-    },
-    {
-      id: `deal_${Date.now()}_2`,
-      senderName: 'Деревенский пекарь',
-      senderAvatar: '👨‍🍳',
-      letterTitle: 'Срочно требуются яйца',
-      letterMessage: 'Для свежего бисквита нужны свежие куриные яйца. Взамен поделюсь прочной пилой!',
-      requiredItemId: 'egg',
-      requiredCount: 4,
-      rewardItemId: 'saw',
-      rewardCount: 2,
-      rewardCoins: 60,
-      rewardXP: 25,
-      isCompleted: false,
-      expiresAt: Date.now() + 86400000,
-    },
-    {
-      id: `deal_${Date.now()}_3`,
-      senderName: 'Плотник Грег',
-      senderAvatar: '🪵',
-      letterTitle: 'Обмен на стройматериалы',
-      letterMessage: 'Строю новый навес для коров! Обменяю кукурузу на гвозди и доски.',
-      requiredItemId: 'corn',
-      requiredCount: 6,
-      rewardItemId: 'nail',
-      rewardCount: 2,
-      rewardCoins: 50,
-      rewardXP: 20,
-      isCompleted: false,
-      expiresAt: Date.now() + 86400000,
-    },
-    {
-      id: `deal_${Date.now()}_4`,
-      senderName: 'Горный рудокоп',
-      senderAvatar: '⛏️',
-      letterTitle: 'Запасы моркови для кроликов',
-      letterMessage: 'Мои рудокопные кролики просят хрустящую морковь. Отдам динамит для расчистки скал!',
-      requiredItemId: 'carrot',
-      requiredCount: 5,
-      rewardItemId: 'dynamite',
-      rewardCount: 1,
-      rewardCoins: 75,
-      rewardXP: 30,
-      isCompleted: false,
-      expiresAt: Date.now() + 86400000,
-    },
-    {
-      id: `deal_${Date.now()}_5`,
-      senderName: 'Землемер округа',
-      senderAvatar: '📜',
-      letterTitle: 'Документы на расширение',
-      letterMessage: 'Привези мне свежий горячий хлеб к чаю, и я выпишу тебе официальную купчую на землю!',
-      requiredItemId: 'bread',
-      requiredCount: 3,
-      rewardItemId: 'deed',
-      rewardCount: 1,
-      rewardCoins: 90,
-      rewardXP: 35,
-      isCompleted: false,
-      expiresAt: Date.now() + 86400000,
-    }
+    { ...pickEasy, id: `mission_${Date.now()}_1`, currentCount: 0, isClaimed: false },
+    { ...pickMedium, id: `mission_${Date.now()}_2`, currentCount: 0, isClaimed: false },
+    { ...pickHard, id: `mission_${Date.now()}_3`, currentCount: 0, isClaimed: false },
   ];
 }
 
@@ -272,7 +333,7 @@ export interface GameStore {
   tutorialCompleted: boolean;
   
   // UI & Notifications
-  activeModal: 'shop' | 'silo' | 'barn' | 'orders' | 'roadside' | 'market' | 'fishing' | 'events' | 'settings' | 'levelup' | 'expansion' | 'mailbox' | 'friends' | 'daily_bonus' | 'weather_forecast' | null;
+  activeModal: 'shop' | 'silo' | 'barn' | 'orders' | 'roadside' | 'market' | 'fishing' | 'events' | 'settings' | 'levelup' | 'expansion' | 'friends' | 'daily_bonus' | 'weather_forecast' | null;
   unlockedLevelInfo: LevelConfig | null;
   floatingTexts: FloatingText[];
   soundMuted: boolean;
@@ -287,6 +348,12 @@ export interface GameStore {
   dismissMarketNotification: (id: string) => void;
   pushMarketNotification: (toast: Omit<MarketToastNotification, 'id' | 'timestamp'>) => void;
   
+  // Daily Missions (3 tier missions per 24 hours)
+  dailyMissions: DailyMission[];
+  dailyMissionsExpiresAt: number;
+  claimDailyMission: (missionId: string) => boolean;
+  updateDailyMissionProgress: (type: DailyMission['type'], targetId?: string, amount?: number) => void;
+
   // Actions
   initGame: () => void;
   tickGameLoop: () => void;
@@ -314,9 +381,6 @@ export interface GameStore {
     };
   };
   claimCargoTruckUnload: () => boolean;
-  acceptMailboxDeal: (dealId: string) => boolean;
-  claimMailboxGift: () => boolean;
-  refreshMailboxDeals: () => void;
   
   // Economy & Inventory
   addCoins: (amount: number) => void;
@@ -428,9 +492,8 @@ export const useGameStore = create<GameStore>((set, get) => ({
   shopSlots: [...INITIAL_SHOP_SLOTS],
   marketListings: generateMarketListings(),
   marketDelivery: null,
-  mailboxDeals: generateMailboxDeals(),
-  mailboxGiftClaimed: false,
-  mailboxGiftClaimedAt: 0,
+  dailyMissions: generateDailyMissions(),
+  dailyMissionsExpiresAt: Date.now() + 86400000,
   cargoTruckState: {
     isParkedWaiting: false,
     isDrivingIn: false,
@@ -464,7 +527,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
   isActionStripOpen: false,
   toggleActionStrip: () => set(state => ({ isActionStripOpen: !state.isActionStripOpen })),
   setActionStripOpen: (open: boolean) => set({ isActionStripOpen: open }),
-  isDesign2026: typeof localStorage !== 'undefined' ? localStorage.getItem('farm_design_2026') === 'true' : false,
+  isDesign2026: typeof localStorage !== 'undefined' ? localStorage.getItem('farm_design_2026') !== 'false' : true,
   toggleDesign2026: () => set(state => {
     const next = !state.isDesign2026;
     try { localStorage.setItem('farm_design_2026', String(next)); } catch {}
@@ -696,6 +759,15 @@ export const useGameStore = create<GameStore>((set, get) => ({
         }));
       }
     }
+
+    // Check 24-hour Daily Missions expiration
+    if (now >= state.dailyMissionsExpiresAt) {
+      set({
+        dailyMissions: generateDailyMissions(),
+        dailyMissionsExpiresAt: now + 86400000,
+      });
+      state.addFloatingText('🎯 Новые ежедневные миссии доступны!', 0, 0, '#38BDF8');
+    }
   },
 
   claimDailyLoginBonus: () => {
@@ -801,94 +873,50 @@ export const useGameStore = create<GameStore>((set, get) => ({
     return true;
   },
 
-  acceptMailboxDeal: (dealId) => {
-    const state = get();
-    const deal = state.mailboxDeals.find(d => d.id === dealId);
-    if (!deal || deal.isCompleted) return false;
+  updateDailyMissionProgress: (type, targetId, amount = 1) => {
+    set(state => {
+      let changed = false;
+      const updated = state.dailyMissions.map(m => {
+        if (m.isClaimed) return m;
+        if (m.type === type) {
+          if (!m.targetId || !targetId || m.targetId === targetId) {
+            const newCount = Math.min(m.targetCount, m.currentCount + amount);
+            if (newCount !== m.currentCount) {
+              changed = true;
+              if (newCount >= m.targetCount && m.currentCount < m.targetCount) {
+                state.addFloatingText(`🎯 Миссия выполнена: ${m.title}!`, 0, 0, '#22C55E');
+              }
+              return { ...m, currentCount: newCount };
+            }
+          }
+        }
+        return m;
+      });
+      return changed ? { dailyMissions: updated } : {};
+    });
+  },
 
-    // Check required item in inventory
-    const countInInv = state.inventory[deal.requiredItemId] || 0;
-    if (countInInv < deal.requiredCount) {
+  claimDailyMission: (missionId) => {
+    const state = get();
+    const mission = state.dailyMissions.find(m => m.id === missionId);
+    if (!mission || mission.isClaimed || mission.currentCount < mission.targetCount) {
       return false;
     }
 
-    // Check storage capacity for reward item if any
-    if (deal.rewardItemId && deal.rewardCount) {
-      const isSiloItem = Boolean(CROPS[deal.rewardItemId] || TREES_BUSHES[deal.rewardItemId]);
-      const storageType: 'silo' | 'barn' = isSiloItem ? 'silo' : 'barn';
-      const cap = storageType === 'silo' ? state.siloCapacity : state.barnCapacity;
-      const used = state.getStorageUsed(storageType);
-      if (used + deal.rewardCount > cap) {
-        return false;
-      }
+    state.addCoins(mission.rewardCoins);
+    state.addXP(mission.rewardXP);
+    if (mission.rewardGems) {
+      state.addGems(mission.rewardGems);
     }
 
-    state.removeItem(deal.requiredItemId, deal.requiredCount);
-
-    const lootItems: Record<string, number> = {};
-    if (deal.rewardItemId && deal.rewardCount) {
-      lootItems[deal.rewardItemId] = deal.rewardCount;
-    }
-
-    sounds.playCraftStart();
-    state.addFloatingText('🚚 Фура с обменом выехала на ферму (Заезд 1)!', 0, 0, '#38BDF8');
+    sounds.playLevelUp();
+    confetti({ particleCount: 60, spread: 70, origin: { y: 0.55 } });
+    state.addFloatingText(`🎯 Награда за миссию: +${mission.rewardCoins} 🪙 +${mission.rewardXP} XP!`, 0, 0, '#22C55E');
 
     set(s => ({
-      mailboxDeals: s.mailboxDeals.map(d => d.id === dealId ? { ...d, isCompleted: true } : d),
-      cargoTruckState: {
-        isParkedWaiting: false,
-        isDrivingIn: true,
-        isDrivingOut: false,
-        driveStartTime: Date.now(),
-        driveDuration: 3800,
-        loot: {
-          dealTitle: deal.letterTitle,
-          coins: deal.rewardCoins,
-          gems: 0,
-          xp: deal.rewardXP,
-          items: lootItems,
-        },
-      },
-      activeModal: null,
+      dailyMissions: s.dailyMissions.map(m => m.id === missionId ? { ...m, isClaimed: true } : m),
     }));
     return true;
-  },
-
-  claimMailboxGift: () => {
-    const state = get();
-    if (state.mailboxGiftClaimed) return false;
-
-    sounds.playCraftStart();
-    state.addFloatingText('🚚 Почтовая фура доставила посылку (Заезд 1)!', 0, 0, '#38BDF8');
-
-    set({
-      mailboxGiftClaimed: true,
-      mailboxGiftClaimedAt: Date.now(),
-      cargoTruckState: {
-        isParkedWaiting: false,
-        isDrivingIn: true,
-        isDrivingOut: false,
-        driveStartTime: Date.now(),
-        driveDuration: 3800,
-        loot: {
-          dealTitle: 'Ежедневная посылка от почтальона',
-          coins: 150,
-          gems: 3,
-          xp: 45,
-          items: { axe: 1, nail: 1 },
-        },
-      },
-      activeModal: null,
-    });
-    return true;
-  },
-
-  refreshMailboxDeals: () => {
-    sounds.playClick();
-    set({
-      mailboxDeals: generateMailboxDeals(),
-      mailboxGiftClaimed: false,
-    });
   },
 
   addCoins: (amount) => {
@@ -1435,6 +1463,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
 
     state.addItem(crop.id, crop.harvestYield);
     state.addXP(crop.xpGain);
+    state.updateDailyMissionProgress('harvest', crop.id, crop.harvestYield);
     sounds.playHarvest();
 
     set(s => ({
@@ -1477,6 +1506,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
 
     state.addItem(cfg.produceItemId, cfg.harvestYield);
     state.addXP(cfg.xpGain);
+    state.updateDailyMissionProgress('harvest', cfg.produceItemId, cfg.harvestYield);
     sounds.playHarvest();
 
     const remainingHarvests = (tree.harvestsLeft || 4) - 1;
@@ -1517,6 +1547,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
     }
 
     state.removeItem(cfg.feedItemId, 1);
+    state.updateDailyMissionProgress('feed', animal.animalConfigId, 1);
     sounds.playAnimalSound(animal.animalConfigId);
 
     set(s => ({
@@ -1557,6 +1588,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
 
     state.addItem(cfg.produceItemId, 1);
     state.addXP(cfg.xpGain);
+    state.updateDailyMissionProgress('craft', cfg.produceItemId, 1);
     sounds.playHarvest();
 
     set(s => ({
@@ -1655,6 +1687,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
 
     state.addItem(product.itemId, product.count);
     state.addXP(item.xpGain * product.count);
+    state.updateDailyMissionProgress('craft', product.itemId, product.count);
     sounds.playHarvest();
 
     const updatedCompleted = building.completedProducts.filter((_, idx) => idx !== index);
@@ -1791,6 +1824,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
     }
 
     sounds.playTruckHonk();
+    state.updateDailyMissionProgress('order', undefined, 1);
 
     set({
       truckState: {
@@ -1828,6 +1862,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
     }
 
     state.removeItem(itemId, count);
+    state.updateDailyMissionProgress('sell', undefined, count);
     sounds.playClick();
 
     set(s => ({
@@ -1986,6 +2021,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
 
     state.addItem(speciesId, 1);
     state.addXP(fish.xpGain);
+    state.updateDailyMissionProgress('fish', speciesId, 1);
     sounds.playHarvest();
 
     const curBiggest = state.fishingStats.biggestCatch[speciesId] || 0;

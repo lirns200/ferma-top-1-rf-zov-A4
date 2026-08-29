@@ -3,6 +3,7 @@ import { useGameStore } from '../game/gameState';
 import { LEVELS } from '../config/levels';
 import { sounds } from '../audio/SoundManager';
 import { triggerTelegramHaptic, getTelegramUserProfile } from '../utils/telegram';
+import { DailyMissionsWidget } from './DailyMissionsWidget';
 
 function fmtNumber(n: number): string {
   if (n >= 1_000_000) return (n / 1_000_000).toFixed(1) + 'M';
@@ -63,55 +64,60 @@ export const TopBar: React.FC = () => {
     <header className="fixed top-0 left-0 right-0 z-50 pointer-events-none p-1.5 sm:p-3 select-none">
       <div className="max-w-4xl mx-auto flex items-center justify-between gap-1 sm:gap-2.5">
 
-        {/* ── LEFT: Telegram Profile (Квадратная карточка со скругленными углами) ── */}
-        <div 
-          onClick={() => {
-            sounds.playClick();
-            triggerTelegramHaptic('light');
-            openModal('settings');
-          }}
-          className={`pointer-events-auto cursor-pointer flex items-center gap-1.5 sm:gap-2.5 active:scale-95 transition-all ${badgeBoxClass}`}
-        >
-          {/* Telegram User Avatar */}
-          <div className="relative shrink-0">
-            {tgProfile.photoUrl ? (
-              <img
-                src={tgProfile.photoUrl}
-                alt={tgProfile.name}
-                className="w-7 h-7 sm:w-8.5 sm:h-8.5 rounded-lg object-cover border border-white/20 shadow"
-              />
-            ) : (
-              <div className="w-7 h-7 sm:w-8.5 sm:h-8.5 rounded-lg bg-gradient-to-tr from-purple-600 to-indigo-500 border border-white/30 flex items-center justify-center font-black text-white text-[11px] sm:text-xs shadow">
-                {tgProfile.name.charAt(0)}
-              </div>
-            )}
-            {/* Online Green Dot */}
-            <span className="absolute -bottom-0.5 -right-0.5 w-2 h-2 sm:w-2.5 sm:h-2.5 bg-emerald-500 border border-black rounded-full" />
-          </div>
-
-          {/* User Name & Level */}
-          <div className="flex flex-col min-w-[55px] sm:min-w-[80px]">
-            <div className="flex items-center gap-1.5 justify-between">
-              <span className={`font-bold text-[11px] sm:text-xs tracking-tight truncate max-w-[55px] sm:max-w-[90px] ${
-                isDesign2026 ? 'text-white' : 'text-[#3B1F0D]'
-              }`}>
-                {tgProfile.name}
-              </span>
-
-              {/* Level Badge */}
-              <div className="flex items-center justify-center w-4.5 h-4.5 sm:w-5 sm:h-5 bg-[#3B1F0D] border border-amber-400 rounded-md font-black text-[9px] sm:text-[10px] text-yellow-300 shadow">
-                {level}
-              </div>
+        {/* ── LEFT: Telegram Profile & Daily Missions under Level ── */}
+        <div className="flex flex-col items-start pointer-events-auto">
+          <div 
+            onClick={() => {
+              sounds.playClick();
+              triggerTelegramHaptic('light');
+              openModal('settings');
+            }}
+            className={`cursor-pointer flex items-center gap-1.5 sm:gap-2.5 active:scale-95 transition-all ${badgeBoxClass}`}
+          >
+            {/* Telegram User Avatar */}
+            <div className="relative shrink-0">
+              {tgProfile.photoUrl ? (
+                <img
+                  src={tgProfile.photoUrl}
+                  alt={tgProfile.name}
+                  className="w-7 h-7 sm:w-8.5 sm:h-8.5 rounded-lg object-cover border border-white/20 shadow"
+                />
+              ) : (
+                <div className="w-7 h-7 sm:w-8.5 sm:h-8.5 rounded-lg bg-gradient-to-tr from-purple-600 to-indigo-500 border border-white/30 flex items-center justify-center font-black text-white text-[11px] sm:text-xs shadow">
+                  {tgProfile.name.charAt(0)}
+                </div>
+              )}
+              {/* Online Green Dot */}
+              <span className="absolute -bottom-0.5 -right-0.5 w-2 h-2 sm:w-2.5 sm:h-2.5 bg-emerald-500 border border-black rounded-full" />
             </div>
 
-            {/* XP Bar */}
-            <div className="w-full h-1 sm:h-1.5 bg-black/50 rounded-full overflow-hidden border border-white/10 mt-0.5 sm:mt-1">
-              <div 
-                className="h-full bg-gradient-to-r from-amber-400 to-yellow-300 rounded-full transition-all duration-300"
-                style={{ width: `${xpPercent}%` }}
-              />
+            {/* User Name & Level */}
+            <div className="flex flex-col min-w-[55px] sm:min-w-[80px]">
+              <div className="flex items-center gap-1.5 justify-between">
+                <span className={`font-bold text-[11px] sm:text-xs tracking-tight truncate max-w-[55px] sm:max-w-[90px] ${
+                  isDesign2026 ? 'text-white' : 'text-[#3B1F0D]'
+                }`}>
+                  {tgProfile.name}
+                </span>
+
+                {/* Level Badge */}
+                <div className="flex items-center justify-center w-4.5 h-4.5 sm:w-5 sm:h-5 bg-[#3B1F0D] border border-amber-400 rounded-md font-black text-[9px] sm:text-[10px] text-yellow-300 shadow">
+                  {level}
+                </div>
+              </div>
+
+              {/* XP Bar */}
+              <div className="w-full h-1 sm:h-1.5 bg-black/50 rounded-full overflow-hidden border border-white/10 mt-0.5 sm:mt-1">
+                <div 
+                  className="h-full bg-gradient-to-r from-amber-400 to-yellow-300 rounded-full transition-all duration-300"
+                  style={{ width: `${xpPercent}%` }}
+                />
+              </div>
             </div>
           </div>
+
+          {/* Daily Missions Under Level */}
+          <DailyMissionsWidget />
         </div>
 
         {/* ── RIGHT: 3 Currency Badges (Квадратные со скругленными углами) ── */}

@@ -1670,21 +1670,6 @@ export const GameScene: React.FC = () => {
     westTunnel.rotation.y = Math.atan2(7.5, -0.3);
     terrainGroup.add(westTunnel);
 
-    // Roadside Mailbox (x = -4.2, z = -5.8 on the grass beside driveway 1)
-    const mbGroup = new THREE.Group();
-    mbGroup.name = 'farm_mailbox';
-    const mbPost = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, 1.0, 6), archWoodMat);
-    mbPost.position.set(-4.2, 0.5, -5.8);
-    mbPost.castShadow = true;
-    const mbBox = new THREE.Mesh(new THREE.BoxGeometry(0.32, 0.32, 0.52), getCachedColorMaterial('#DC2626', 0.5));
-    mbBox.position.set(-4.2, 1.0, -5.8);
-    mbBox.castShadow = true;
-    const mbFlag = new THREE.Mesh(new THREE.BoxGeometry(0.03, 0.22, 0.12), getCachedColorMaterial('#FBBF24', 0.3));
-    mbFlag.name = 'mailbox_flag';
-    mbFlag.position.set(-4.03, 1.12, -5.8);
-    mbGroup.add(mbPost, mbBox, mbFlag);
-    terrainGroup.add(mbGroup);
-
     // Stepping stones in pedestrian garden square
     const pathMat = getCachedColorMaterial('#94A3B8', 0.9);
     const stoneGeo = new THREE.CylinderGeometry(0.35, 0.4, 0.03, 6);
@@ -2417,9 +2402,6 @@ export const GameScene: React.FC = () => {
         } else if (cargoTruckStateRef.current.isParkedWaiting) {
           claimCargoTruckUnload();
         }
-      } else if (tile && Math.abs(tile.x - (-4.2)) <= 1.2 && Math.abs(tile.z - (-5.8)) <= 1.2) {
-        // Direct click on roadside Mailbox
-        openModal('mailbox');
       } else {
         setSelectedEntity(null);
       }

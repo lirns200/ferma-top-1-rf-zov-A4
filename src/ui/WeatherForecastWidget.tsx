@@ -60,9 +60,6 @@ export const WeatherForecastWidget: React.FC = () => {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [isPopoverOpen]);
 
-  // Only show on main 3D farm map when no major full modals are open
-  if (activeModal !== null) return null;
-
   const event = activeEvent || GAME_EVENTS.sunny_day;
   const isRainy = event.type === 'rain' || event.type === 'thunderstorm';
   const precipText = isRainy ? 'Осадки: 85%' : 'Без осадков';
@@ -73,7 +70,7 @@ export const WeatherForecastWidget: React.FC = () => {
   const timeFormatted = `${mins}:${String(secs).padStart(2, '0')}`;
 
   return (
-    <div ref={popoverRef} className="fixed top-12 sm:top-14 right-2 sm:right-3 z-40 pointer-events-auto select-none">
+    <div ref={popoverRef} className="fixed top-12 sm:top-14 right-2 sm:right-3 z-[100] pointer-events-auto select-none">
       
       {/* ── WEATHER PILL TRIGGER BUTTON ── */}
       <button
@@ -126,7 +123,7 @@ export const WeatherForecastWidget: React.FC = () => {
 
       {/* ── BEAUTIFUL TRANSPARENT RIGHT-SIDE GLASS POPOVER (MOBILE ADAPTED) ── */}
       {isPopoverOpen && (
-        <div className="fixed top-13 sm:top-16 right-2 sm:right-3 w-[calc(100vw-16px)] max-w-[330px] sm:max-w-[350px] p-3.5 sm:p-4 rounded-3xl bg-[#10141D]/95 backdrop-blur-2xl border border-white/20 shadow-2xl shadow-black/90 text-white flex flex-col gap-3 animate-pop-in z-50">
+        <div className="fixed top-13 sm:top-16 right-2 sm:right-3 w-[calc(100vw-16px)] max-w-[330px] sm:max-w-[350px] p-3.5 sm:p-4 rounded-3xl bg-[#10141D]/95 backdrop-blur-2xl border border-white/20 shadow-2xl shadow-black/90 text-white flex flex-col gap-3 animate-pop-in z-[100]">
           
           {/* Popover Header */}
           <div className="flex items-center justify-between border-b border-white/10 pb-2">

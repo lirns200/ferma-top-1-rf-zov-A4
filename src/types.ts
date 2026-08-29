@@ -319,18 +319,21 @@ export interface ObstacleConfig {
 
 export type TutorialStep = number;
 
-export interface MailboxDeal {
+export interface DailyMission {
   id: string;
-  senderName: string;
-  senderAvatar: string;
-  letterTitle: string;
-  letterMessage: string;
-  requiredItemId: string;
-  requiredCount: number;
-  rewardItemId?: string;
-  rewardCount?: number;
-  rewardCoins?: number;
-  rewardXP?: number;
-  isCompleted: boolean;
-  expiresAt: number;
+  tier: 'easy' | 'medium' | 'hard';
+  tierLabel: 'Легко' | 'Средне' | 'Очень тяжело';
+  tierColor: string;
+  title: string;
+  description: string;
+  icon: string;
+  targetCount: number;
+  currentCount: number;
+  type: 'harvest' | 'feed' | 'craft' | 'order' | 'sell' | 'fish';
+  targetId?: string;
+  rewardCoins: number;
+  rewardXP: number;
+  rewardGems?: number;
+  isClaimed: boolean;
 }
+
