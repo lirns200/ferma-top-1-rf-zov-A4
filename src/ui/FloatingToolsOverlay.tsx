@@ -304,21 +304,27 @@ export const FloatingToolsOverlay: React.FC = () => {
         >
           {/* Header */}
           <div className="flex items-center justify-between px-1">
-            <span className={`text-xs font-black uppercase tracking-wide flex items-center gap-1.5 ${
-              isDesign2026 ? 'text-yellow-300' : 'text-[#3B1F0D]'
-            }`}>
-              <span>🔨</span>
-              <span>ВЫБЕРИТЕ, ЧТО ПОСТРОИТЬ:</span>
-            </span>
+            <div className="flex items-center gap-2">
+              <div className={`w-6 h-6 rounded-lg flex items-center justify-center text-xs ${
+                isDesign2026 ? 'bg-amber-400/20 border border-amber-400/40' : 'bg-amber-950/40'
+              }`}>
+                🔨
+              </div>
+              <span className={`text-xs font-extrabold tracking-wide uppercase ${
+                isDesign2026 ? 'text-white' : 'text-[#3B1F0D]'
+              }`}>
+                Строительство
+              </span>
+            </div>
             <button
               onClick={() => {
                 sounds.playClick();
                 triggerTelegramHaptic('light');
                 setActionStripOpen(false);
               }}
-              className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold cursor-pointer active:scale-90 transition-transform ${
+              className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold cursor-pointer active:scale-90 transition-transform ${
                 isDesign2026
-                  ? 'bg-white/15 hover:bg-white/25 text-white border border-white/20'
+                  ? 'bg-white/10 hover:bg-white/20 text-white/80 hover:text-white border border-white/15'
                   : 'bg-amber-950 text-amber-200'
               }`}
             >
@@ -326,7 +332,7 @@ export const FloatingToolsOverlay: React.FC = () => {
             </button>
           </div>
 
-          {/* Horizontal Scrollable Building Cards (с достаточным отступом, чтобы ничего не обрезалось!) */}
+          {/* Horizontal Scrollable Building Cards */}
           <div className="flex items-center gap-2.5 overflow-x-auto py-2.5 px-1">
             {QUICK_BUILD_ITEMS.map(item => {
               const isUnlocked = level >= item.level;
@@ -344,20 +350,20 @@ export const FloatingToolsOverlay: React.FC = () => {
                     }
                   }}
                   disabled={!isUnlocked || !canAfford}
-                  className={`group flex flex-col items-center justify-center gap-1 p-2.5 sm:p-3 min-w-[86px] sm:min-w-[94px] shrink-0 relative rounded-2xl transition-all duration-150 cursor-pointer ${
+                  className={`group flex flex-col items-center justify-center gap-1 p-2.5 sm:p-3 min-w-[84px] sm:min-w-[90px] shrink-0 relative rounded-2xl transition-all duration-150 cursor-pointer ${
                     isDesign2026
-                      ? 'bg-white/10 border border-white/15 hover:bg-white/20 hover:border-yellow-300/70 hover:shadow-lg text-white'
+                      ? 'bg-[#181C24]/80 border border-[#242A35] hover:border-amber-400/60 hover:bg-[#202530] text-white shadow-lg'
                       : 'hud-tool-btn text-[#3B1F0D] hover:brightness-105'
                   } ${!isUnlocked || !canAfford ? 'opacity-50 grayscale' : 'active:scale-95'}`}
                 >
                   <Building3DThumbnail
                     buildingId={item.id}
                     fallbackEmoji={item.icon}
-                    size={52}
+                    size={48}
                     className="my-0.5 group-hover:scale-105 transition-transform duration-150"
                   />
-                  <span className={`text-xs font-black truncate max-w-[80px] tracking-tight ${
-                    isDesign2026 ? 'text-white' : 'text-[#3B1F0D]'
+                  <span className={`text-[11px] font-bold truncate max-w-[76px] tracking-tight ${
+                    isDesign2026 ? 'text-slate-100' : 'text-[#3B1F0D]'
                   }`}>
                     {item.name}
                   </span>
@@ -365,8 +371,8 @@ export const FloatingToolsOverlay: React.FC = () => {
                   {/* Price with crisp Vector Coin */}
                   <div className="flex items-center gap-1 mt-0.5">
                     <CoinSvg />
-                    <span className={`text-xs font-black ${
-                      isDesign2026 ? 'text-yellow-300' : 'text-amber-900'
+                    <span className={`text-xs font-extrabold ${
+                      isDesign2026 ? 'text-amber-300' : 'text-amber-900'
                     }`}>
                       {item.cost}
                     </span>
