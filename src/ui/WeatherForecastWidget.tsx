@@ -59,7 +59,7 @@ export const WeatherForecastWidget: React.FC = () => {
   const timeFormatted = `${mins}:${String(secs).padStart(2, '0')}`;
 
   return (
-    <div ref={popoverRef} className="fixed top-[52px] sm:top-[60px] right-2 sm:right-3.5 z-[100] pointer-events-auto select-none">
+    <div ref={popoverRef} className="relative z-40 pointer-events-auto select-none mt-1">
       
       {/* ── WEATHER PILL TRIGGER BUTTON ── */}
       <button
@@ -112,7 +112,7 @@ export const WeatherForecastWidget: React.FC = () => {
 
       {/* ── BEAUTIFUL TRANSPARENT RIGHT-SIDE GLASS POPOVER (MOBILE ADAPTED) ── */}
       {isPopoverOpen && (
-        <div className="fixed top-[108px] sm:top-[118px] right-2 sm:right-3.5 w-[calc(100vw-16px)] max-w-[330px] sm:max-w-[350px] p-3.5 sm:p-4 rounded-3xl bg-[#10141D]/95 backdrop-blur-2xl border border-white/20 shadow-2xl shadow-black/90 text-white flex flex-col gap-3 animate-pop-in z-[100]">
+        <div className="fixed top-[95px] sm:top-[110px] right-2 sm:right-3.5 w-[calc(100vw-16px)] max-w-[330px] sm:max-w-[350px] p-3.5 sm:p-4 rounded-3xl bg-[#10141D]/95 backdrop-blur-2xl border border-white/20 shadow-2xl shadow-black/90 text-white flex flex-col gap-3 animate-pop-in z-[100]">
           
           {/* Popover Header */}
           <div className="flex items-center justify-between border-b border-white/10 pb-2">

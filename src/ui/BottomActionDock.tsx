@@ -3,6 +3,18 @@ import { useGameStore } from '../game/gameState';
 import { sounds } from '../audio/SoundManager';
 import { triggerTelegramHaptic } from '../utils/telegram';
 
+const HUD_ICONS = {
+  shop: new URL('../assets/hud/hud-shop.png', import.meta.url).href,
+  market: new URL('../assets/hud/hud-market-v2.png', import.meta.url).href,
+  build: new URL('../assets/hud/hud-build.png', import.meta.url).href,
+  farm: new URL('../assets/hud/hud-farm-v2.png', import.meta.url).href,
+  friends: new URL('../assets/hud/hud-friends-v2.png', import.meta.url).href,
+  settings: new URL('../assets/hud/hud-settings.png', import.meta.url).href,
+  soldCoin: new URL('../assets/hud/hud-sold-coin.png', import.meta.url).href,
+} as const;
+
+const HUD_ICON_CLASS = 'w-full h-full object-contain scale-[1.12] drop-shadow-[0_2px_2px_rgba(0,0,0,0.45)] transition-transform duration-200 group-hover:scale-[1.18]';
+
 export const BottomActionDock: React.FC = () => {
   const {
     activeModal, openModal, closeModal,
@@ -47,7 +59,13 @@ export const BottomActionDock: React.FC = () => {
               ? 'bg-white/10 border border-white/15 hover:bg-white/15'
               : 'bg-amber-950/70 border border-amber-700/80'
           }`}>
-            🎪
+            <img
+              src={HUD_ICONS.shop}
+              alt=""
+              aria-hidden="true"
+              draggable={false}
+              className={HUD_ICON_CLASS}
+            />
           </div>
           <span className={`text-[9px] sm:text-xs font-bold tracking-tight ${
             activeModal === 'shop' ? 'text-yellow-300' : isDesign2026 ? 'text-zinc-300' : 'text-amber-200'
@@ -70,7 +88,13 @@ export const BottomActionDock: React.FC = () => {
         >
           {hasSoldItems && (
             <span className="absolute -top-1 right-1.5 sm:right-3 w-3.5 h-3.5 sm:w-4 sm:h-4 bg-emerald-500 border border-white rounded-full text-white text-[8px] sm:text-[9px] font-black flex items-center justify-center shadow-lg animate-bounce">
-              🪙
+              <img
+                src={HUD_ICONS.soldCoin}
+                alt=""
+                aria-hidden="true"
+                draggable={false}
+                className="w-full h-full object-contain scale-125"
+              />
             </span>
           )}
           <div className={`w-9.5 h-9.5 min-w-[38px] sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl flex items-center justify-center text-xl sm:text-2xl transition-all shadow-inner ${
@@ -80,7 +104,13 @@ export const BottomActionDock: React.FC = () => {
               ? 'bg-white/10 border border-white/15 hover:bg-white/15'
               : 'bg-amber-950/70 border border-amber-700/80'
           }`}>
-            🏪
+            <img
+              src={HUD_ICONS.market}
+              alt=""
+              aria-hidden="true"
+              draggable={false}
+              className={HUD_ICON_CLASS}
+            />
           </div>
           <span className={`text-[9px] sm:text-xs font-bold tracking-tight ${
             activeModal === 'roadside' || activeModal === 'market' ? 'text-yellow-300' : isDesign2026 ? 'text-zinc-300' : 'text-amber-200'
@@ -109,7 +139,13 @@ export const BottomActionDock: React.FC = () => {
             /* Inside Tab: 🌾 Ферма */
             <>
               <div className="w-11 h-11 sm:w-14 sm:h-14 rounded-xl sm:rounded-2xl flex items-center justify-center text-2xl sm:text-3xl transition-all shadow-lg border-2 border-green-300 bg-gradient-to-tr from-green-600 via-emerald-500 to-green-400 text-white animate-pulse">
-                🌾
+                <img
+                  src={HUD_ICONS.farm}
+                  alt=""
+                  aria-hidden="true"
+                  draggable={false}
+                  className={HUD_ICON_CLASS}
+                />
               </div>
               <span className="text-[9px] sm:text-xs font-black tracking-tight text-emerald-400 uppercase leading-tight mt-0.5">
                 Ферма
@@ -123,7 +159,13 @@ export const BottomActionDock: React.FC = () => {
                   ? 'border-yellow-200 ring-4 ring-yellow-400/50 scale-105 bg-gradient-to-tr from-amber-500 via-yellow-400 to-amber-300 text-amber-950 shadow-yellow-500/50'
                   : 'bg-gradient-to-tr from-amber-500 via-yellow-400 to-yellow-300 border-yellow-200 shadow-yellow-500/40 text-amber-950 hover:scale-105'
               }`}>
-                🏡
+                <img
+                  src={HUD_ICONS.build}
+                  alt=""
+                  aria-hidden="true"
+                  draggable={false}
+                  className={HUD_ICON_CLASS}
+                />
               </div>
               <span className="text-[9px] sm:text-xs font-black tracking-tight text-yellow-300 uppercase leading-tight mt-0.5">
                 Строить
@@ -151,7 +193,13 @@ export const BottomActionDock: React.FC = () => {
               ? 'bg-white/10 border border-white/15 hover:bg-white/15'
               : 'bg-amber-950/70 border border-amber-700/80'
           }`}>
-            👥
+            <img
+              src={HUD_ICONS.friends}
+              alt=""
+              aria-hidden="true"
+              draggable={false}
+              className={HUD_ICON_CLASS}
+            />
           </div>
           <span className={`text-[9px] sm:text-xs font-bold tracking-tight ${
             activeModal === 'friends' ? 'text-yellow-300' : isDesign2026 ? 'text-zinc-300' : 'text-amber-200'
@@ -179,7 +227,13 @@ export const BottomActionDock: React.FC = () => {
               ? 'bg-white/10 border border-white/15 hover:bg-white/15'
               : 'bg-amber-950/70 border border-amber-700/80'
           }`}>
-            ⚙️
+            <img
+              src={HUD_ICONS.settings}
+              alt=""
+              aria-hidden="true"
+              draggable={false}
+              className={HUD_ICON_CLASS}
+            />
           </div>
           <span className={`text-[9px] sm:text-xs font-bold tracking-tight ${
             activeModal === 'settings' ? 'text-yellow-300' : isDesign2026 ? 'text-zinc-300' : 'text-amber-200'

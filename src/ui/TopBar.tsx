@@ -4,6 +4,7 @@ import { LEVELS } from '../config/levels';
 import { sounds } from '../audio/SoundManager';
 import { triggerTelegramHaptic, getTelegramUserProfile } from '../utils/telegram';
 import { DailyMissionsWidget } from './DailyMissionsWidget';
+import { WeatherForecastWidget } from './WeatherForecastWidget';
 
 function fmtNumber(n: number): string {
   if (n >= 1_000_000) return (n / 1_000_000).toFixed(1) + 'M';
@@ -120,56 +121,59 @@ export const TopBar: React.FC = () => {
           <DailyMissionsWidget />
         </div>
 
-        {/* ── RIGHT: 3 Currency Badges (Квадратные со скругленными углами) ── */}
-        <div className="flex items-center gap-1 sm:gap-1.5">
-          
-          {/* 1. Coins Badge */}
-          <div className={`pointer-events-auto flex items-center gap-1 sm:gap-1.5 ${badgeBoxClass}`}>
-            <CoinSvg />
-            <span className={`font-extrabold text-[11px] sm:text-xs md:text-sm min-w-[24px] sm:min-w-[32px] ${
-              isDesign2026 ? 'text-amber-300' : 'text-[#3B1F0D]'
-            }`}>
-              {fmtNumber(coins)}
-            </span>
-          </div>
+        {/* ── RIGHT: 3 Currency Badges & Weather Widget below them ── */}
+        <div className="flex flex-col items-end pointer-events-auto">
+          <div className="flex items-center gap-1 sm:gap-1.5">
+            {/* 1. Coins Badge */}
+            <div className={`flex items-center gap-1 sm:gap-1.5 ${badgeBoxClass}`}>
+              <CoinSvg />
+              <span className={`font-extrabold text-[11px] sm:text-xs md:text-sm min-w-[24px] sm:min-w-[32px] ${
+                isDesign2026 ? 'text-amber-300' : 'text-[#3B1F0D]'
+              }`}>
+                {fmtNumber(coins)}
+              </span>
+            </div>
 
-          {/* 2. Wood / Barn Storage Badge */}
-          <div 
-            onClick={() => {
-              sounds.playClick();
-              triggerTelegramHaptic('light');
-              openModal('barn');
-            }}
-            className={`pointer-events-auto cursor-pointer flex items-center gap-1 sm:gap-1.5 hover:brightness-105 active:scale-95 transition-all ${badgeBoxClass}`}
-          >
-            <WoodSvg />
-            <span className={`font-extrabold text-[11px] sm:text-xs md:text-sm ${
-              isDesign2026 ? 'text-amber-200' : 'text-[#3B1F0D]'
-            }`}>
-              {barnUsed}
-            </span>
-          </div>
-
-          {/* 3. Gems / Energy Badge with [+] Button */}
-          <div className={`pointer-events-auto flex items-center gap-1 sm:gap-1.5 pl-1.5 pr-1 py-0.5 sm:pl-2.5 sm:pr-1 sm:py-1.5 ${badgeBoxClass}`}>
-            <EnergySvg />
-            <span className={`font-extrabold text-[11px] sm:text-xs md:text-sm ${
-              isDesign2026 ? 'text-sky-300' : 'text-[#1E3A8A]'
-            }`}>
-              {gems}/30
-            </span>
-            <button
+            {/* 2. Wood / Barn Storage Badge */}
+            <div 
               onClick={() => {
                 sounds.playClick();
                 triggerTelegramHaptic('light');
-                openModal('events');
+                openModal('barn');
               }}
-              className="w-4.5 h-4.5 sm:w-5.5 sm:h-5.5 rounded-md sm:rounded-lg bg-emerald-600 hover:bg-emerald-500 border border-emerald-300 text-white flex items-center justify-center text-[10px] sm:text-xs font-black shadow active:scale-90 transition-transform cursor-pointer"
+              className={`cursor-pointer flex items-center gap-1 sm:gap-1.5 hover:brightness-105 active:scale-95 transition-all ${badgeBoxClass}`}
             >
-              +
-            </button>
+              <WoodSvg />
+              <span className={`font-extrabold text-[11px] sm:text-xs md:text-sm ${
+                isDesign2026 ? 'text-amber-200' : 'text-[#3B1F0D]'
+              }`}>
+                {barnUsed}
+              </span>
+            </div>
+
+            {/* 3. Gems / Energy Badge with [+] Button */}
+            <div className={`flex items-center gap-1 sm:gap-1.5 pl-1.5 pr-1 py-0.5 sm:pl-2.5 sm:pr-1 sm:py-1.5 ${badgeBoxClass}`}>
+              <EnergySvg />
+              <span className={`font-extrabold text-[11px] sm:text-xs md:text-sm ${
+                isDesign2026 ? 'text-sky-300' : 'text-[#1E3A8A]'
+              }`}>
+                {gems}/30
+              </span>
+              <button
+                onClick={() => {
+                  sounds.playClick();
+                  triggerTelegramHaptic('light');
+                  openModal('events');
+                }}
+                className="w-4.5 h-4.5 sm:w-5.5 sm:h-5.5 rounded-md sm:rounded-lg bg-emerald-600 hover:bg-emerald-500 border border-emerald-300 text-white flex items-center justify-center text-[10px] sm:text-xs font-black shadow active:scale-90 transition-transform cursor-pointer"
+              >
+                +
+              </button>
+            </div>
           </div>
 
+          {/* Weather & Local Time Widget directly under Currency Badges */}
+          <WeatherForecastWidget />
         </div>
 
       </div>

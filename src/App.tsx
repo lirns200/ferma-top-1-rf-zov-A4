@@ -8,7 +8,6 @@ import { TutorialOverlay } from './ui/TutorialOverlay';
 import { CinematicIntroOverlay } from './ui/CinematicIntroOverlay';
 import { FloatingTextsOverlay } from './ui/FloatingTextsOverlay';
 import { MarketDeliveryBanner } from './ui/MarketDeliveryBanner';
-import { WeatherForecastWidget } from './ui/WeatherForecastWidget';
 import { HudSideWidgets } from './ui/HudSideWidgets';
 import { MarketNotificationToasts } from './ui/MarketNotificationToasts';
 
@@ -55,7 +54,6 @@ export function App() {
 
       {/* Heads Up Display Overlay */}
       <TopBar />
-      <WeatherForecastWidget />
       <HudSideWidgets />
       <BottomActionDock />
       <FloatingToolsOverlay />
