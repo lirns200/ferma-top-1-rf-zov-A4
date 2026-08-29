@@ -1,4 +1,4 @@
-﻿import React from 'react';
+import React from 'react';
 import { useGameStore } from '../game/gameState';
 import { CROPS, TREES_BUSHES } from '../config/crops';
 import { BUILDINGS } from '../config/buildings';
@@ -292,12 +292,12 @@ export const FloatingToolsOverlay: React.FC = () => {
         </div>
       )}
 
-      {/* ── 2. QUICK BUILD STRIP (Прозрачное парящее стекло в Дизайне 2026) ── */}
+      {/* ── 2. QUICK BUILD STRIP (Квадратное меню с закругленными углами из стекла) ── */}
       {isActionStripOpen && (
         <div
-          className={`pointer-events-auto w-full p-3 shadow-2xl flex flex-col gap-2.5 animate-pop-in ${
+          className={`pointer-events-auto w-full p-3.5 shadow-2xl flex flex-col gap-2.5 animate-pop-in ${
             isDesign2026
-              ? 'hud-ios26-dock bg-[#0F1115]/88 backdrop-blur-2xl border border-white/20 text-white rounded-3xl'
+              ? 'hud-ios26-card text-white'
               : 'hud-parchment'
           }`}
         >
