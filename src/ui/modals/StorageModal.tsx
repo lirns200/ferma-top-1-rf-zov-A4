@@ -4,6 +4,7 @@ import { PRODUCTS } from '../../config/products';
 import { sounds } from '../../audio/SoundManager';
 import { triggerTelegramHaptic } from '../../utils/telegram';
 import { ArrowUpCircle, Hammer } from 'lucide-react';
+import { Item3DThumbnail } from '../Item3DThumbnail';
 
 export const StorageModal: React.FC = () => {
   const {
@@ -145,11 +146,11 @@ export const StorageModal: React.FC = () => {
                     key={item.id}
                     className={`flex items-center gap-2.5 p-3 rounded-2xl shadow border ${
                       isDesign2026
-                        ? 'bg-[#181C24] border-[#242A35] text-white'
+                        ? 'bg-[#181C24] border-[#242A35] text-white hover:border-white/20'
                         : 'hud-parchment border-amber-700/60 text-[#3B1F0D]'
                     }`}
                   >
-                    <span className="text-3xl shrink-0">{item.icon}</span>
+                    <Item3DThumbnail itemId={item.id} fallbackIcon={item.icon} className="w-10 h-10 shrink-0" />
                     <div className="flex flex-col flex-1 min-w-0">
                       <span className="font-extrabold text-xs truncate">
                         {item.name}
@@ -186,13 +187,13 @@ export const StorageModal: React.FC = () => {
                   return (
                     <div
                       key={mat.id}
-                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl border font-bold text-xs ${
+                      className={`flex items-center gap-2 px-3 py-1.5 rounded-xl border font-bold text-xs ${
                         hasEnough
                           ? 'bg-emerald-950/60 border-emerald-500 text-emerald-300'
                           : 'bg-[#242A35] border-[#353D4C] text-[#8E939D]'
                       }`}
                     >
-                      <span className="text-base">{mat.icon}</span>
+                      <Item3DThumbnail itemId={mat.id} fallbackIcon={mat.icon} className="w-5 h-5 shrink-0" />
                       <span>{mat.have}/{reqCount}</span>
                     </div>
                   );
