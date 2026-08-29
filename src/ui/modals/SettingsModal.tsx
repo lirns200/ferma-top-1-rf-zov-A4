@@ -1,6 +1,7 @@
-import React from 'react';
+﻿import React from 'react';
 import { useGameStore } from '../../game/gameState';
-import { X, Volume2, VolumeX, Save, RotateCcw, Award, Info, Heart } from 'lucide-react';
+import { sounds } from '../../audio/SoundManager';
+import { ArrowLeft, Volume2, VolumeX, Save, RotateCcw, Award, Info, Heart } from 'lucide-react';
 
 export const SettingsModal: React.FC = () => {
   const {
@@ -11,8 +12,6 @@ export const SettingsModal: React.FC = () => {
     saveCurrentState,
     resetGame,
     level,
-    coins,
-    gems,
     fishingStats,
     entities,
   } = useGameStore();
@@ -23,71 +22,108 @@ export const SettingsModal: React.FC = () => {
   const buildingsCount = entities.filter(e => e.type === 'production' || e.type === 'animal_pen').length;
 
   return (
-    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 font-['Fredoka',sans-serif]">
-      <div className="relative w-full max-w-md bg-gradient-to-b from-amber-900 to-amber-950 rounded-3xl border-4 border-amber-500 shadow-2xl overflow-hidden flex flex-col max-h-[85vh]">
-        {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 bg-amber-950/80 border-b-2 border-amber-700/60">
-          <div className="flex items-center gap-3">
-            <span className="text-3xl">🏡</span>
-            <div>
-              <h2 className="text-xl font-black text-white">Усадьба и Настройки</h2>
-              <p className="text-xs text-amber-300">Статистика фермы и управление</p>
-            </div>
-          </div>
+    <div className="fixed inset-0 z-50 flex flex-col bg-[#2A1406] select-none animate-pop-in text-[#3B1F0D] overflow-hidden">
+      
+      {/* ── TOP HEADER (Назад + Заголовок) ── */}
+      <header className="hud-wood-dock px-3 sm:px-6 py-3 flex items-center justify-between gap-2 shrink-0 shadow-md">
+        <div className="flex items-center gap-3">
           <button
-            onClick={closeModal}
-            className="w-9 h-9 rounded-full bg-red-600 hover:bg-red-500 text-white flex items-center justify-center shadow-md active:scale-95 transition-transform"
+            onClick={() => {
+              sounds.playClick();
+              closeModal();
+            }}
+            className="hud-parchment flex items-center gap-1.5 px-3 py-1.5 text-xs sm:text-sm font-extrabold shadow cursor-pointer active:scale-95 transition-transform"
           >
-            <X size={20} />
+            <ArrowLeft size={16} />
+            <span>Назад</span>
           </button>
+          
+          <div className="flex items-center gap-2">
+            <span className="text-2xl">🏡</span>
+            <div>
+              <h1 className="font-extrabold text-sm sm:text-lg text-yellow-300 tracking-tight leading-tight">
+                Усадьба и Настройки
+              </h1>
+              <p className="text-[10px] sm:text-xs text-amber-200/80">
+                Статистика фермы, звук и управление игрой
+              </p>
+            </div>
+          </div>
         </div>
+      </header>
 
-        {/* Content */}
-        <div className="p-6 overflow-y-auto flex flex-col gap-4 text-white">
-          {/* Farm Stats Summary */}
-          <div className="bg-amber-950/70 p-4 rounded-2xl border border-amber-800 flex flex-col gap-2">
-            <span className="text-xs font-bold text-amber-300 uppercase tracking-wide">Достижения фермы:</span>
-            <div className="grid grid-cols-2 gap-2 text-xs">
-              <div className="bg-amber-900/60 p-2 rounded-xl">
-                <span className="text-amber-400">Уровень:</span> <span className="font-bold">{level}</span>
+      {/* ── SETTINGS & STATS BODY ── */}
+      <div className="flex-1 overflow-y-auto p-4 sm:p-6">
+        <div className="max-w-2xl mx-auto flex flex-col gap-4 pb-12">
+          
+          {/* Farm Stats Card */}
+          <div className="hud-parchment p-4 sm:p-5 rounded-2xl border-2 border-amber-600 shadow-md">
+            <div className="flex items-center gap-2 mb-3">
+              <Award size={18} className="text-amber-800" />
+              <h2 className="text-xs sm:text-sm font-extrabold text-[#3B1F0D] uppercase tracking-wide">
+                Достижения и Статистика:
+              </h2>
+            </div>
+
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 text-xs">
+              <div className="bg-amber-100/90 p-3 rounded-xl border border-amber-300 flex flex-col">
+                <span className="text-[10px] text-[#78350F] font-bold">Уровень</span>
+                <span className="text-base sm:text-lg font-black text-[#3B1F0D]">{level}</span>
               </div>
-              <div className="bg-amber-900/60 p-2 rounded-xl">
-                <span className="text-amber-400">Полей:</span> <span className="font-bold">{fieldsCount} шт</span>
+              <div className="bg-amber-100/90 p-3 rounded-xl border border-amber-300 flex flex-col">
+                <span className="text-[10px] text-[#78350F] font-bold">Полей</span>
+                <span className="text-base sm:text-lg font-black text-[#3B1F0D]">{fieldsCount} шт</span>
               </div>
-              <div className="bg-amber-900/60 p-2 rounded-xl">
-                <span className="text-amber-400">Заводов и загонов:</span> <span className="font-bold">{buildingsCount} шт</span>
+              <div className="bg-amber-100/90 p-3 rounded-xl border border-amber-300 flex flex-col">
+                <span className="text-[10px] text-[#78350F] font-bold">Заводов и загонов</span>
+                <span className="text-base sm:text-lg font-black text-[#3B1F0D]">{buildingsCount} шт</span>
               </div>
-              <div className="bg-amber-900/60 p-2 rounded-xl">
-                <span className="text-amber-400">Рыбы выловлено:</span> <span className="font-bold">{fishingStats.fishCaughtCount} шт</span>
+              <div className="bg-amber-100/90 p-3 rounded-xl border border-amber-300 flex flex-col">
+                <span className="text-[10px] text-[#78350F] font-bold">Рыбы выловлено</span>
+                <span className="text-base sm:text-lg font-black text-[#3B1F0D]">{fishingStats.fishCaughtCount} шт</span>
               </div>
             </div>
           </div>
 
-          {/* Sound Setting */}
-          <div className="flex items-center justify-between bg-amber-950/70 p-4 rounded-2xl border border-amber-800">
-            <div className="flex items-center gap-2">
-              {soundMuted ? <VolumeX className="text-red-400" /> : <Volume2 className="text-emerald-400" />}
-              <span className="text-sm font-bold">Звуковые эффекты и музыка</span>
+          {/* Sound Setting Card */}
+          <div className="hud-parchment p-4 sm:p-5 rounded-2xl border-2 border-amber-600 shadow-md flex items-center justify-between gap-3">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-amber-200/90 border border-amber-700 flex items-center justify-center text-xl">
+                {soundMuted ? <VolumeX className="text-red-700" /> : <Volume2 className="text-green-700" />}
+              </div>
+              <div>
+                <h3 className="font-extrabold text-xs sm:text-sm text-[#3B1F0D]">
+                  Звуковые эффекты и музыка
+                </h3>
+                <p className="text-[11px] text-[#78350F]">
+                  Акустическая музыка фермы и звуки действий
+                </p>
+              </div>
             </div>
+
             <button
-              onClick={() => setSoundMuted(!soundMuted)}
-              className={`px-4 py-1.5 rounded-xl text-xs font-black transition-all ${
-                soundMuted 
-                  ? 'bg-amber-800 text-amber-300' 
-                  : 'bg-emerald-500 text-emerald-950 shadow-md'
+              onClick={() => {
+                sounds.playClick();
+                setSoundMuted(!soundMuted);
+              }}
+              className={`px-4 py-2 rounded-xl text-xs font-black shadow transition-transform active:scale-95 cursor-pointer ${
+                soundMuted
+                  ? 'bg-amber-900 text-amber-200 border border-amber-700'
+                  : 'bg-green-600 text-white border border-green-300'
               }`}
             >
               {soundMuted ? 'ВЫКЛ' : 'ВКЛ'}
             </button>
           </div>
 
-          {/* Save Action */}
+          {/* Save Game Button */}
           <button
             onClick={() => {
+              sounds.playClick();
               saveCurrentState();
               closeModal();
             }}
-            className="w-full py-3 bg-gradient-to-b from-emerald-500 to-emerald-600 hover:from-emerald-400 hover:to-emerald-500 text-emerald-950 font-black text-sm rounded-2xl shadow-lg flex items-center justify-center gap-2 active:scale-95 transition-transform"
+            className="w-full py-3.5 bg-gradient-to-b from-green-500 to-green-700 hover:from-green-400 hover:to-green-600 border-2 border-green-200 text-white font-extrabold text-sm rounded-2xl shadow-xl flex items-center justify-center gap-2 active:scale-95 transition-transform cursor-pointer"
           >
             <Save size={18} />
             <span>Сохранить игру в памяти</span>
@@ -96,29 +132,33 @@ export const SettingsModal: React.FC = () => {
           {/* Replay Tutorial Action */}
           <button
             onClick={() => {
+              sounds.playClick();
               useGameStore.getState().restartTutorial();
               closeModal();
             }}
-            className="w-full py-2.5 bg-amber-800/80 hover:bg-amber-700 border border-amber-500/60 text-yellow-200 font-bold text-xs rounded-2xl flex items-center justify-center gap-2 transition-colors"
+            className="w-full py-3.5 bg-gradient-to-b from-amber-700 to-amber-900 border-2 border-amber-400 text-yellow-200 font-extrabold text-xs sm:text-sm rounded-2xl shadow-lg flex items-center justify-center gap-2 active:scale-95 transition-transform cursor-pointer"
           >
-            <span>👨‍🌾</span>
+            <span className="text-lg">👨‍🌾</span>
             <span>Посмотреть историю и пройти обучение заново</span>
           </button>
 
-          {/* Reset Action */}
+          {/* Reset Farm Action */}
           <button
             onClick={() => {
               if (window.confirm('Вы уверены, что хотите начать заново? Весь прогресс будет сброшен!')) {
                 resetGame();
+                closeModal();
               }
             }}
-            className="w-full py-2.5 bg-red-950/80 hover:bg-red-900 border border-red-700/60 text-red-300 font-bold text-xs rounded-2xl flex items-center justify-center gap-2 transition-colors mt-1"
+            className="w-full py-3 bg-red-950/80 hover:bg-red-900 border border-red-700/60 text-red-300 font-bold text-xs rounded-2xl flex items-center justify-center gap-2 transition-colors mt-2 cursor-pointer"
           >
             <RotateCcw size={16} />
             <span>Сбросить ферму и начать сначала</span>
           </button>
+
         </div>
       </div>
+
     </div>
   );
 };

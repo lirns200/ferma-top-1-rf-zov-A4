@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import { useGameStore } from '../../game/gameState';
 import { PRODUCTS } from '../../config/products';
-import { X, ArrowUpCircle, Hammer, Package } from 'lucide-react';
+import { sounds } from '../../audio/SoundManager';
+import { ArrowLeft, ArrowUpCircle, Hammer, Package } from 'lucide-react';
 
 export const StorageModal: React.FC = () => {
   const {
@@ -52,127 +53,179 @@ export const StorageModal: React.FC = () => {
   const canUpgrade = currentMats.every(m => m.have >= reqCount);
 
   return (
-    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 font-['Fredoka',sans-serif]">
-      <div className="relative w-full max-w-2xl bg-gradient-to-b from-amber-900 to-amber-950 rounded-3xl border-4 border-amber-500 shadow-2xl overflow-hidden flex flex-col max-h-[85vh]">
-        {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 bg-amber-950/80 border-b-2 border-amber-700/60">
-          <div className="flex items-center gap-3">
-            <span className="text-3xl">{currentType === 'silo' ? '🌾' : '🏠'}</span>
+    <div className="fixed inset-0 z-50 flex flex-col bg-[#2A1406] select-none animate-pop-in text-[#3B1F0D] overflow-hidden">
+      
+      {/* ── TOP HEADER (Назад + Заголовок) ── */}
+      <header className="hud-wood-dock px-3 sm:px-6 py-3 flex items-center justify-between gap-2 shrink-0 shadow-md">
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => {
+              sounds.playClick();
+              closeModal();
+            }}
+            className="hud-parchment flex items-center gap-1.5 px-3 py-1.5 text-xs sm:text-sm font-extrabold shadow cursor-pointer active:scale-95 transition-transform"
+          >
+            <ArrowLeft size={16} />
+            <span>Назад</span>
+          </button>
+          
+          <div className="flex items-center gap-2">
+            <span className="text-2xl">📦</span>
             <div>
-              <h2 className="text-xl sm:text-2xl font-black text-white">
-                {currentType === 'silo' ? 'Силос (Хранилище урожая)' : 'Амбар (Склад продуктов и инструментов)'}
-              </h2>
-              <p className="text-xs text-amber-300">
+              <h1 className="font-extrabold text-sm sm:text-lg text-yellow-300 tracking-tight leading-tight">
+                {currentType === 'silo' ? 'Силос (Хранилище урожая)' : 'Амбар (Склад продуктов и материалов)'}
+              </h1>
+              <p className="text-[10px] sm:text-xs text-amber-200/80">
                 Заполненность: {used} / {capacity} мест ({percent}%)
               </p>
             </div>
           </div>
-          <button
-            onClick={closeModal}
-            className="w-9 h-9 rounded-full bg-red-600 hover:bg-red-500 text-white flex items-center justify-center shadow-md active:scale-95 transition-transform"
-          >
-            <X size={20} />
-          </button>
         </div>
+      </header>
 
-        {/* Tab Switcher */}
-        <div className="flex items-center gap-2 px-6 pt-3 pb-2 bg-amber-950/50 border-b border-amber-800/60">
-          <button
-            onClick={() => setActiveTab('silo')}
-            className={`flex items-center gap-2 px-5 py-2 rounded-2xl font-bold text-sm transition-all ${
-              activeTab === 'silo'
-                ? 'bg-amber-500 text-amber-950 shadow-md border border-amber-300'
-                : 'bg-amber-900/60 text-amber-200 hover:bg-amber-800'
-            }`}
-          >
-            <span>🌾</span>
-            <span>Силос ({getStorageUsed('silo')}/{siloCapacity})</span>
-          </button>
-          <button
-            onClick={() => setActiveTab('barn')}
-            className={`flex items-center gap-2 px-5 py-2 rounded-2xl font-bold text-sm transition-all ${
-              activeTab === 'barn'
-                ? 'bg-amber-500 text-amber-950 shadow-md border border-amber-300'
-                : 'bg-amber-900/60 text-amber-200 hover:bg-amber-800'
-            }`}
-          >
-            <span>🏠</span>
-            <span>Амбар ({getStorageUsed('barn')}/{barnCapacity})</span>
-          </button>
-        </div>
+      {/* ── TABS SWITCHER ── */}
+      <div className="bg-[#3D2008] px-3 sm:px-6 py-2.5 flex items-center gap-2 border-b-2 border-[#5C3718] shrink-0">
+        <button
+          onClick={() => {
+            sounds.playClick();
+            setActiveTab('silo');
+          }}
+          className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-extrabold transition-all cursor-pointer ${
+            activeTab === 'silo'
+              ? 'hud-parchment shadow-lg border-2 border-yellow-400 scale-105'
+              : 'bg-[#2A1406]/80 text-amber-200 border border-amber-900 hover:bg-[#2A1406]'
+          }`}
+        >
+          <span className="text-base">🌾</span>
+          <span>Силос ({getStorageUsed('silo')}/{siloCapacity})</span>
+        </button>
 
-        {/* Storage Bar */}
-        <div className="px-6 py-3 bg-amber-950/30">
-          <div className="w-full bg-amber-950 h-4 rounded-full overflow-hidden border border-amber-700/60 p-0.5">
-            <div
+        <button
+          onClick={() => {
+            sounds.playClick();
+            setActiveTab('barn');
+          }}
+          className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-extrabold transition-all cursor-pointer ${
+            activeTab === 'barn'
+              ? 'hud-parchment shadow-lg border-2 border-yellow-400 scale-105'
+              : 'bg-[#2A1406]/80 text-amber-200 border border-amber-900 hover:bg-[#2A1406]'
+          }`}
+        >
+          <span className="text-base">🏚️</span>
+          <span>Амбар ({getStorageUsed('barn')}/{barnCapacity})</span>
+        </button>
+      </div>
+
+      {/* ── CAPACITY PROGRESS BAR ── */}
+      <div className="bg-[#241004] px-4 sm:px-6 py-2 border-b border-[#5C3718]/40">
+        <div className="max-w-4xl mx-auto flex items-center gap-3">
+          <span className="text-xs font-extrabold text-amber-200 shrink-0">Вместимость:</span>
+          <div className="w-full h-3 bg-[#4A2810] rounded-full overflow-hidden border border-[#5C3718]">
+            <div 
               className={`h-full rounded-full transition-all duration-300 ${
-                percent > 90 ? 'bg-red-500' : percent > 75 ? 'bg-amber-400' : 'bg-emerald-400'
+                percent >= 90 ? 'bg-red-500' : percent >= 75 ? 'bg-amber-400' : 'bg-green-500'
               }`}
               style={{ width: `${percent}%` }}
             />
           </div>
+          <span className="text-xs font-black text-yellow-300 shrink-0">{used}/{capacity}</span>
         </div>
+      </div>
 
-        {/* Items Grid */}
-        <div className="p-6 overflow-y-auto grid grid-cols-2 sm:grid-cols-4 md:grid-cols-5 gap-3 flex-1">
-          {storedItems.length === 0 ? (
-            <div className="col-span-full flex flex-col items-center justify-center py-12 text-amber-400/60 gap-2">
-              <Package size={48} />
-              <span className="text-sm font-bold">Хранилище пусто</span>
-            </div>
-          ) : (
-            storedItems.map(({ item, count }) => (
-              <div
-                key={item.id}
-                className="flex flex-col items-center justify-center p-3 rounded-2xl bg-amber-900/70 border border-amber-700/80 text-white relative shadow-sm"
-              >
-                <span className="text-3xl mb-1">{item.icon}</span>
-                <span className="text-xs font-bold text-center truncate w-full">{item.name}</span>
-                <div className="mt-1 bg-amber-950/80 text-amber-300 text-[11px] px-2 py-0.5 rounded-full font-black border border-amber-600/50">
-                  {count} шт
-                </div>
+      {/* ── STORED ITEMS GRID & UPGRADE BLOCK ── */}
+      <div className="flex-1 overflow-y-auto p-3 sm:p-6">
+        <div className="max-w-4xl mx-auto flex flex-col gap-5 pb-12">
+          
+          {/* Stored Items Grid */}
+          <div>
+            <h2 className="text-xs sm:text-sm font-extrabold text-amber-200 uppercase tracking-wide mb-3">
+              Предметы в хранилище:
+            </h2>
+
+            {storedItems.length === 0 ? (
+              <div className="hud-parchment p-8 rounded-2xl text-center flex flex-col items-center justify-center gap-2">
+                <span className="text-4xl">🌾</span>
+                <span className="text-sm font-bold text-[#5C3718]">Хранилище пока пусто. Соберите урожай на ферме!</span>
               </div>
-            ))
-          )}
-        </div>
-
-        {/* Upgrade Footer */}
-        <div className="p-4 sm:p-6 bg-amber-950/90 border-t-2 border-amber-700/60 flex flex-col sm:flex-row items-center justify-between gap-4">
-          <div className="flex items-center gap-3">
-            <div className="flex flex-col">
-              <span className="text-xs text-amber-300 font-bold">Материалы для улучшения (+25 мест):</span>
-              <div className="flex items-center gap-2 mt-1">
-                {currentMats.map(mat => (
+            ) : (
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
+                {storedItems.map(({ item, count }) => (
                   <div
-                    key={mat.id}
-                    className={`flex items-center gap-1 text-xs px-2.5 py-1 rounded-xl border ${
-                      mat.have >= reqCount
-                        ? 'bg-emerald-950/80 border-emerald-500 text-emerald-300'
-                        : 'bg-red-950/80 border-red-500 text-red-300'
-                    }`}
+                    key={item.id}
+                    className="hud-parchment flex items-center gap-2.5 p-3 rounded-2xl shadow border-2 border-amber-700/60"
                   >
-                    <span>{mat.icon}</span>
-                    <span className="font-bold">{mat.have}/{reqCount}</span>
+                    <span className="text-3xl shrink-0">{item.icon}</span>
+                    <div className="flex flex-col flex-1 min-w-0">
+                      <span className="font-extrabold text-xs text-[#3B1F0D] truncate">
+                        {item.name}
+                      </span>
+                      <span className="font-black text-sm text-green-800">
+                        ×{count}
+                      </span>
+                    </div>
                   </div>
                 ))}
               </div>
-            </div>
+            )}
           </div>
 
-          <button
-            disabled={!canUpgrade}
-            onClick={() => upgradeStorage(currentType)}
-            className={`flex items-center gap-2 px-6 py-2.5 rounded-2xl font-black text-xs sm:text-sm shadow-lg transition-all ${
-              canUpgrade
-                ? 'bg-gradient-to-b from-emerald-400 to-emerald-600 hover:from-emerald-300 hover:to-emerald-500 text-emerald-950 active:scale-95'
-                : 'bg-amber-900/50 text-amber-600 cursor-not-allowed border border-amber-800'
-            }`}
-          >
-            <Hammer size={18} />
-            <span>Улучшить склад</span>
-          </button>
+          {/* Upgrade Storage Card */}
+          <div className="hud-parchment p-4 sm:p-5 rounded-2xl border-2 border-amber-500 shadow-xl flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4">
+            <div className="flex flex-col gap-1">
+              <div className="flex items-center gap-2">
+                <ArrowUpCircle size={20} className="text-green-700" />
+                <h3 className="font-black text-sm sm:text-base text-[#3B1F0D]">
+                  Увеличить склад на +25 мест
+                </h3>
+              </div>
+              <p className="text-xs text-[#5C3718]">
+                Требуются строительные материалы (можно найти при сборе урожая или в бартере):
+              </p>
+
+              {/* Material Badges */}
+              <div className="flex items-center gap-2 mt-2">
+                {currentMats.map(mat => {
+                  const hasEnough = mat.have >= reqCount;
+                  return (
+                    <div
+                      key={mat.id}
+                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl border font-bold text-xs ${
+                        hasEnough
+                          ? 'bg-green-100 border-green-500 text-green-900'
+                          : 'bg-amber-100 border-amber-700 text-amber-950'
+                      }`}
+                    >
+                      <span className="text-base">{mat.icon}</span>
+                      <span>{mat.have}/{reqCount}</span>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Upgrade Button */}
+            <button
+              onClick={() => {
+                if (canUpgrade) {
+                  sounds.playLevelUp();
+                  upgradeStorage(currentType);
+                }
+              }}
+              disabled={!canUpgrade}
+              className={`px-5 py-3 rounded-2xl font-black text-xs sm:text-sm shadow-xl flex items-center justify-center gap-2 transition-all active:scale-95 ${
+                canUpgrade
+                  ? 'bg-gradient-to-b from-green-500 to-green-700 border-2 border-green-300 text-white cursor-pointer hover:brightness-110 animate-pulse'
+                  : 'bg-stone-600 text-stone-300 border border-stone-500 cursor-not-allowed opacity-60'
+              }`}
+            >
+              <Hammer size={16} />
+              <span>Улучшить склад</span>
+            </button>
+          </div>
+
         </div>
       </div>
+
     </div>
   );
 };

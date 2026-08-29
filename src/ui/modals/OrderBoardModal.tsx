@@ -1,7 +1,8 @@
-import React from 'react';
+﻿import React from 'react';
 import { useGameStore } from '../../game/gameState';
 import { PRODUCTS } from '../../config/products';
-import { X, Trash2, Send, Clock, CheckCircle2 } from 'lucide-react';
+import { sounds } from '../../audio/SoundManager';
+import { ArrowLeft, Trash2, Send, Clock, CheckCircle2 } from 'lucide-react';
 
 export const OrderBoardModal: React.FC = () => {
   const {
@@ -17,39 +18,51 @@ export const OrderBoardModal: React.FC = () => {
   if (activeModal !== 'orders') return null;
 
   return (
-    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 font-['Fredoka',sans-serif]">
-      <div className="relative w-full max-w-3xl bg-gradient-to-b from-amber-800 to-amber-950 rounded-3xl border-4 border-amber-500 shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
-        {/* Board Header */}
-        <div className="flex items-center justify-between px-6 py-4 bg-amber-950/90 border-b-2 border-amber-700/60">
-          <div className="flex items-center gap-3">
-            <span className="text-3xl">📋</span>
-            <div>
-              <h2 className="text-xl sm:text-2xl font-black text-white">Доска заказов городка</h2>
-              <p className="text-xs text-amber-300">Выполняйте заказы жителей и отправляйте грузовик с товарами</p>
-            </div>
-          </div>
+    <div className="fixed inset-0 z-50 flex flex-col bg-[#2A1406] select-none animate-pop-in text-[#3B1F0D] overflow-hidden">
+      
+      {/* ── TOP HEADER (Назад + Заголовок) ── */}
+      <header className="hud-wood-dock px-3 sm:px-6 py-3 flex items-center justify-between gap-2 shrink-0 shadow-md">
+        <div className="flex items-center gap-3">
           <button
-            onClick={closeModal}
-            className="w-9 h-9 rounded-full bg-red-600 hover:bg-red-500 text-white flex items-center justify-center shadow-md active:scale-95 transition-transform"
+            onClick={() => {
+              sounds.playClick();
+              closeModal();
+            }}
+            className="hud-parchment flex items-center gap-1.5 px-3 py-1.5 text-xs sm:text-sm font-extrabold shadow cursor-pointer active:scale-95 transition-transform"
           >
-            <X size={20} />
+            <ArrowLeft size={16} />
+            <span>Назад</span>
           </button>
-        </div>
-
-        {/* Truck Delivery Status Banner */}
-        {truckState.isDelivering && (
-          <div className="flex items-center justify-center gap-3 bg-blue-900/90 px-4 py-2 text-white font-bold text-xs sm:text-sm border-b border-blue-500/50 animate-pulse">
-            <span className="text-xl">🚚</span>
-            <span>Грузовик уехал доставлять заказ покупателю...</span>
-            <div className="flex items-center gap-1 text-cyan-300">
-              <Clock size={14} />
-              <span>{Math.max(0, Math.ceil((truckState.deliveringUntil - Date.now()) / 1000))}с</span>
+          
+          <div className="flex items-center gap-2">
+            <span className="text-2xl">📋</span>
+            <div>
+              <h1 className="font-extrabold text-sm sm:text-lg text-yellow-300 tracking-tight leading-tight">
+                Доска заказов городка
+              </h1>
+              <p className="text-[10px] sm:text-xs text-amber-200/80">
+                Выполняйте контракты жителей и отправляйте грузовик с фермы в город
+              </p>
             </div>
           </div>
-        )}
+        </div>
+      </header>
 
-        {/* Orders 3x2 Grid */}
-        <div className="p-6 overflow-y-auto grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+      {/* ── TRUCK DELIVERY STATUS BANNER ── */}
+      {truckState.isDelivering && (
+        <div className="flex items-center justify-center gap-3 bg-blue-900/90 px-4 py-2 text-white font-bold text-xs sm:text-sm border-b border-blue-500/50 animate-pulse shrink-0">
+          <span className="text-xl">🛻</span>
+          <span>Красный пикап везет заказ в город...</span>
+          <div className="flex items-center gap-1 text-cyan-300 font-mono">
+            <Clock size={14} />
+            <span>{Math.max(0, Math.ceil((truckState.deliveringUntil - Date.now()) / 1000))}с</span>
+          </div>
+        </div>
+      )}
+
+      {/* ── ORDERS CARDS GRID ── */}
+      <div className="flex-1 overflow-y-auto p-3 sm:p-6">
+        <div className="max-w-5xl mx-auto grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4 pb-12">
           {orders.map(order => {
             const allItemsAvailable = order.items.every(
               req => (inventory[req.itemId] || 0) >= req.count
@@ -58,21 +71,24 @@ export const OrderBoardModal: React.FC = () => {
             return (
               <div
                 key={order.id}
-                className={`relative flex flex-col justify-between p-4 rounded-3xl border-2 transition-all shadow-lg ${
+                className={`hud-parchment flex flex-col justify-between p-4 rounded-2xl shadow-lg border-2 transition-all ${
                   allItemsAvailable
-                    ? 'bg-amber-900/80 border-amber-400 text-white'
-                    : 'bg-amber-950/70 border-amber-800 text-amber-200'
+                    ? 'border-green-600 bg-[#FDF7E7]'
+                    : 'border-[#5C3718]'
                 }`}
               >
                 {/* Customer header */}
-                <div className="flex items-center justify-between mb-3 border-b border-amber-700/50 pb-2">
+                <div className="flex items-center justify-between mb-3 border-b border-[#5C3718]/30 pb-2">
                   <div className="flex items-center gap-2">
                     <span className="text-3xl">{order.customerAvatar}</span>
-                    <span className="font-bold text-sm text-white">{order.customerName}</span>
+                    <span className="font-extrabold text-sm text-[#3B1F0D]">{order.customerName}</span>
                   </div>
                   <button
-                    onClick={() => trashOrder(order.id)}
-                    className="text-amber-400/60 hover:text-red-400 p-1 rounded-lg transition-colors"
+                    onClick={() => {
+                      sounds.playClick();
+                      trashOrder(order.id);
+                    }}
+                    className="text-amber-800/60 hover:text-red-700 p-1 rounded-lg transition-colors cursor-pointer"
                     title="Удалить заказ"
                   >
                     <Trash2 size={16} />
@@ -80,7 +96,7 @@ export const OrderBoardModal: React.FC = () => {
                 </div>
 
                 {/* Requested Items List */}
-                <div className="flex flex-col gap-2 mb-4">
+                <div className="flex flex-col gap-2 mb-3">
                   {order.items.map(req => {
                     const item = PRODUCTS[req.itemId];
                     const countHave = inventory[req.itemId] || 0;
@@ -91,15 +107,15 @@ export const OrderBoardModal: React.FC = () => {
                         key={req.itemId}
                         className={`flex items-center justify-between px-3 py-1.5 rounded-xl border ${
                           isEnough 
-                            ? 'bg-emerald-950/60 border-emerald-500/60 text-emerald-200'
-                            : 'bg-amber-950/60 border-amber-800 text-amber-300'
+                            ? 'bg-green-100/80 border-green-500 text-green-950 font-bold'
+                            : 'bg-amber-100/70 border-amber-300 text-amber-950 font-medium'
                         }`}
                       >
                         <div className="flex items-center gap-2">
                           <span className="text-xl">{item?.icon || '📦'}</span>
-                          <span className="text-xs font-bold">{item?.name || req.itemId}</span>
+                          <span className="text-xs">{item?.name || req.itemId}</span>
                         </div>
-                        <span className={`text-xs font-black ${isEnough ? 'text-emerald-400' : 'text-red-400'}`}>
+                        <span className={`text-xs font-black ${isEnough ? 'text-green-800' : 'text-red-700'}`}>
                           {countHave}/{req.count}
                         </span>
                       </div>
@@ -108,36 +124,43 @@ export const OrderBoardModal: React.FC = () => {
                 </div>
 
                 {/* Reward & Send Button */}
-                <div className="flex items-center justify-between pt-2 border-t border-amber-700/50">
+                <div className="flex items-center justify-between pt-2.5 border-t border-[#5C3718]/30">
                   <div className="flex flex-col">
-                    <div className="flex items-center gap-1 text-xs font-bold text-amber-300">
+                    <div className="flex items-center gap-1 text-xs font-extrabold text-amber-900">
                       <span>💰</span>
                       <span>+{order.coinReward}</span>
                     </div>
-                    <div className="flex items-center gap-1 text-[11px] font-bold text-blue-300">
+                    <div className="flex items-center gap-1 text-[11px] font-extrabold text-blue-900">
                       <span>✨</span>
                       <span>+{order.xpReward} XP</span>
                     </div>
                   </div>
 
                   <button
+                    onClick={() => {
+                      if (allItemsAvailable && !truckState.isDelivering) {
+                        sounds.playLevelUp();
+                        fulfillOrder(order.id);
+                      }
+                    }}
                     disabled={!allItemsAvailable || truckState.isDelivering}
-                    onClick={() => fulfillOrder(order.id)}
-                    className={`flex items-center gap-1.5 px-4 py-2 rounded-2xl font-black text-xs shadow-md transition-all ${
+                    className={`px-4 py-2 rounded-xl text-xs font-extrabold flex items-center gap-1.5 shadow transition-all active:scale-95 ${
                       allItemsAvailable && !truckState.isDelivering
-                        ? 'bg-gradient-to-b from-emerald-400 to-emerald-600 hover:from-emerald-300 hover:to-emerald-500 text-emerald-950 shadow-emerald-900/50 active:scale-95'
-                        : 'bg-amber-950/60 text-amber-600/60 cursor-not-allowed border border-amber-900'
+                        ? 'bg-gradient-to-b from-green-500 to-green-700 hover:from-green-400 hover:to-green-600 border border-green-300 text-white cursor-pointer shadow-lg animate-pulse'
+                        : 'bg-amber-900/30 text-amber-800/60 border border-amber-900/20 cursor-not-allowed'
                     }`}
                   >
                     <Send size={14} />
                     <span>Отправить</span>
                   </button>
                 </div>
+
               </div>
             );
           })}
         </div>
       </div>
+
     </div>
   );
 };

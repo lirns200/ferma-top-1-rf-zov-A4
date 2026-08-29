@@ -3,25 +3,27 @@ import { useGameStore } from '../../game/gameState';
 import { BUILDINGS } from '../../config/buildings';
 import { DECORATIONS } from '../../config/decorations';
 import { TREES_BUSHES } from '../../config/crops';
+import { sounds } from '../../audio/SoundManager';
+import { ArrowLeft, Search, Check } from 'lucide-react';
 
 type ShopTab = 'farming' | 'factories' | 'trees' | 'decorations';
 
 const TABS: { id: ShopTab; label: string; icon: string }[] = [
-  { id: 'farming',     label: 'Поля и загоны',  icon: '🌾' },
-  { id: 'factories',   label: 'Производство',  icon: '🏭' },
-  { id: 'trees',       label: 'Сад и деревья', icon: '🍎' },
-  { id: 'decorations', label: 'Декорации',     icon: '⛲' },
+  { id: 'farming', label: 'Поля и загоны', icon: '🌾' },
+  { id: 'factories', label: 'Производство', icon: '🏭' },
+  { id: 'trees', label: 'Сад и деревья', icon: '🍎' },
+  { id: 'decorations', label: 'Декорации', icon: '⛲' },
 ];
 
 function fmtCost(n: number): string {
   if (n >= 1_000_000) return (n / 1_000_000).toFixed(1) + 'M';
-  if (n >= 10_000)    return Math.round(n / 1000) + 'K';
+  if (n >= 10_000) return Math.round(n / 1000) + 'K';
   return n.toLocaleString('ru-RU');
 }
 
 export const BuildShopModal: React.FC = () => {
   const {
-    activeModal, closeModal, level, coins, gems, entities, setPlacingBuilding,
+    activeModal, closeModal, level, coins, gems, setPlacingBuilding,
   } = useGameStore();
 
   const [activeTab, setActiveTab] = useState<ShopTab>('farming');
@@ -55,397 +57,205 @@ export const BuildShopModal: React.FC = () => {
 
   const handleSelect = (id: string, unlocked: boolean, canAfford: boolean) => {
     if (!unlocked || !canAfford) return;
+    sounds.playClick();
     setPlacingBuilding(id);
     closeModal();
   };
 
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5"
-      style={{ background: 'rgba(0, 0, 0, 0.78)', backdropFilter: 'blur(4px)' }}
-      onClick={e => { if (e.target === e.currentTarget) closeModal(); }}
-    >
-      <div
-        className="relative w-full max-w-3xl flex flex-col rounded-2xl overflow-hidden shadow-2xl"
-        style={{
-          maxHeight: '90vh',
-          background: '#231206',
-          border: '3px solid #633612',
-          boxShadow: '0 20px 50px rgba(0,0,0,0.8), inset 0 1px 0 rgba(255,255,255,0.15)',
-          fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
-        }}
-      >
-
-        {/* ── HEADER ── */}
-        <div style={{
-          background: 'linear-gradient(180deg, #4A280F 0%, #341A08 100%)',
-          borderBottom: '2px solid #5C3310',
-          padding: '14px 20px',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-        }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
-            <div style={{
-              width: 44, height: 44,
-              borderRadius: 12,
-              background: 'linear-gradient(135deg, #F59E0B, #B45309)',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              fontSize: 24,
-              boxShadow: '0 4px 10px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.4)',
-            }}>
-              🚜
-            </div>
+    <div className="fixed inset-0 z-50 flex flex-col bg-[#2A1406] select-none animate-pop-in text-[#3B1F0D] overflow-hidden">
+      
+      {/* ── TOP HEADER BAR (Стрелка Назад + Заголовок + Баланс) ── */}
+      <header className="hud-wood-dock px-3 sm:px-6 py-3 flex items-center justify-between gap-2 shrink-0 shadow-md">
+        
+        {/* Back Button & Title */}
+        <div className="flex items-center gap-2 sm:gap-3">
+          <button
+            onClick={() => {
+              sounds.playClick();
+              closeModal();
+            }}
+            className="hud-parchment flex items-center gap-1.5 px-3 py-1.5 text-xs sm:text-sm font-extrabold shadow cursor-pointer active:scale-95 transition-transform"
+          >
+            <ArrowLeft size={16} />
+            <span className="hidden sm:inline">Назад</span>
+          </button>
+          
+          <div className="flex items-center gap-2">
+            <span className="text-2xl">🚜</span>
             <div>
-              <div style={{ fontSize: 18, fontWeight: 800, color: '#FEF08A', letterSpacing: '0.5px' }}>
+              <h1 className="font-extrabold text-sm sm:text-lg text-yellow-300 tracking-tight leading-tight">
                 Магазин строительства
-              </div>
-              <div style={{ fontSize: 12, color: '#D97706', fontWeight: 500, marginTop: 1 }}>
+              </h1>
+              <p className="text-[10px] sm:text-xs text-amber-200/80 hidden sm:block">
                 Постройки, производство, животные и декор
-              </div>
+              </p>
             </div>
           </div>
-          <button
-            onClick={closeModal}
-            style={{
-              width: 36, height: 36,
-              borderRadius: 10,
-              background: 'linear-gradient(180deg, #EF4444 0%, #B91C1C 100%)',
-              color: '#FFF',
-              border: '1px solid #7F1D1D',
-              boxShadow: '0 2px 6px rgba(0,0,0,0.4)',
-              fontSize: 16,
-              fontWeight: 'bold',
-              cursor: 'pointer',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              transition: 'transform 0.1s, opacity 0.1s',
-            }}
-            onMouseEnter={e => e.currentTarget.style.opacity = '0.85'}
-            onMouseLeave={e => e.currentTarget.style.opacity = '1'}
-          >
-            ✕
-          </button>
         </div>
 
-        {/* ── TABS ── */}
-        <div style={{
-          display: 'flex',
-          gap: 6,
-          padding: '10px 16px',
-          background: '#1A0C04',
-          borderBottom: '1px solid #3D2008',
-          overflowX: 'auto',
-        }}>
+        {/* Currency Badges */}
+        <div className="flex items-center gap-1.5 sm:gap-2">
+          {/* Coins */}
+          <div className="hud-parchment flex items-center gap-1 px-2.5 py-1 text-xs font-bold">
+            <span>🪙</span>
+            <span>{fmtCost(coins)}</span>
+          </div>
+          {/* Gems */}
+          <div className="hud-parchment flex items-center gap-1 px-2.5 py-1 text-xs font-bold">
+            <span>💎</span>
+            <span className="text-cyan-900">{gems}</span>
+          </div>
+          {/* Level */}
+          <div className="hud-parchment flex items-center gap-1 px-2 py-1 text-xs font-bold bg-amber-200">
+            <span>⭐</span>
+            <span>{level} ур.</span>
+          </div>
+        </div>
+
+      </header>
+
+      {/* ── CATEGORY TABS & SEARCH BAR ── */}
+      <div className="bg-[#3D2008] px-3 sm:px-6 py-2.5 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5 border-b-2 border-[#5C3718] shrink-0">
+        
+        {/* Tabs */}
+        <div className="flex items-center gap-1.5 sm:gap-2 overflow-x-auto pb-1 sm:pb-0">
           {TABS.map(tab => {
             const isActive = activeTab === tab.id;
             return (
               <button
                 key={tab.id}
-                onClick={() => { setActiveTab(tab.id); setSearch(''); }}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 8,
-                  padding: '8px 16px',
-                  borderRadius: 10,
-                  fontSize: 13,
-                  fontWeight: isActive ? 700 : 500,
-                  color: isActive ? '#FFF' : '#C4A482',
-                  background: isActive ? 'linear-gradient(180deg, #B45309 0%, #78350F 100%)' : '#2A1507',
-                  border: isActive ? '1px solid #F59E0B' : '1px solid #43220B',
-                  boxShadow: isActive ? '0 2px 8px rgba(245, 158, 11, 0.35), inset 0 1px 0 rgba(255,255,255,0.25)' : 'none',
-                  cursor: 'pointer',
-                  whiteSpace: 'nowrap',
-                  transition: 'all 0.15s ease',
+                onClick={() => {
+                  sounds.playClick();
+                  setActiveTab(tab.id);
                 }}
+                className={`flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-extrabold transition-all cursor-pointer shrink-0 ${
+                  isActive
+                    ? 'hud-parchment shadow-lg border-2 border-yellow-400 scale-105'
+                    : 'bg-[#2A1406]/80 text-amber-200 border border-amber-900 hover:bg-[#2A1406]'
+                }`}
               >
-                <span style={{ fontSize: 16 }}>{tab.icon}</span>
+                <span className="text-base">{tab.icon}</span>
                 <span>{tab.label}</span>
               </button>
             );
           })}
         </div>
 
-        {/* ── SEARCH BAR ── */}
-        <div style={{ padding: '10px 16px', background: '#170A03', borderBottom: '1px solid #341706' }}>
-          <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
-            <span style={{ position: 'absolute', left: 14, fontSize: 15, color: '#926038' }}>🔍</span>
-            <input
-              type="text"
-              value={search}
-              onChange={e => setSearch(e.target.value)}
-              placeholder="Поиск предметов по названию..."
-              style={{
-                width: '100%',
-                padding: '9px 36px 9px 40px',
-                borderRadius: 10,
-                background: '#281306',
-                border: '1px solid #542B0D',
-                color: '#FEF08A',
-                fontSize: 13,
-                outline: 'none',
-              }}
-              onFocus={e => e.currentTarget.style.borderColor = '#F59E0B'}
-              onBlur={e => e.currentTarget.style.borderColor = '#542B0D'}
-            />
-            {search && (
-              <button
-                onClick={() => setSearch('')}
-                style={{
-                  position: 'absolute', right: 12,
-                  background: 'none', border: 'none',
-                  color: '#A87C50', fontSize: 14,
-                  cursor: 'pointer',
-                }}
-              >
-                ✕
-              </button>
-            )}
-          </div>
+        {/* Search */}
+        <div className="relative">
+          <input
+            type="text"
+            placeholder="Поиск по названию..."
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            className="w-full sm:w-56 bg-[#2A1406] border border-amber-800 rounded-xl px-3 py-1.5 text-xs text-yellow-200 placeholder-amber-400/50 focus:outline-none focus:border-yellow-400 pl-8"
+          />
+          <Search size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-amber-400/60" />
+          {search && (
+            <button onClick={() => setSearch('')} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-xs text-amber-400">
+              ✕
+            </button>
+          )}
         </div>
 
-        {/* ── ITEMS GRID ── */}
-        <div
-          className="custom-scroll"
-          style={{
-            flex: 1,
-            overflowY: 'auto',
-            padding: 16,
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fill, minmax(210px, 1fr))',
-            gap: 12,
-            minHeight: 280,
-          }}
-        >
-          {sorted.length === 0 && (
-            <div style={{ gridColumn: '1/-1', textAlign: 'center', padding: '48px 0', color: '#A87C50' }}>
-              <div style={{ fontSize: 36, marginBottom: 8 }}>🔍</div>
-              <div style={{ fontSize: 15, fontWeight: 600 }}>Ничего не найдено</div>
-              <div style={{ fontSize: 12, marginTop: 4, opacity: 0.8 }}>Попробуйте изменить поисковый запрос</div>
-            </div>
-          )}
+      </div>
 
+      {/* ── CARDS GRID (2 КОЛОНКИ НА ТЕЛЕФОНЕ, 3-4 НА ПК) ── */}
+      <div className="flex-1 overflow-y-auto p-3 sm:p-6">
+        <div className="max-w-6xl mx-auto grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4 pb-12">
           {sorted.map(item => {
-            const unlocked  = level >= item.unlockLevel;
-            const cost      = item.cost || 0;
-            const gemsCost  = (item as any).gemsCost || 0;
-            const canAfford = coins >= cost && gems >= gemsCost;
-            const placed    = entities.filter(e => e.configId === item.id).length;
-            const description = (item as any).description as string | undefined;
-            const w = (item as any).width;
-            const d = (item as any).depth;
+            const unlocked = level >= item.unlockLevel;
+            const cost = item.cost || 0;
+            const canAfford = coins >= cost;
+            const w = (item as { width?: number }).width || 1;
+            const d = (item as { depth?: number }).depth || 1;
 
             return (
               <div
                 key={item.id}
-                onClick={() => handleSelect(item.id, unlocked, canAfford)}
-                style={{
-                  background: !unlocked ? '#1A0B03' : '#2D1608',
-                  border: !unlocked ? '1px solid #361705' : '1px solid #5A2E0F',
-                  borderRadius: 14,
-                  padding: 12,
-                  display: 'flex',
-                  flexDirection: 'column',
-                  gap: 10,
-                  boxShadow: !unlocked ? 'none' : '0 4px 12px rgba(0,0,0,0.3)',
-                  opacity: !unlocked ? 0.65 : canAfford ? 1 : 0.88,
-                  cursor: unlocked && canAfford ? 'pointer' : 'default',
-                  transition: 'transform 0.12s, border-color 0.12s, box-shadow 0.12s',
-                }}
-                onMouseEnter={e => {
-                  if (unlocked && canAfford) {
-                    e.currentTarget.style.transform = 'translateY(-2px)';
-                    e.currentTarget.style.borderColor = '#F59E0B';
-                    e.currentTarget.style.boxShadow = '0 6px 16px rgba(245, 158, 11, 0.2)';
-                  }
-                }}
-                onMouseLeave={e => {
-                  if (unlocked && canAfford) {
-                    e.currentTarget.style.transform = 'none';
-                    e.currentTarget.style.borderColor = '#5A2E0F';
-                    e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.3)';
-                  }
-                }}
+                className={`hud-parchment flex flex-col justify-between p-3.5 sm:p-4 rounded-2xl shadow-md border-2 transition-all relative ${
+                  !unlocked
+                    ? 'opacity-65 grayscale bg-amber-950/40'
+                    : canAfford
+                    ? 'hover:border-yellow-500 hover:scale-[1.02]'
+                    : 'border-amber-700/60'
+                }`}
               >
-                {/* Top Info row */}
-                <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                  <div style={{
-                    width: 50, height: 50,
-                    borderRadius: 12,
-                    background: !unlocked ? '#120702' : 'linear-gradient(135deg, #4A280F, #2A1305)',
-                    border: '1px solid #633612',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    fontSize: 26,
-                    flexShrink: 0,
-                    filter: !unlocked ? 'grayscale(1) brightness(0.5)' : 'none',
-                    boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.1)',
-                  }}>
-                    {item.icon}
-                  </div>
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{
-                      fontSize: 13,
-                      fontWeight: 700,
-                      color: !unlocked ? '#A87C50' : '#FEF08A',
-                      whiteSpace: 'nowrap',
-                      overflow: 'hidden',
-                      textOverflow: 'ellipsis',
-                    }}>
-                      {item.name}
-                    </div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 3 }}>
-                      {w && (
-                        <span style={{ fontSize: 11, color: '#A87C50', fontWeight: 500 }}>
-                          {w}×{d} кл.
-                        </span>
-                      )}
-                      {placed > 0 && (
-                        <span style={{
-                          fontSize: 10,
-                          fontWeight: 700,
-                          color: '#86EFAC',
-                          background: '#14532D',
-                          borderRadius: 6,
-                          padding: '1px 5px',
-                        }}>
-                          ×{placed}
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                </div>
-
-                {/* Description if any */}
-                {description && (
-                  <div style={{ fontSize: 11, color: '#C4A482', lineHeight: 1.4 }}>
-                    {description}
+                {/* Level Lock Badge */}
+                {!unlocked && (
+                  <div className="absolute top-3 right-3 px-2 py-0.5 rounded-lg bg-amber-950/90 border border-yellow-500/80 text-[10px] font-black text-yellow-300 flex items-center gap-1 shadow">
+                    <span>🔒</span>
+                    <span>Ур. {item.unlockLevel}</span>
                   </div>
                 )}
 
-                {/* Bottom Row: Cost & Action Button */}
-                <div style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  gap: 8,
-                  marginTop: 'auto',
-                  paddingTop: 8,
-                  borderTop: '1px solid #3D1F08',
-                }}>
-                  {/* Cost display */}
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                    {cost === 0 && gemsCost === 0 ? (
-                      <span style={{ fontSize: 12, fontWeight: 700, color: '#4ADE80' }}>
-                        Бесплатно
+                {/* Top Info: Icon + Title + Size */}
+                <div>
+                  <div className="flex items-start gap-3 mb-2">
+                    <div className="w-12 h-12 rounded-xl bg-amber-100/90 border border-[#5C3718] flex items-center justify-center text-3xl shadow-inner shrink-0">
+                      {item.icon}
+                    </div>
+                    <div className="flex flex-col flex-1 pr-12 sm:pr-0">
+                      <h3 className="font-extrabold text-xs sm:text-sm text-[#3B1F0D] leading-tight">
+                        {item.name}
+                      </h3>
+                      <span className="text-[10px] text-[#78350F] font-bold mt-0.5">
+                        {w}×{d} кл.
                       </span>
+                    </div>
+                  </div>
+
+                  <p className="text-[11px] text-[#5C3718] leading-snug line-clamp-2 my-1.5 font-medium">
+                    {(item as { description?: string }).description || 'Постройка для развития и процветания вашей фермы.'}
+                  </p>
+                </div>
+
+                {/* Bottom Action: Price + Build Button */}
+                <div className="flex items-center justify-between pt-2.5 mt-2 border-t border-[#5C3718]/30">
+                  {/* Price */}
+                  <div className="flex items-center gap-1 font-extrabold text-xs">
+                    {cost === 0 ? (
+                      <span className="text-green-700">Бесплатно</span>
                     ) : (
                       <>
-                        {cost > 0 && (
-                          <span style={{
-                            fontSize: 13,
-                            fontWeight: 700,
-                            color: coins >= cost ? '#FACC15' : '#EF4444',
-                            display: 'flex', alignItems: 'center', gap: 3,
-                          }}>
-                            <span>🪙</span>
-                            <span>{fmtCost(cost)}</span>
-                          </span>
-                        )}
-                        {gemsCost > 0 && (
-                          <span style={{
-                            fontSize: 13,
-                            fontWeight: 700,
-                            color: gems >= gemsCost ? '#38BDF8' : '#EF4444',
-                            display: 'flex', alignItems: 'center', gap: 3,
-                          }}>
-                            <span>💎</span>
-                            <span>{gemsCost}</span>
-                          </span>
-                        )}
+                        <span>🪙</span>
+                        <span className={canAfford ? 'text-[#3B1F0D]' : 'text-red-700'}>
+                          {fmtCost(cost)}
+                        </span>
                       </>
                     )}
                   </div>
 
-                  {/* Action Button */}
-                  {!unlocked ? (
-                    <div style={{
-                      fontSize: 11,
-                      fontWeight: 700,
-                      color: '#F59E0B',
-                      background: '#351B07',
-                      border: '1px solid #633612',
-                      borderRadius: 8,
-                      padding: '4px 8px',
-                      display: 'flex', alignItems: 'center', gap: 4,
-                    }}>
-                      <span>🔒</span>
-                      <span>Ур. {item.unlockLevel}</span>
-                    </div>
-                  ) : (
-                    <button
-                      disabled={!canAfford}
-                      onClick={e => {
-                        e.stopPropagation();
-                        handleSelect(item.id, unlocked, canAfford);
-                      }}
-                      style={{
-                        padding: '6px 12px',
-                        borderRadius: 8,
-                        fontSize: 12,
-                        fontWeight: 700,
-                        cursor: canAfford ? 'pointer' : 'not-allowed',
-                        color: canAfford ? '#FFF' : '#A87C50',
-                        background: canAfford
-                          ? 'linear-gradient(180deg, #22C55E 0%, #16A34A 100%)'
-                          : '#281306',
-                        border: canAfford ? '1px solid #15803D' : '1px solid #43220B',
-                        boxShadow: canAfford ? '0 2px 6px rgba(22, 163, 74, 0.4)' : 'none',
-                        transition: 'transform 0.1s, filter 0.1s',
-                      }}
-                      onMouseEnter={e => {
-                        if (canAfford) e.currentTarget.style.filter = 'brightness(1.1)';
-                      }}
-                      onMouseLeave={e => {
-                        if (canAfford) e.currentTarget.style.filter = 'none';
-                      }}
-                    >
-                      {canAfford ? 'Построить' : 'Мало монет'}
-                    </button>
-                  )}
+                  {/* Build Button */}
+                  <button
+                    onClick={() => handleSelect(item.id, unlocked, canAfford)}
+                    disabled={!unlocked || !canAfford}
+                    className={`px-3.5 py-2 rounded-xl font-extrabold text-xs shadow-md transition-transform active:scale-95 cursor-pointer flex items-center gap-1 ${
+                      !unlocked
+                        ? 'bg-stone-500 text-stone-200 cursor-not-allowed'
+                        : !canAfford
+                        ? 'bg-amber-900/60 text-amber-400 border border-amber-700 cursor-not-allowed'
+                        : 'bg-gradient-to-b from-green-500 to-green-700 hover:from-green-400 hover:to-green-600 border border-green-300 text-white shadow-lg'
+                    }`}
+                  >
+                    {unlocked ? (
+                      <>
+                        <Check size={14} />
+                        <span>Построить</span>
+                      </>
+                    ) : (
+                      <span>Закрыто</span>
+                    )}
+                  </button>
                 </div>
+
               </div>
             );
           })}
         </div>
-
-        {/* ── FOOTER: Balance Bar ── */}
-        <div style={{
-          borderTop: '2px solid #43220B',
-          background: '#1A0C04',
-          padding: '10px 20px',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          gap: 28,
-          fontSize: 14,
-          fontWeight: 700,
-        }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6, color: '#FACC15' }}>
-            <span style={{ fontSize: 16 }}>🪙</span>
-            <span>{coins.toLocaleString('ru-RU')} монет</span>
-          </div>
-          <div style={{ width: 1, height: 16, background: '#4A280F' }} />
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6, color: '#38BDF8' }}>
-            <span style={{ fontSize: 16 }}>💎</span>
-            <span>{gems} кристаллов</span>
-          </div>
-          <div style={{ width: 1, height: 16, background: '#4A280F' }} />
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6, color: '#60A5FA' }}>
-            <span style={{ fontSize: 16 }}>⭐</span>
-            <span>Уровень {level}</span>
-          </div>
-        </div>
       </div>
+
     </div>
   );
 };
