@@ -1205,27 +1205,15 @@ export const RoadsideShopModal: React.FC = () => {
                   </div>
                 </div>
 
-                {/* Platform Fee Breakdown Card */}
-                <div className="flex flex-col gap-2 p-3 rounded-2xl bg-black/35 border border-white/10 text-xs shadow-inner">
-                  <div className="flex justify-between items-center text-[#8E939D]">
-                    <span>Покупатель заплатит:</span>
-                    <span className="font-bold text-white flex items-center gap-1">
-                      <CoinSvg /> {sellPrice}
-                    </span>
+                {/* Clean Payout Summary Card (0% Fee) */}
+                <div className="flex justify-between items-center p-3.5 rounded-2xl bg-black/35 border border-white/10 shadow-inner">
+                  <div className="flex flex-col">
+                    <span className="text-xs font-black text-[#8E939D]">Вы получите за продажу:</span>
+                    <span className="text-[10px] text-emerald-400 font-bold mt-0.5">Без комиссии рынка (0%)</span>
                   </div>
-
-                  <div className="flex justify-between items-center text-[#8E939D]">
-                    <span>Комиссия площадки (5%):</span>
-                    <span className="text-rose-400 font-bold flex items-center gap-1">
-                      - {Math.round(sellPrice * 0.05)} <CoinSvg />
-                    </span>
-                  </div>
-
-                  <div className="flex justify-between items-center font-black text-emerald-400 pt-1.5 border-t border-white/10">
-                    <span>Вы получите чистыми:</span>
-                    <span className="text-sm flex items-center gap-1">
-                      + {Math.round(sellPrice * 0.95)} <CoinSvg />
-                    </span>
+                  <div className="flex items-center gap-1.5 font-black text-emerald-400 text-lg">
+                    <span>+{sellPrice}</span>
+                    <CoinSvg />
                   </div>
                 </div>
 
