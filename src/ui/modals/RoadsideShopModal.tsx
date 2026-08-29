@@ -1001,7 +1001,7 @@ export const RoadsideShopModal: React.FC = () => {
                     </span>
                   </div>
                 ) : (
-                  <div className="flex items-center gap-2.5 overflow-x-auto pb-1.5 pt-0.5 scrollbar-none snap-x px-0.5">
+                  <div className="flex items-center gap-2.5 overflow-x-auto py-2 px-1.5 scrollbar-none snap-x">
                     {userInventoryItems.map(({ item, count }) => {
                       const isSelected = sellItemKey === item.id;
 
@@ -1009,22 +1009,22 @@ export const RoadsideShopModal: React.FC = () => {
                         <div
                           key={item.id}
                           onClick={() => handleSelectSellItem(item.id, count)}
-                          className={`w-24 sm:w-28 p-2.5 rounded-2xl border shadow-md flex flex-col items-center justify-between text-center gap-1.5 cursor-pointer shrink-0 snap-start transition-all duration-200 relative select-none ${
+                          className={`w-24 sm:w-28 p-2.5 rounded-2xl border-2 shadow-md flex flex-col items-center justify-between text-center gap-1.5 cursor-pointer shrink-0 snap-start transition-all duration-150 relative select-none ${
                             isSelected
-                              ? 'bg-gradient-to-b from-emerald-950 to-[#12241E] border-emerald-400 ring-2 ring-emerald-400/50 scale-105 shadow-emerald-950/60'
+                              ? 'bg-gradient-to-b from-emerald-950 to-[#10231C] border-emerald-400 shadow-lg shadow-emerald-950/80 text-white'
                               : isDesign2026
                               ? 'bg-[#181C24] border-[#242A35] text-white hover:border-white/20 hover:bg-[#1E232D] active:scale-95'
                               : 'hud-parchment border-amber-700/60 text-[#3B1F0D]'
                           }`}
                         >
                           {isSelected && (
-                            <div className="absolute top-1.5 right-1.5 w-4 h-4 rounded-full bg-emerald-500 text-white flex items-center justify-center text-[9px] font-black shadow">
+                            <div className="absolute top-2 right-2 w-4 h-4 rounded-full bg-emerald-500 text-white flex items-center justify-center text-[9px] font-black shadow">
                               ✓
                             </div>
                           )}
 
-                          <div className={`w-11 h-11 rounded-xl flex items-center justify-center text-2xl shadow-inner transition-transform ${
-                            isSelected ? 'bg-emerald-900/40 scale-110' : 'bg-black/30'
+                          <div className={`w-11 h-11 rounded-xl flex items-center justify-center text-2xl shadow-inner transition-colors ${
+                            isSelected ? 'bg-emerald-900/50' : 'bg-black/30'
                           }`}>
                             {item.icon}
                           </div>
