@@ -216,6 +216,25 @@ export const GameScene: React.FC = () => {
     fillLight.position.set(-25, 25, -25);
     scene.add(fillLight);
 
+    // Glowing Night Fireflies (active during night hours)
+    const firefliesCount = 28;
+    const firefliesGeo = new THREE.BufferGeometry();
+    const firefliesPos = new Float32Array(firefliesCount * 3);
+    for (let f = 0; f < firefliesCount; f++) {
+      firefliesPos[f * 3] = (Math.random() - 0.5) * 44;
+      firefliesPos[f * 3 + 1] = 0.4 + Math.random() * 2.2;
+      firefliesPos[f * 3 + 2] = (Math.random() - 0.5) * 44;
+    }
+    firefliesGeo.setAttribute('position', new THREE.BufferAttribute(firefliesPos, 3));
+    const firefliesMat = new THREE.PointsMaterial({
+      color: 0xFDE047,
+      size: 0.28,
+      transparent: true,
+      opacity: 0.0,
+    });
+    const firefliesPoints = new THREE.Points(firefliesGeo, firefliesMat);
+    scene.add(firefliesPoints);
+
     // 5. Terrain Group
     const terrainGroup = new THREE.Group();
     terrainGroupRef.current = terrainGroup;
@@ -819,6 +838,95 @@ export const GameScene: React.FC = () => {
         lightningTimer = 4.2 + Math.random() * 4.5;
       }
 
+      // ── Real-Time Day / Night / Dawn / Dusk Cycle (Synced with User Clock) ──
+      const nowClock = new Date();
+      const hourVal = nowClock.getHours() + nowClock.getMinutes() / 60 + nowClock.getSeconds() / 3600;
+
+      let baseSkyColor = '#BAE6FD';
+      let baseAmbientColor = 0xFEF3C7;
+      let baseAmbientIntensity = 0.95;
+      let baseSunColor = 0xFFFBEB;
+      let baseSunIntensity = 1.35;
+      let baseSunX = 38;
+      let baseSunY = 55;
+      let baseSunZ = 28;
+      let isNightMode = false;
+
+      if (hourVal >= 5.0 && hourVal < 8.5) {
+        // 🌅 Dawn / Sunrise (05:00 - 08:30)
+        const t = (hourVal - 5.0) / 3.5;
+        baseSkyColor = '#FDE68A';
+        baseAmbientColor = 0xFED7AA;
+        baseAmbientIntensity = 0.82 + t * 0.15;
+        baseSunColor = 0xFBBF24;
+        baseSunIntensity = 1.05 + t * 0.3;
+        baseSunX = 22 + t * 16;
+        baseSunY = 28 + t * 25;
+        baseSunZ = 20 + t * 8;
+      } else if (hourVal >= 8.5 && hourVal < 18.0) {
+        // ☀️ Day / Midday (08:30 - 18:00)
+        baseSkyColor = curSeason === 'winter' ? '#E0F2FE' : curSeason === 'autumn' ? '#FED7AA' : '#BAE6FD';
+        baseAmbientColor = curSeason === 'winter' ? 0xE2E8F0 : 0xFEF3C7;
+        baseAmbientIntensity = 0.98;
+        baseSunColor = 0xFFFBEB;
+        baseSunIntensity = 1.38;
+        baseSunX = 38;
+        baseSunY = 55;
+        baseSunZ = 28;
+      } else if (hourVal >= 18.0 && hourVal < 21.5) {
+        // 🌇 Sunset / Dusk / Twilight (18:00 - 21:30)
+        const t = (hourVal - 18.0) / 3.5;
+        baseSkyColor = '#FB923C';
+        baseAmbientColor = 0xFDBA74;
+        baseAmbientIntensity = 0.92 - t * 0.38;
+        baseSunColor = 0xEA580C;
+        baseSunIntensity = 1.25 - t * 0.55;
+        baseSunX = 38 - t * 15;
+        baseSunY = 45 - t * 28;
+        baseSunZ = 28 - t * 16;
+      } else {
+        // 🌙 Night (21:30 - 05:00)
+        baseSkyColor = '#0B1120';
+        baseAmbientColor = 0x1E293B;
+        baseAmbientIntensity = 0.46;
+        baseSunColor = 0x93C5FD; // Silvery moonlight
+        baseSunIntensity = 0.62;
+        baseSunX = -25;
+        baseSunY = 45;
+        baseSunZ = -20;
+        isNightMode = true;
+      }
+
+      // Smoothly apply background & fog if not flashing
+      if (!isFlashing) {
+        scene.background = new THREE.Color(baseSkyColor);
+        if (scene.fog) {
+          (scene.fog as THREE.FogExp2).color.set(baseSkyColor);
+        }
+        ambientLight.color.setHex(baseAmbientColor);
+        ambientLight.intensity = baseAmbientIntensity;
+        sunLight.color.setHex(baseSunColor);
+        sunLight.intensity = baseSunIntensity;
+        sunLight.position.set(baseSunX, baseSunY, baseSunZ);
+      }
+
+      // Fireflies Animation in Night mode
+      if (firefliesPoints && firefliesMat) {
+        if (isNightMode) {
+          firefliesMat.opacity = 0.85 + Math.sin(elapsed * 4) * 0.15;
+          const fArr = firefliesGeo.attributes.position.array as Float32Array;
+          for (let f = 0; f < firefliesCount; f++) {
+            const fIdx = f * 3;
+            fArr[fIdx + 1] = 0.4 + Math.sin(elapsed * 1.5 + f * 1.8) * 0.8 + 0.6;
+            fArr[fIdx] += Math.sin(elapsed * 0.8 + f) * 0.01;
+            fArr[fIdx + 2] += Math.cos(elapsed * 0.6 + f) * 0.01;
+          }
+          firefliesGeo.attributes.position.needsUpdate = true;
+        } else {
+          firefliesMat.opacity = 0.0;
+        }
+      }
+
       // Multi-Pulse Lightning Ambient & Sun Flash
       if (isFlashing) {
         const flashElapsed = clock.getElapsedTime() - flashStartTime;
@@ -839,9 +947,9 @@ export const GameScene: React.FC = () => {
           sunLight.intensity = 1.35 + (3.2 - 1.35) * (1 - t);
         } else {
           isFlashing = false;
-          ambientLight.intensity = 0.95;
-          sunLight.intensity = 1.35;
-          sunLight.color.setHex(0xFFFBEB);
+          ambientLight.intensity = baseAmbientIntensity;
+          sunLight.intensity = baseSunIntensity;
+          sunLight.color.setHex(baseSunColor);
         }
       }
 
@@ -1602,40 +1710,49 @@ export const GameScene: React.FC = () => {
     });
 
     // ── LANDSCAPE TREES (Carefully positioned to keep roads & tunnels open) ──
+    // ── LANDSCAPE TREES (Dense forests, scenic groves, mountain pines & cherry blossoms) ──
     const eastTrees: [number, number, 'pine' | 'oak' | 'cherry', number][] = [
       [27, -4, 'oak', 1.1], [29, -14, 'pine', 1.2], [31, 8, 'cherry', 1.0],
       [28, 18, 'pine', 1.3], [30, -22, 'oak', 1.1], [26, 26, 'pine', 1.0],
       [25, -20, 'cherry', 0.9], [32, -18, 'pine', 1.4], [30, 14, 'oak', 1.2],
       [26, 10, 'pine', 1.1], [28, -30, 'oak', 1.3], [33, 24, 'pine', 1.2],
       [42, -18, 'pine', 1.5], [44, 8, 'oak', 1.2], [42, 20, 'pine', 1.4],
+      [25, 2, 'cherry', 1.0], [27, -10, 'oak', 1.15], [31, 30, 'pine', 1.3],
+      [35, 12, 'pine', 1.25], [29, 22, 'cherry', 1.05], [34, -8, 'pine', 1.35],
     ];
     eastTrees.forEach(([tx, tz, type, sc]) => {
       terrainGroup.add(createLandscapeTree(tx, tz, type, sc));
     });
 
-    // North Mountain Forest
+    // North Mountain Forest & Footing Groves
     const northTrees: [number, number, 'pine' | 'oak' | 'cherry', number][] = [
       [-16, -24, 'pine', 1.3], [-10, -26, 'pine', 1.2], [-4, -25, 'oak', 1.1],
       [2, -27, 'pine', 1.4], [8, -25, 'cherry', 1.0], [-20, -22, 'pine', 1.1],
-      [-14, -28, 'pine', 1.5], [4, -28, 'oak', 1.2]
+      [-14, -28, 'pine', 1.5], [4, -28, 'oak', 1.2], [-8, -22, 'cherry', 0.95],
+      [-26, -22, 'pine', 1.25], [12, -26, 'pine', 1.35], [16, -23, 'oak', 1.1],
+      [-2, -22, 'oak', 1.15], [-24, -27, 'pine', 1.4], [6, -23, 'cherry', 1.0],
     ];
     northTrees.forEach(([tx, tz, type, sc]) => {
       terrainGroup.add(createLandscapeTree(tx, tz, type, sc));
     });
 
-    // West Ridge Forest
+    // West Ridge Forest & Foothill Woods
     const westTrees: [number, number, 'pine' | 'oak' | 'cherry', number][] = [
       [-22, -14, 'pine', 1.2], [-24, -6, 'oak', 1.1], [-23, 4, 'pine', 1.3],
-      [-25, 14, 'cherry', 1.0], [-22, 22, 'pine', 1.2], [-26, -18, 'pine', 1.4]
+      [-25, 14, 'cherry', 1.0], [-22, 22, 'pine', 1.2], [-26, -18, 'pine', 1.4],
+      [-28, -8, 'pine', 1.3], [-25, 8, 'oak', 1.15], [-27, 18, 'pine', 1.25],
+      [-21, -2, 'cherry', 1.0], [-28, 26, 'pine', 1.35], [-24, -24, 'oak', 1.2],
     ];
     westTrees.forEach(([tx, tz, type, sc]) => {
       terrainGroup.add(createLandscapeTree(tx, tz, type, sc));
     });
 
-    // South Meadow Woods
+    // South Meadow Woods & Riverbanks
     const southTrees: [number, number, 'pine' | 'oak' | 'cherry', number][] = [
       [-16, 24, 'oak', 1.2], [-8, 26, 'pine', 1.3], [0, 25, 'cherry', 1.1],
-      [6, 27, 'pine', 1.2], [-20, 26, 'oak', 1.0], [4, 25, 'oak', 1.1]
+      [6, 27, 'pine', 1.2], [-20, 26, 'oak', 1.0], [4, 25, 'oak', 1.1],
+      [-12, 22, 'cherry', 1.05], [-4, 28, 'pine', 1.35], [8, 22, 'cherry', 1.0],
+      [-24, 25, 'pine', 1.2], [2, 28, 'oak', 1.15], [-14, 27, 'pine', 1.3],
     ];
     southTrees.forEach(([tx, tz, type, sc]) => {
       terrainGroup.add(createLandscapeTree(tx, tz, type, sc));

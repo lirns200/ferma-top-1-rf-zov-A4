@@ -309,18 +309,47 @@ function createMeadowDetails(season: SeasonType, random: () => number) {
   blooms.userData.instances = flowerInstances;
 
   const grassGeometry = createGrassTuftGeometry();
-  const grassCount = 130;
+  const grassCount = 360;
   const grass = new THREE.InstancedMesh(grassGeometry, makeMaterial(palette.grassDark, 0.88), grassCount);
   grass.name = 'meadow_grass_tufts';
   const grassInstances: Array<{ x: number; y: number; z: number; scale: THREE.Vector3; rotY: number }> = [];
 
   for (let i = 0; i < grassCount; i++) {
-    const east = i % 3 === 0;
-    const x = east ? 24.5 + random() * 8 : -31 + random() * 38;
-    const z = -28 + random() * 56;
-    const scX = 0.85 + random() * 0.55;
-    const scY = 0.75 + random() * 0.7;
-    const scZ = 0.85 + random() * 0.55;
+    let x: number;
+    let z: number;
+
+    const zone = i % 5;
+    if (zone === 0) {
+      // West meadows & hillsides
+      x = -32 + random() * 18;
+      z = -28 + random() * 56;
+    } else if (zone === 1) {
+      // East hills beyond river
+      x = 24.5 + random() * 11;
+      z = -28 + random() * 56;
+    } else if (zone === 2) {
+      // River banks (west and east bank fringes)
+      const isWestBank = i % 2 === 0;
+      x = isWestBank ? (9.2 - random() * 2.5) : (22.5 + random() * 2.5);
+      z = -26 + random() * 52;
+    } else if (zone === 3) {
+      // North and South mountain footings
+      const isNorth = i % 2 === 0;
+      x = -26 + random() * 52;
+      z = isNorth ? (-22 - random() * 8) : (20 + random() * 8);
+    } else {
+      // Farm yard fringes, borders, and lawn clearings
+      x = -13 + random() * 24;
+      z = -13 + random() * 24;
+      // Keep main road clear
+      if (z >= -10.8 && z <= -7.4) {
+        z = z > -9.1 ? -6.2 : -12.0;
+      }
+    }
+
+    const scX = 0.75 + random() * 0.55;
+    const scY = 0.70 + random() * 0.75;
+    const scZ = 0.75 + random() * 0.55;
     const scale = new THREE.Vector3(scX, scY, scZ);
     const rotY = random() * Math.PI * 2;
     setInstance(grass, i, x, 0.02, z, scale, rotY);

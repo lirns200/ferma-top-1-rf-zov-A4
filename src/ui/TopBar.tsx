@@ -43,12 +43,30 @@ const PixelBar: React.FC<{ pct: number; color: string; width?: number }> = ({ pc
   );
 };
 
+function getLocalTimeFormatted(): { timeStr: string; timeLabel: string; timeIcon: string } {
+  const d = new Date();
+  const h = d.getHours();
+  const m = d.getMinutes();
+  const timeStr = `${h < 10 ? '0' + h : h}:${m < 10 ? '0' + m : m}`;
+  const hourVal = h + m / 60;
+  if (hourVal >= 5.0 && hourVal < 8.5) return { timeStr, timeLabel: 'Рассвет', timeIcon: '🌅' };
+  if (hourVal >= 8.5 && hourVal < 18.0) return { timeStr, timeLabel: 'День', timeIcon: '☀️' };
+  if (hourVal >= 18.0 && hourVal < 21.5) return { timeStr, timeLabel: 'Закат', timeIcon: '🌇' };
+  return { timeStr, timeLabel: 'Ночь', timeIcon: '🌙' };
+}
+
 export const TopBar: React.FC = () => {
   const {
     level, xp, coins, gems,
     activeSeason, activeEvent, eventEndsAt,
     soundMuted, setSoundMuted, openModal,
   } = useGameStore();
+
+  const [timeInfo, setTimeInfo] = useState(getLocalTimeFormatted());
+  useEffect(() => {
+    const timer = setInterval(() => setTimeInfo(getLocalTimeFormatted()), 5000);
+    return () => clearInterval(timer);
+  }, []);
 
   const currentLevelConfig = LEVELS[level - 1];
   const xpNeeded  = currentLevelConfig ? currentLevelConfig.xpRequired : 1000;
@@ -90,20 +108,22 @@ export const TopBar: React.FC = () => {
           </div>
         </div>
 
-        {/* Season & Weather row */}
+        {/* Season & Weather & Real Time of Day row */}
         <button
           onClick={() => openModal('events')}
           className="px-btn px-btn-amber flex items-center gap-1.5 w-full text-left"
           style={{ padding: '4px 6px' }}
           title="Нажмите для выбора сезона и погоды"
         >
-          <span style={{ fontSize: 14 }}>{activeEvent?.icon || seasonInfo.icon}</span>
+          <span style={{ fontSize: 14 }}>{timeInfo.timeIcon}</span>
           <div className="flex flex-col flex-1 overflow-hidden">
-            <span className="px-font text-[6px] text-amber-300 truncate">
-              {activeEvent?.name || seasonInfo.name}
-            </span>
-            <span className="px-font text-[5px] text-amber-400/80 truncate">
-              {seasonInfo.icon} {seasonInfo.name} ({getRealCalendarMonthName()})
+            <div className="flex items-center gap-1">
+              <span className="px-font text-[6px] text-yellow-300 font-bold">
+                {timeInfo.timeStr} • {timeInfo.timeLabel}
+              </span>
+            </div>
+            <span className="px-font text-[5px] text-amber-400/90 truncate">
+              {activeEvent?.icon || seasonInfo.icon} {activeEvent?.name || seasonInfo.name} ({seasonInfo.name})
             </span>
           </div>
           {activeEvent && (
