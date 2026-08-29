@@ -867,38 +867,33 @@ export const useGameStore = create<GameStore>((set, get) => ({
       }
     }
 
-    // 2. Prohibit placing on Roads, Paths, Water/River, Sand Shoreline, Mountains, or Cliffs
-    if (configId !== 'fishing_dock') {
-      // Mountains & Off-map boundaries
-      if (z < -6.5 || z + depth > 24.5 || x < -24.5 || x + width > 27.5) {
-        return false;
-      }
+    // 2. Allow fishing dock on the river bank
+    if (configId === 'fishing_dock') {
+      return true;
+    }
 
-      // Main Road & Wooden Bridge (spans full width x from -36 to 36, z in [-11.2, -6.8])
-      const overlapRoadZ = z < -6.8 && z + depth > -11.2;
-      if (overlapRoadZ) {
-        return false;
-      }
+    // 3. Prohibit placing directly ON the Main Road or Bridge (z in [-11.5, -7.2])
+    const overlapMainRoad = z < -7.2 && z + depth > -11.5;
+    if (overlapMainRoad) {
+      return false;
+    }
 
-      // Farmhouse approach path: x in [-7.8, -3.2], z in [-7.2, 0.2]
-      const overlapFarmPathX = x < -3.2 && x + width > -7.8;
-      const overlapFarmPathZ = z < 0.2 && z + depth > -7.2;
-      if (overlapFarmPathX && overlapFarmPathZ) {
-        return false;
-      }
+    // 4. Prohibit placing directly on Driveway 1 path (x in [-8.5, -6.0], z in [-8.8, -1.5])
+    const overlapDriveway1 = (x < -6.0 && x + width > -8.5) && (z < -1.5 && z + depth > -8.8);
+    if (overlapDriveway1) {
+      return false;
+    }
 
-      // Roadside shop approach path: x in [0.5, 6.5], z in [-7.2, 0.2]
-      const overlapShopPathX = x < 6.5 && x + width > 0.5;
-      const overlapShopPathZ = z < 0.2 && z + depth > -7.2;
-      if (overlapShopPathX && overlapShopPathZ) {
-        return false;
-      }
+    // 5. Prohibit placing directly on Driveway 2 path (x in [1.8, 4.5], z in [-8.8, -3.0])
+    const overlapDriveway2 = (x < 4.5 && x + width > 1.8) && (z < -3.0 && z + depth > -8.8);
+    if (overlapDriveway2) {
+      return false;
+    }
 
-      // River Water Channel & Sand Shoreline (x in [8.5, 23.5])
-      const overlapRiverX = x < 23.5 && x + width > 8.5;
-      if (overlapRiverX) {
-        return false;
-      }
+    // 6. Prohibit placing inside the river water channel (x in [10.2, 21.8])
+    const overlapRiver = x < 21.8 && x + width > 10.2;
+    if (overlapRiver) {
+      return false;
     }
 
     return true;
