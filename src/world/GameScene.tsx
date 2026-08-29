@@ -46,6 +46,8 @@ export const GameScene: React.FC = () => {
     truckState,
     cargoTruckState,
     claimCargoTruckUnload,
+    marketDelivery,
+    claimMarketDelivery,
     setSelectedEntity,
     plantCrop,
     harvestCrop,
@@ -93,6 +95,9 @@ export const GameScene: React.FC = () => {
   // Store Refs for 60fps render loop
   const truckStateRef = useRef(truckState);
   truckStateRef.current = truckState;
+
+  const marketDeliveryRef = useRef(marketDelivery);
+  marketDeliveryRef.current = marketDelivery;
 
   const placingRef = useRef({ configId: placingBuildingConfigId, rotation: placingRotation });
   placingRef.current = { configId: placingBuildingConfigId, rotation: placingRotation };
@@ -1203,9 +1208,41 @@ export const GameScene: React.FC = () => {
 
       // ── Cargo Semi-Truck Animation in Driveway 1 (Фура) ───────────────
       const cState = cargoTruckStateRef.current;
+      const mDel = marketDeliveryRef.current;
       const lootBadge = cargoTruckGroup.getObjectByName('cargo_loot_badge');
 
-      if (cState.isDrivingIn) {
+      if (mDel) {
+        // Market Delivery from Seller in 3D (едет по дороге как фура)
+        const totalDuration = Math.max(1, mDel.arrivedAt - mDel.orderedAt);
+        const elapsedDriving = Math.max(0, Date.now() - mDel.orderedAt);
+        const t = Math.min(1, elapsedDriving / totalDuration);
+
+        cargoTruckGroup.visible = true;
+
+        if (t < 1.0) {
+          // 1. Driving in from West Mountain Tunnel along road into Driveway 1
+          if (lootBadge) lootBadge.visible = false;
+          const pos = cargoInboundCurve.getPointAt(t);
+          const tangent = cargoInboundCurve.getTangentAt(t);
+          cargoTruckGroup.position.set(pos.x, pos.y + Math.abs(Math.sin(elapsed * 16)) * 0.035, pos.z);
+          cargoTruckGroup.rotation.y = -Math.atan2(tangent.z, tangent.x);
+
+          cargoTruckGroup.traverse(child => {
+            if (child.name === 'truck_wheel') {
+              child.children.forEach(c => { c.rotation.y += delta * 14; });
+            }
+          });
+        } else {
+          // 2. Parked in Driveway 1 waiting for user unload
+          cargoTruckGroup.position.set(-7.0, 0.05, -3.2);
+          cargoTruckGroup.rotation.y = -1.35;
+          if (lootBadge) {
+            lootBadge.visible = true;
+            lootBadge.position.y = 2.6 + Math.sin(elapsed * 4) * 0.12;
+            lootBadge.rotation.y = elapsed * 1.5;
+          }
+        }
+      } else if (cState.isDrivingIn) {
         cargoTruckGroup.visible = true;
         if (lootBadge) lootBadge.visible = false;
         const totalDuration = cState.driveDuration || 4200;
@@ -2373,9 +2410,13 @@ export const GameScene: React.FC = () => {
             collectProduct(clickedEntity.id, 0);
           }
         }
-      } else if (tile && Math.abs(tile.x - (-7.0)) <= 2.2 && Math.abs(tile.z - (-3.2)) <= 2.2 && cargoTruckStateRef.current.isParkedWaiting) {
-        // Direct click on parked Cargo Semi-Truck (Фура) in Driveway 1 to unload goods!
-        claimCargoTruckUnload();
+      } else if (tile && Math.abs(tile.x - (-7.0)) <= 2.5 && Math.abs(tile.z - (-3.2)) <= 2.5) {
+        // Direct click on parked Semi-Truck (Фура) in Driveway 1 to unload goods!
+        if (marketDeliveryRef.current && Date.now() >= marketDeliveryRef.current.arrivedAt) {
+          claimMarketDelivery();
+        } else if (cargoTruckStateRef.current.isParkedWaiting) {
+          claimCargoTruckUnload();
+        }
       } else if (tile && Math.abs(tile.x - (-4.2)) <= 1.2 && Math.abs(tile.z - (-5.8)) <= 1.2) {
         // Direct click on roadside Mailbox
         openModal('mailbox');
