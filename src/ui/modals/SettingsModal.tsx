@@ -281,6 +281,33 @@ export const SettingsModal: React.FC = () => {
                 </button>
               </div>
 
+              {/* ☁️ Облака на небе и тени */}
+              <div className="flex items-center justify-between p-3.5 border-b border-[#242A35]/60">
+                <div className="flex items-center gap-3">
+                  <div className="w-9 h-9 rounded-xl bg-sky-900/60 border border-sky-500/40 flex items-center justify-center text-sky-300 text-lg shadow">
+                    ☁️
+                  </div>
+                  <div className="flex flex-col">
+                    <span className="text-sm font-semibold text-white">3D Облака и тени</span>
+                    <span className="text-[11px] text-[#8E939D]">Плавающие облака в небе и тени на земле</span>
+                  </div>
+                </div>
+                <button
+                  onClick={() => {
+                    sounds.playClick();
+                    triggerTelegramHaptic('medium');
+                    useGameStore.getState().toggleClouds();
+                  }}
+                  className={`px-3.5 py-1.5 rounded-xl text-xs font-black transition-all cursor-pointer shadow ${
+                    useGameStore.getState().showClouds
+                      ? 'bg-[#22C55E] text-black shadow'
+                      : 'bg-[#242A35] text-[#8E939D]'
+                  }`}
+                >
+                  {useGameStore.getState().showClouds ? 'ВКЛ' : 'ВЫКЛ'}
+                </button>
+              </div>
+
               {/* Haptic Setting */}
               <div className="flex items-center justify-between p-3.5 border-b border-[#242A35]/60">
                 <div className="flex items-center gap-3">

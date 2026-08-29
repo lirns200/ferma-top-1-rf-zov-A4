@@ -1,12 +1,12 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useGameStore, generateWeatherForecast } from '../game/gameState';
-import { GAME_EVENTS } from '../config/events';
+import { GAME_EVENTS, getMoscowTime } from '../config/events';
 import { sounds } from '../audio/SoundManager';
 import { triggerTelegramHaptic } from '../utils/telegram';
 import { CloudRain, Sun, Droplets, Clock, Sparkles, X, ChevronRight } from 'lucide-react';
 
 export const WeatherForecastWidget: React.FC = () => {
-  const { activeEvent, eventEndsAt, activeModal, isDesign2026 } = useGameStore();
+  const { activeEvent, eventEndsAt, isDesign2026 } = useGameStore();
   const [timeStr, setTimeStr] = useState('');
   const [dayPhase, setDayPhase] = useState<{ label: string; icon: string }>({ label: 'День', icon: '☀️' });
   const [isPopoverOpen, setIsPopoverOpen] = useState(false);
@@ -15,24 +15,13 @@ export const WeatherForecastWidget: React.FC = () => {
 
   useEffect(() => {
     const updateTime = () => {
-      const d = new Date();
-      const h = d.getHours();
-      const m = d.getMinutes();
-      setTimeStr(`${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`);
-
-      if (h >= 5 && h < 11) {
-        setDayPhase({ label: 'Утро', icon: '🌅' });
-      } else if (h >= 11 && h < 17) {
-        setDayPhase({ label: 'День', icon: '☀️' });
-      } else if (h >= 17 && h < 22) {
-        setDayPhase({ label: 'Вечер', icon: '🌇' });
-      } else {
-        setDayPhase({ label: 'Ночь', icon: '🌙' });
-      }
+      const m = getMoscowTime();
+      setTimeStr(m.timeString);
+      setDayPhase(m.dayPhase);
     };
 
     updateTime();
-    const interval = setInterval(updateTime, 10000);
+    const interval = setInterval(updateTime, 5000);
     return () => clearInterval(interval);
   }, []);
 
@@ -70,7 +59,7 @@ export const WeatherForecastWidget: React.FC = () => {
   const timeFormatted = `${mins}:${String(secs).padStart(2, '0')}`;
 
   return (
-    <div ref={popoverRef} className="fixed top-12 sm:top-14 right-2 sm:right-3 z-[100] pointer-events-auto select-none">
+    <div ref={popoverRef} className="fixed top-[52px] sm:top-[60px] right-2 sm:right-3.5 z-[100] pointer-events-auto select-none">
       
       {/* ── WEATHER PILL TRIGGER BUTTON ── */}
       <button
@@ -123,7 +112,7 @@ export const WeatherForecastWidget: React.FC = () => {
 
       {/* ── BEAUTIFUL TRANSPARENT RIGHT-SIDE GLASS POPOVER (MOBILE ADAPTED) ── */}
       {isPopoverOpen && (
-        <div className="fixed top-13 sm:top-16 right-2 sm:right-3 w-[calc(100vw-16px)] max-w-[330px] sm:max-w-[350px] p-3.5 sm:p-4 rounded-3xl bg-[#10141D]/95 backdrop-blur-2xl border border-white/20 shadow-2xl shadow-black/90 text-white flex flex-col gap-3 animate-pop-in z-[100]">
+        <div className="fixed top-[108px] sm:top-[118px] right-2 sm:right-3.5 w-[calc(100vw-16px)] max-w-[330px] sm:max-w-[350px] p-3.5 sm:p-4 rounded-3xl bg-[#10141D]/95 backdrop-blur-2xl border border-white/20 shadow-2xl shadow-black/90 text-white flex flex-col gap-3 animate-pop-in z-[100]">
           
           {/* Popover Header */}
           <div className="flex items-center justify-between border-b border-white/10 pb-2">

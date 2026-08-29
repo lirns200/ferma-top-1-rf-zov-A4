@@ -71,7 +71,11 @@ export const GameScene: React.FC = () => {
     confirmMoveEntity,
     cancelMoveEntity,
     rotateMovingEntity,
+    showClouds,
   } = useGameStore();
+
+  const showCloudsRef = useRef(showClouds);
+  showCloudsRef.current = showClouds;
 
   // Smooth Camera Coordinates & Target
   const targetCamPosRef = useRef({ x: 0, z: 1 });
@@ -730,11 +734,15 @@ export const GameScene: React.FC = () => {
 
       const cloudDriftSpeed = isStrongWind ? 3.6 : isRain ? 2.2 : 1.5;
 
+      const curShowClouds = showCloudsRef.current;
+      skyCloudsGroup.visible = curShowClouds;
+      cloudShadowsGroup.visible = curShowClouds;
+
       // Check if user is currently AFK / Idle (no input for > 3.5 seconds)
       const isAfk = (performance.now() - lastActivityTimeRef.current) > 3500;
 
-      // When player is AFK / Idle, launch dormant standby clouds one by one
-      if (isAfk) {
+      // When player is AFK / Idle and clouds are enabled, launch dormant standby clouds one by one
+      if (curShowClouds && isAfk) {
         cloudSpawnTimer -= delta;
         if (cloudSpawnTimer <= 0) {
           const dormantCloud = activeCloudPairs.find(c => !c.isFlying);

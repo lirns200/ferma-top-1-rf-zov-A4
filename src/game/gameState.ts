@@ -25,7 +25,18 @@ import { LEVELS } from '../config/levels';
 import { DECORATIONS } from '../config/decorations';
 import { OBSTACLES } from '../config/obstacles';
 import { FISH_SPECIES } from '../config/fishing';
-import { GAME_EVENTS, GameEventConfig, getCurrentRealSeason, getRealCalendarMonthName, SEASONS_INFO } from '../config/events';
+import { 
+  GAME_EVENTS, 
+  GameEventConfig, 
+  getCurrentRealSeason, 
+  getRealCalendarMonthName, 
+  SEASONS_INFO,
+  getMoscowTime,
+  getGlobalSeason,
+  getGlobalWeather,
+  getGlobalWeatherForSlot,
+  WEATHER_SLOT_DURATION_MS
+} from '../config/events';
 import { 
   INITIAL_ENTITIES, 
   INITIAL_MAP_EXPANSIONS, 
@@ -72,47 +83,43 @@ export const DAILY_REWARDS_SCHEDULE = [
 ];
 
 export function generateWeatherForecast(currentEvent: GameEventConfig): HourlyWeatherForecast[] {
-  const d = new Date();
-  const currentHour = d.getHours();
-  const slots: HourlyWeatherForecast[] = [];
+  const { hours: currentHour } = getMoscowTime();
+  const season = getGlobalSeason();
+  const utcMs = Date.now() + (new Date().getTimezoneOffset() * 60000);
+  const moscowMs = utcMs + (3 * 3600 * 1000);
+  const currentSlotIndex = Math.floor(moscowMs / WEATHER_SLOT_DURATION_MS);
 
-  const icons = ['☀️', '🌤️', '🌧️', '⛈️', '🌈', '⛅', '🌧️', '☀️'];
-  const names = ['Ясно', 'Облачно с прояснениями', 'Грибной дождь', 'Летняя гроза', 'Радужное сияние', 'Переменная облачность', 'Лёгкий дождь', 'Ясно'];
-  const bonuses = [
-    'Обычный стабильный рост',
-    'Обычный стабильный рост',
-    'Урожай растет на +50% быстрее',
-    'Урожай растет на +80% быстрее',
-    'Двойной опыт (x2 XP)',
-    'Урожай растет на +25% быстрее',
-    'Урожай растет на +50% быстрее',
-    'Обычный стабильный рост'
-  ];
+  const slots: HourlyWeatherForecast[] = [];
 
   for (let i = 0; i < 8; i++) {
     const targetHour = (currentHour + i * 3) % 24;
     const timeLabel = i === 0 ? 'Сейчас' : `${String(targetHour).padStart(2, '0')}:00`;
 
     if (i === 0) {
+      const isRainy = currentEvent.type === 'rain' || currentEvent.type === 'thunderstorm';
       slots.push({
         timeLabel: 'Сейчас',
         weatherName: currentEvent.name,
         icon: currentEvent.icon,
-        tempCelsius: 22,
-        precipChancePercent: currentEvent.type === 'rain' ? 85 : currentEvent.type === 'thunderstorm' ? 95 : 10,
+        tempCelsius: season === 'winter' ? -4 : season === 'summer' ? 24 : 14,
+        precipChancePercent: isRainy ? 85 : currentEvent.type === 'snow' ? 90 : 10,
         growthBonusLabel: currentEvent.bonusEffect || 'Стабильный рост',
         isCurrent: true,
       });
     } else {
-      const idx = (currentHour + i) % names.length;
-      const isRainy = idx === 2 || idx === 3 || idx === 6;
+      const futureSlot = currentSlotIndex + i * 36;
+      const futureEvent = getGlobalWeatherForSlot(futureSlot, season);
+      const isRainy = futureEvent.type === 'rain' || futureEvent.type === 'thunderstorm';
+      const baseTemp = season === 'winter' ? -5 : season === 'summer' ? 22 : 12;
+      const hourOffset = ((targetHour >= 11 && targetHour <= 17) ? 5 : 0) - ((targetHour >= 0 && targetHour <= 5) ? 4 : 0);
+
       slots.push({
         timeLabel,
-        weatherName: names[idx],
-        icon: icons[idx],
-        tempCelsius: 18 + ((targetHour >= 11 && targetHour <= 17) ? 6 : 0) - ((targetHour >= 0 && targetHour <= 5) ? 5 : 0),
-        precipChancePercent: isRainy ? 80 : Math.round(((targetHour * 7) % 30)),
-        growthBonusLabel: bonuses[idx],
+        weatherName: futureEvent.name,
+        icon: futureEvent.icon,
+        tempCelsius: baseTemp + hourOffset,
+        precipChancePercent: isRainy ? 85 : futureEvent.type === 'snow' ? 90 : Math.round(10 + (futureSlot % 20)),
+        growthBonusLabel: futureEvent.bonusEffect || 'Стабильный рост',
       });
     }
   }
@@ -339,6 +346,7 @@ export interface GameStore {
   soundMuted: boolean;
   isActionStripOpen: boolean;
   isDesign2026: boolean;
+  showClouds: boolean;
   
   // Daily Login Bonus & Market Toasts
   dailyBonusStreak: number;
@@ -362,6 +370,8 @@ export interface GameStore {
   setActionStripOpen: (open: boolean) => void;
   toggleDesign2026: () => void;
   setDesign2026: (enabled: boolean) => void;
+  toggleClouds: () => void;
+  setShowClouds: (show: boolean) => void;
   openModal: (modal: GameStore['activeModal']) => void;
   closeModal: () => void;
   addFloatingText: (text: string, x: number, y: number, color?: string) => void;
@@ -502,9 +512,9 @@ export const useGameStore = create<GameStore>((set, get) => ({
     driveDuration: 4000,
   },
   
-  activeSeason: getCurrentRealSeason(),
-  activeEvent: GAME_EVENTS.sunny_day,
-  eventEndsAt: Date.now() + 300000,
+  activeSeason: getGlobalSeason(),
+  activeEvent: getGlobalWeather().event,
+  eventEndsAt: getGlobalWeather().endsAt,
   
   fishingStats: {
     fishCaughtCount: 0,
@@ -536,6 +546,16 @@ export const useGameStore = create<GameStore>((set, get) => ({
   setDesign2026: (enabled: boolean) => {
     try { localStorage.setItem('farm_design_2026', String(enabled)); } catch {}
     set({ isDesign2026: enabled });
+  },
+  showClouds: typeof localStorage !== 'undefined' ? localStorage.getItem('farm_show_clouds') !== 'false' : true,
+  toggleClouds: () => set(state => {
+    const next = !state.showClouds;
+    try { localStorage.setItem('farm_show_clouds', String(next)); } catch {}
+    return { showClouds: next };
+  }),
+  setShowClouds: (show: boolean) => {
+    try { localStorage.setItem('farm_show_clouds', String(show)); } catch {}
+    set({ showClouds: show });
   },
 
   initGame: () => {
@@ -720,16 +740,23 @@ export const useGameStore = create<GameStore>((set, get) => ({
       set({ entities: updatedEntities });
     }
 
-    // Check weather event rotation
-    if (now >= state.eventEndsAt) {
-      const eventKeys = Object.keys(GAME_EVENTS);
-      const nextEventKey = eventKeys[Math.floor(Math.random() * eventKeys.length)];
-      const nextEvent = GAME_EVENTS[nextEventKey];
+    // Check global season rotation across all players
+    const currentGlobalSeason = getGlobalSeason(now);
+    if (state.activeSeason !== currentGlobalSeason) {
+      set({ activeSeason: currentGlobalSeason });
+    }
+
+    // Check synchronized global weather rotation
+    const globalWeather = getGlobalWeather(now);
+    if (state.activeEvent?.id !== globalWeather.event.id || now >= state.eventEndsAt) {
+      const prevId = state.activeEvent?.id;
       set({
-        activeEvent: nextEvent,
-        eventEndsAt: now + nextEvent.durationSeconds * 1000,
+        activeEvent: globalWeather.event,
+        eventEndsAt: globalWeather.endsAt,
       });
-      state.addFloatingText(`Погода: ${nextEvent.name}`, 0, 0, nextEvent.color);
+      if (prevId && prevId !== globalWeather.event.id) {
+        state.addFloatingText(`Погода: ${globalWeather.event.name}`, 0, 0, globalWeather.event.color);
+      }
     }
 
     // Check roadside shop slot sales simulation & send toast notifications

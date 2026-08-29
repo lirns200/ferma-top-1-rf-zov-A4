@@ -53,58 +53,37 @@ export const DailyMissionsWidget: React.FC = () => {
   const completedCount = dailyMissions.filter(m => m.isClaimed).length;
   const hasReadyToClaim = dailyMissions.some(m => !m.isClaimed && m.currentCount >= m.targetCount);
 
-  // Active / in-progress nearest mission
-  const activeMission = dailyMissions.find(m => !m.isClaimed) || dailyMissions[0];
-
   return (
     <div ref={popoverRef} className="relative z-40">
       
-      {/* ── COMPACT MISSION BADGE UNDER LEVEL ── */}
+      {/* ── SIMPLE & CLEAN BUTTON "🎯 Миссии" UNDER LEVEL ── */}
       <button
         onClick={() => {
           sounds.playClick();
           triggerTelegramHaptic('light');
           setIsOpen(prev => !prev);
         }}
-        className={`mt-1 flex items-center gap-1.5 px-2 py-0.8 rounded-xl border shadow-lg backdrop-blur-md transition-all active:scale-95 cursor-pointer max-w-[200px] sm:max-w-[240px] group ${
+        className={`mt-1 flex items-center gap-1.5 px-2.5 py-1 rounded-xl border shadow-lg backdrop-blur-md transition-all active:scale-95 cursor-pointer text-xs font-black group ${
           hasReadyToClaim
-            ? 'bg-gradient-to-r from-emerald-950/90 to-green-950/90 border-emerald-400 ring-1 ring-emerald-400/50 text-white animate-pulse'
+            ? 'bg-gradient-to-r from-emerald-950 to-green-950 border-emerald-400 ring-2 ring-emerald-400/50 text-white animate-pulse'
             : isDesign2026
-            ? 'bg-[#181C24]/90 border-[#283244] text-white hover:border-white/20'
+            ? 'bg-[#181C24]/90 border-[#283244] text-amber-300 hover:border-amber-400/40 hover:text-white'
             : 'hud-parchment border-amber-800 text-[#3B1F0D]'
         }`}
-        title="Нажмите, чтобы открыть ежедневные миссии"
+        title="Ежедневные миссии"
       >
-        <span className="text-xs shrink-0">
-          {hasReadyToClaim ? '🎁' : activeMission?.icon || '🎯'}
+        <span className="text-xs">{hasReadyToClaim ? '🎁' : '🎯'}</span>
+        <span className="tracking-tight">Миссии</span>
+        <span className={`text-[9px] px-1 py-0.2 rounded-md font-black ${
+          hasReadyToClaim ? 'bg-emerald-500 text-white' : 'bg-white/10 text-white/70'
+        }`}>
+          {completedCount}/3
         </span>
-
-        <div className="flex flex-col text-left min-w-0 flex-1">
-          <div className="flex items-center justify-between gap-1 leading-none">
-            <span className="text-[9px] sm:text-[10px] font-black text-amber-300 truncate">
-              {hasReadyToClaim ? 'Награда готова!' : activeMission?.title || 'Миссии дня'}
-            </span>
-            <span className="text-[8px] font-extrabold text-[#8E939D] shrink-0">
-              {completedCount}/3
-            </span>
-          </div>
-
-          {activeMission && !hasReadyToClaim && (
-            <div className="w-full bg-black/40 h-1 rounded-full overflow-hidden mt-0.5 border border-white/5">
-              <div
-                className="h-full bg-gradient-to-r from-amber-500 to-emerald-400 rounded-full transition-all duration-300"
-                style={{ width: `${Math.min(100, Math.round((activeMission.currentCount / activeMission.targetCount) * 100))}%` }}
-              />
-            </div>
-          )}
-        </div>
-
-        <ChevronDown size={11} className={`text-[#8E939D] transition-transform shrink-0 ${isOpen ? 'rotate-180' : ''}`} />
       </button>
 
-      {/* ── BEAUTIFUL 24H MISSIONS DROPDOWN DIALOG ── */}
+      {/* ── BEAUTIFUL 24H MISSIONS DROPDOWN DIALOG (ON TOP OF ALL WINDOWS z-[110]) ── */}
       {isOpen && (
-        <div className="fixed top-14 sm:top-16 left-2 sm:left-4 w-[calc(100vw-16px)] max-w-[340px] sm:max-w-[380px] p-3.5 sm:p-4 rounded-3xl bg-[#10141D]/95 backdrop-blur-2xl border border-white/20 shadow-2xl shadow-black/90 text-white flex flex-col gap-3 animate-pop-in z-50">
+        <div className="fixed top-[52px] sm:top-[60px] left-2 sm:left-4 w-[calc(100vw-16px)] max-w-[340px] sm:max-w-[380px] p-3.5 sm:p-4 rounded-3xl bg-[#10141D]/95 backdrop-blur-2xl border border-white/20 shadow-2xl shadow-black/90 text-white flex flex-col gap-3 animate-pop-in z-[110]">
           
           {/* Header */}
           <div className="flex items-center justify-between border-b border-white/10 pb-2">
