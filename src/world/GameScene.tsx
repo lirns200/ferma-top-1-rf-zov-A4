@@ -1466,14 +1466,15 @@ export const GameScene: React.FC = () => {
     mbGroup.add(mbPost, mbBox, mbFlag);
     terrainGroup.add(mbGroup);
 
-    // 6 Country Street Lamp Posts with lanterns along the Road & Wooden Bridge
+    // Country Street Lamp Posts with soft lanterns along the Roadside Verge
     const roadLampPositions: [number, number, number][] = [
-      [-23.0, -10.5, 0],
-      [-13.0, -10.5, 0],
-      [-2.5, -10.5, 0],
-      [7.5, -10.5, 0],
-      [16.0, -10.6, 0], // On the wooden bridge
-      [25.5, -10.5, 0],
+      [-20.0, -7.5, -Math.PI / 2],
+      [-11.5, -7.5, -Math.PI / 2],
+      [-4.5, -7.5, -Math.PI / 2],
+      [3.5, -7.5, -Math.PI / 2],
+      [8.2, -7.5, -Math.PI / 2],  // Roadside before bridge
+      [23.8, -7.5, -Math.PI / 2], // Roadside after bridge
+      [28.0, -5.2, -Math.PI / 2], // Roadside approach to East Tunnel
     ];
     roadLampPositions.forEach(([lx, lz, rotY]) => {
       const lamp = createStreetLampPostMesh();

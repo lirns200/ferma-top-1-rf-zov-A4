@@ -30,6 +30,48 @@ export function getCachedColorMaterial(
   return materialCache.get(key) as THREE.MeshStandardMaterial;
 }
 
+let softLightTexture: THREE.CanvasTexture | null = null;
+function getSoftLightPoolTexture(): THREE.CanvasTexture {
+  if (!softLightTexture && typeof document !== 'undefined') {
+    const canvas = document.createElement('canvas');
+    canvas.width = 128;
+    canvas.height = 128;
+    const ctx = canvas.getContext('2d');
+    if (ctx) {
+      const grad = ctx.createRadialGradient(64, 64, 0, 64, 64, 64);
+      grad.addColorStop(0, 'rgba(254, 240, 138, 0.7)');
+      grad.addColorStop(0.35, 'rgba(253, 224, 71, 0.45)');
+      grad.addColorStop(0.7, 'rgba(245, 158, 11, 0.15)');
+      grad.addColorStop(1.0, 'rgba(245, 158, 11, 0)');
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, 0, 128, 128);
+    }
+    softLightTexture = new THREE.CanvasTexture(canvas);
+  }
+  return softLightTexture!;
+}
+
+let headlightGroundTexture: THREE.CanvasTexture | null = null;
+function getHeadlightGroundTexture(): THREE.CanvasTexture {
+  if (!headlightGroundTexture && typeof document !== 'undefined') {
+    const canvas = document.createElement('canvas');
+    canvas.width = 256;
+    canvas.height = 256;
+    const ctx = canvas.getContext('2d');
+    if (ctx) {
+      const grad = ctx.createRadialGradient(128, 20, 10, 128, 140, 120);
+      grad.addColorStop(0, 'rgba(255, 251, 235, 0.75)');
+      grad.addColorStop(0.35, 'rgba(254, 240, 138, 0.45)');
+      grad.addColorStop(0.75, 'rgba(253, 224, 71, 0.15)');
+      grad.addColorStop(1.0, 'rgba(245, 158, 11, 0)');
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, 0, 256, 256);
+    }
+    headlightGroundTexture = new THREE.CanvasTexture(canvas);
+  }
+  return headlightGroundTexture!;
+}
+
 // -------------------------------------------------------------
 // GABLE SHAPE HELPERS (Exact roofs without poking corners)
 // -------------------------------------------------------------
@@ -697,33 +739,34 @@ export function createStylizedDeliveryTruck(): THREE.Group {
   truck.add(grille, grilleMesh);
 
   // Twin Glowing Round Headlights with Chrome Bezels
+  const headlightLensMat = new THREE.MeshStandardMaterial({
+    color: 0xFFFBEB,
+    emissive: new THREE.Color(0xFEF08A),
+    emissiveIntensity: 2.2,
+    roughness: 0.1,
+  });
   const headlightGeo = new THREE.CylinderGeometry(0.1, 0.1, 0.08, 12);
-  const hlL = new THREE.Mesh(headlightGeo, headlightMat);
+  const hlL = new THREE.Mesh(headlightGeo, headlightLensMat);
   hlL.position.set(1.1, 0.64, -0.42);
   hlL.rotation.z = Math.PI / 2;
 
-  const hlR = hlL.clone();
-  hlR.position.z = 0.42;
+  const hlR = new THREE.Mesh(headlightGeo, headlightLensMat);
+  hlR.position.set(1.1, 0.64, 0.42);
+  hlR.rotation.z = Math.PI / 2;
 
-  // Volumetric Headlight Light Beams (shine on road in dusk/night)
+  // Soft Forward Road Illumination Decal Plane (lies flat on road, no stiff 3D cones)
   const beamMat = new THREE.MeshBasicMaterial({
-    color: 0xFEF08A,
+    map: getHeadlightGroundTexture(),
     transparent: true,
-    opacity: 0.40,
-    side: THREE.DoubleSide,
+    opacity: 0.80,
     depthWrite: false,
+    side: THREE.DoubleSide,
   });
-  const beamGeo = new THREE.ConeGeometry(0.55, 3.4, 8, 1, true);
-  beamGeo.translate(0, 1.7, 0);
-  beamGeo.rotateZ(-Math.PI / 2);
-
-  const beamL = new THREE.Mesh(beamGeo, beamMat);
-  beamL.name = 'truck_headlight_beam';
-  beamL.position.set(1.15, 0.64, -0.42);
-
-  const beamR = new THREE.Mesh(beamGeo, beamMat);
-  beamR.name = 'truck_headlight_beam';
-  beamR.position.set(1.15, 0.64, 0.42);
+  const roadBeam = new THREE.Mesh(new THREE.PlaneGeometry(3.8, 5.8), beamMat);
+  roadBeam.name = 'truck_headlight_beam';
+  roadBeam.rotation.x = -Math.PI / 2;
+  roadBeam.rotation.z = -Math.PI / 2;
+  roadBeam.position.set(3.4, 0.03, 0);
 
   // Amber turn signals
   const blinkerGeo = new THREE.BoxGeometry(0.04, 0.06, 0.1);
@@ -731,7 +774,7 @@ export function createStylizedDeliveryTruck(): THREE.Group {
   blkL.position.set(1.1, 0.48, -0.48);
   const blkR = blkL.clone();
   blkR.position.z = 0.48;
-  truck.add(hlL, hlR, beamL, beamR, blkL, blkR);
+  truck.add(hlL, hlR, roadBeam, blkL, blkR);
 
   // Glass Windows (Front Windshield, Side Windows, Rear Window)
   const windshield = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.36, 0.9), glassMat);
@@ -2974,20 +3017,20 @@ export function createStreetLampPostMesh(): THREE.Group {
   lantern.name = 'lantern_glow';
   lantern.position.set(0.44, 2.52, 0);
 
-  // Volumetric Downward Light Cone Pool
-  const lightConeGeo = new THREE.ConeGeometry(1.6, 2.8, 8, 1, true);
-  lightConeGeo.translate(0, -1.4, 0);
-  const lightConeMat = new THREE.MeshBasicMaterial({
-    color: 0xFDE047,
+  // Soft Warm Golden Light Pool on the road / ground (no rigid cones!)
+  const groundLightGeo = new THREE.PlaneGeometry(3.6, 3.6);
+  const groundLightMat = new THREE.MeshBasicMaterial({
+    map: getSoftLightPoolTexture(),
     transparent: true,
-    opacity: 0.22,
+    opacity: 0.85,
     depthWrite: false,
     side: THREE.DoubleSide,
   });
-  const lightCone = new THREE.Mesh(lightConeGeo, lightConeMat);
-  lightCone.name = 'lamp_light_cone';
-  lightCone.position.set(0.44, 2.4, 0);
+  const groundLight = new THREE.Mesh(groundLightGeo, groundLightMat);
+  groundLight.name = 'lamp_light_cone';
+  groundLight.rotation.x = -Math.PI / 2;
+  groundLight.position.set(0.44, 0.03, 0);
 
-  group.add(base, pole, arm, brace, cap, lantern, lightCone);
+  group.add(base, pole, arm, brace, cap, lantern, groundLight);
   return group;
 }
