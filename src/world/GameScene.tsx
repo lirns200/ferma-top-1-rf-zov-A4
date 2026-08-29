@@ -23,6 +23,7 @@ import {
   createMountainWaterfallGroup,
   createWindingRiverMesh,
   createStylizedDeliveryTruck,
+  createStylizedCargoSemiTruck,
   createStreetLampPostMesh,
   getCachedColorMaterial
 } from './ModelGenerators';
@@ -43,6 +44,8 @@ export const GameScene: React.FC = () => {
     activeSeason,
     activeEvent,
     truckState,
+    cargoTruckState,
+    claimCargoTruckUnload,
     setSelectedEntity,
     plantCrop,
     harvestCrop,
@@ -115,6 +118,9 @@ export const GameScene: React.FC = () => {
   const terrainGroupRef = useRef<THREE.Group | null>(null);
   const previewGridGroupRef = useRef<THREE.Group | null>(null);
   const truckGroupRef = useRef<THREE.Group | null>(null);
+  const cargoTruckGroupRef = useRef<THREE.Group | null>(null);
+  const cargoTruckStateRef = useRef(cargoTruckState);
+  cargoTruckStateRef.current = cargoTruckState;
 
   // Ground Plane Raycast function
   const getGroundIntersectionFromScreen = useCallback((screenX: number, screenY: number): { x: number; z: number } | null => {
@@ -379,13 +385,22 @@ export const GameScene: React.FC = () => {
     previewGridGroupRef.current = previewGridGroup;
     scene.add(previewGridGroup);
 
-    // 11. Stylized Farm Delivery Truck
+    // 11. Stylized Farm Delivery Truck (Наша машинка - паркуется в Заезде 2)
     const truckGroup = createStylizedDeliveryTruck();
     truckGroupRef.current = truckGroup;
-    truckGroup.position.set(2.5, 0.05, -9.0);
+    truckGroup.position.set(4.2, 0.05, -2.8);
+    truckGroup.rotation.y = -2.2;
     scene.add(truckGroup);
 
-    // 12. High-Density Atmospheric & Rain Particle System
+    // 12. Stylized Heavy Cargo Semi-Truck (Фура для бартера/обмена/посылок - паркуется в Заезде 1)
+    const cargoTruckGroup = createStylizedCargoSemiTruck();
+    cargoTruckGroupRef.current = cargoTruckGroup;
+    cargoTruckGroup.position.set(-4.6, 0.05, -2.2);
+    cargoTruckGroup.rotation.y = 2.4;
+    cargoTruckGroup.visible = false;
+    scene.add(cargoTruckGroup);
+
+    // 13. High-Density Atmospheric & Rain Particle System
     const particleCount = 360;
     const particleGeo = new THREE.BufferGeometry();
     const particlePositions = new Float32Array(particleCount * 3);
@@ -404,28 +419,53 @@ export const GameScene: React.FC = () => {
     const particleSystem = new THREE.Points(particleGeo, particleMat);
     scene.add(particleSystem);
 
-    // ── Delivery Circuit Curves ──────────────────────────────────────────
-    // Outbound journey: from farm over wooden bridge into East Mountain Tunnel (to Town)
+    // ── Delivery Circuit Curves (Pickup Truck - Driveway 2) ───────────────
+    // Outbound journey: from Driveway 2 over wooden bridge into East Mountain Tunnel (to Town)
     const outboundDeliveryCurve = new THREE.CatmullRomCurve3([
-      new THREE.Vector3(2.5, 0.05, -9.0),   // 0. Farm parking spot (near shop)
-      new THREE.Vector3(9.6, 0.05, -9.0),   // 1. Entrance to wooden bridge
-      new THREE.Vector3(16.0, 0.22, -9.0),  // 2. Middle crest of wooden bridge
-      new THREE.Vector3(22.4, 0.05, -9.0),  // 3. Bridge exit onto east bank
-      new THREE.Vector3(26.0, 0.05, -8.5),  // 4. East bank road bend
-      new THREE.Vector3(30.0, 0.05, -7.2),  // 5. Road curving towards mountain
-      new THREE.Vector3(32.2, 0.05, -6.2),  // 6. East Mountain Tunnel portal
-      new THREE.Vector3(35.5, 0.05, -4.8),  // 7. Deep inside mountain cave (vanished)
+      new THREE.Vector3(4.2, 0.05, -2.8),   // 0. Home parking spot in Driveway 2
+      new THREE.Vector3(2.8, 0.05, -5.5),   // 1. Driving up Driveway 2 curve
+      new THREE.Vector3(1.2, 0.05, -8.6),   // 2. Merging onto Main Road
+      new THREE.Vector3(9.6, 0.05, -9.0),   // 3. Entrance to wooden bridge
+      new THREE.Vector3(16.0, 0.22, -9.0),  // 4. Middle crest of wooden bridge
+      new THREE.Vector3(22.4, 0.05, -9.0),  // 5. Bridge exit onto east bank
+      new THREE.Vector3(26.0, 0.05, -8.5),  // 6. East bank road bend
+      new THREE.Vector3(30.0, 0.05, -7.2),  // 7. Road curving towards mountain
+      new THREE.Vector3(32.2, 0.05, -6.2),  // 8. East Mountain Tunnel portal
+      new THREE.Vector3(35.5, 0.05, -4.8),  // 9. Deep inside mountain cave (vanished)
     ]);
 
-    // Return journey: emerging from TOP / West Mountain Tunnel back down to farm!
+    // Return journey: emerging from TOP / West Mountain Tunnel back down to Driveway 2!
     const returnDeliveryCurve = new THREE.CatmullRomCurve3([
       new THREE.Vector3(-33.5, 0.05, -10.0),  // 0. Inside West Mountain Cave (vanished)
       new THREE.Vector3(-29.2, 0.05, -10.15), // 1. Emerging from West Mountain Tunnel portal
       new THREE.Vector3(-23.0, 0.05, -10.4),  // 2. Road along country fence
       new THREE.Vector3(-15.0, 0.05, -9.4),   // 3. Approaching farm road
-      new THREE.Vector3(-7.0, 0.05, -9.1),    // 4. Passing mailbox & entrance arch
-      new THREE.Vector3(1.0, 0.05, -8.8),     // 5. Slowing down near shop
-      new THREE.Vector3(2.5, 0.05, -9.0),     // 6. Parked smoothly at farm stand
+      new THREE.Vector3(-7.0, 0.05, -9.1),    // 4. Passing mailbox & Driveway 1
+      new THREE.Vector3(0.5, 0.05, -8.7),     // 5. Slowing down near Driveway 2
+      new THREE.Vector3(2.5, 0.05, -6.0),     // 6. Turning into Driveway 2
+      new THREE.Vector3(4.2, 0.05, -2.8),     // 7. Parked smoothly at home in Driveway 2
+    ]);
+
+    // ── Cargo Semi-Truck Circuit Curves (Фура - Driveway 1) ──────────────
+    // Inbound: from West Mountain Tunnel into Driveway 1
+    const cargoInboundCurve = new THREE.CatmullRomCurve3([
+      new THREE.Vector3(-33.5, 0.05, -10.0),  // 0. Emerging from West Tunnel
+      new THREE.Vector3(-26.0, 0.05, -10.3),  // 1. Approaching farm along road
+      new THREE.Vector3(-14.0, 0.05, -9.4),   // 2. Slowing down near mailbox
+      new THREE.Vector3(-7.5, 0.05, -8.8),    // 3. Turning into Driveway 1
+      new THREE.Vector3(-6.8, 0.05, -5.5),    // 4. Along Driveway 1 curve
+      new THREE.Vector3(-4.6, 0.05, -2.2),    // 5. Parked in Driveway 1 unloading bay
+    ]);
+
+    // Outbound: from Driveway 1 back up onto Road and leaving through East Tunnel
+    const cargoOutboundCurve = new THREE.CatmullRomCurve3([
+      new THREE.Vector3(-4.6, 0.05, -2.2),   // 0. Unloading bay
+      new THREE.Vector3(-3.5, 0.05, -0.8),   // 1. Rolling forward
+      new THREE.Vector3(-6.0, 0.05, -5.5),   // 2. Up Driveway 1 curve
+      new THREE.Vector3(-7.5, 0.05, -8.8),   // 3. Merging onto main road
+      new THREE.Vector3(1.0, 0.05, -8.8),    // 4. Along main road
+      new THREE.Vector3(16.0, 0.22, -9.0),   // 5. Crossing wooden bridge
+      new THREE.Vector3(35.5, 0.05, -4.8),   // 6. Leaving into East Mountain Tunnel
     ]);
 
     // ── 3D Procedural Branching Lightning Bolt Generator ─────────────────
@@ -939,6 +979,15 @@ export const GameScene: React.FC = () => {
         }
       });
 
+      cargoTruckGroup.traverse(child => {
+        if (child.name === 'cargo_headlight_beam') {
+          child.visible = isNightOrTwilight;
+        }
+        if (child.name === 'cargo_point_light') {
+          (child as THREE.PointLight).intensity = isNightOrTwilight ? (isNightMode ? 4.5 : 2.8) : 0;
+        }
+      });
+
       scene.traverse(child => {
         if (child.name === 'lamp_light_cone' || child.name === 'lamp_glow_sprite') {
           child.visible = isNightOrTwilight;
@@ -1038,15 +1087,15 @@ export const GameScene: React.FC = () => {
       if (particleMat) {
         if (isRain) {
           particleMat.color.setHex(curWeather === 'thunderstorm' ? 0x93C5FD : 0x7DD3FC);
-          particleMat.size = 0.38;
-          particleMat.opacity = 0.90;
+          particleMat.size = curWeather === 'thunderstorm' ? 0.38 : 0.30;
+          particleMat.opacity = 0.85;
         } else if (isSnow) {
-          particleMat.color.setHex(0xFFFFFF);
-          particleMat.size = 0.42;
-          particleMat.opacity = 0.92;
-        } else if (isWind) {
-          particleMat.color.setHex(curSeason === 'autumn' ? 0xEA580C : 0x34D399);
-          particleMat.size = 0.42;
+          particleMat.color.setHex(0xF8FAFC);
+          particleMat.size = 0.34;
+          particleMat.opacity = 0.90;
+        } else if (curSeason === 'autumn' || isWind) {
+          particleMat.color.setHex(curSeason === 'autumn' ? 0xD97706 : 0x84CC16);
+          particleMat.size = 0.35;
           particleMat.opacity = 0.85;
         } else if (curSeason === 'spring' && isWind) {
           particleMat.color.setHex(0xF472B6); // Cherry blossom pink petals during spring breeze
@@ -1058,7 +1107,7 @@ export const GameScene: React.FC = () => {
         }
       }
 
-      // ── Delivery Truck Animation along Dual-Tunnel Circuit ───────────
+      // ── Delivery Truck Animation along Dual-Tunnel Circuit (Driveway 2) ──
       const tState = truckStateRef.current;
       if (tState.isDelivering) {
         const totalDuration = 8000;
@@ -1100,10 +1149,60 @@ export const GameScene: React.FC = () => {
           });
         }
       } else {
-        // Parked at the farm roadside
-        truckGroup.position.set(2.5, 0.05, -9.0);
-        truckGroup.rotation.y = 0;
+        // Parked comfortably at home in Driveway 2
+        truckGroup.position.set(4.2, 0.05, -2.8);
+        truckGroup.rotation.y = -2.2;
         truckGroup.visible = true;
+      }
+
+      // ── Cargo Semi-Truck Animation in Driveway 1 (Фура) ───────────────
+      const cState = cargoTruckStateRef.current;
+      const lootBadge = cargoTruckGroup.getObjectByName('cargo_loot_badge');
+
+      if (cState.isDrivingIn) {
+        cargoTruckGroup.visible = true;
+        if (lootBadge) lootBadge.visible = false;
+        const totalDuration = cState.driveDuration || 4000;
+        const elapsedDriving = Math.max(0, Date.now() - cState.driveStartTime);
+        const t = Math.min(1, elapsedDriving / totalDuration);
+        const pos = cargoInboundCurve.getPointAt(t);
+        const tangent = cargoInboundCurve.getTangentAt(t);
+        cargoTruckGroup.position.set(pos.x, pos.y + Math.abs(Math.sin(elapsed * 16)) * 0.035, pos.z);
+        cargoTruckGroup.rotation.y = -Math.atan2(tangent.z, tangent.x);
+
+        cargoTruckGroup.traverse(child => {
+          if (child.name === 'truck_wheel') {
+            child.children.forEach(c => { c.rotation.y += delta * 14; });
+          }
+        });
+      } else if (cState.isParkedWaiting) {
+        cargoTruckGroup.visible = true;
+        cargoTruckGroup.position.set(-4.6, 0.05, -2.2);
+        cargoTruckGroup.rotation.y = 2.4;
+        if (lootBadge) {
+          lootBadge.visible = true;
+          lootBadge.position.y = 2.6 + Math.sin(elapsed * 4) * 0.12;
+          lootBadge.rotation.y = elapsed * 1.5;
+        }
+      } else if (cState.isDrivingOut) {
+        cargoTruckGroup.visible = true;
+        if (lootBadge) lootBadge.visible = false;
+        const totalDuration = cState.driveDuration || 4500;
+        const elapsedDriving = Math.max(0, Date.now() - cState.driveStartTime);
+        const t = Math.min(1, elapsedDriving / totalDuration);
+        const pos = cargoOutboundCurve.getPointAt(t);
+        const tangent = cargoOutboundCurve.getTangentAt(t);
+        cargoTruckGroup.position.set(pos.x, pos.y + Math.abs(Math.sin(elapsed * 16)) * 0.035, pos.z);
+        cargoTruckGroup.rotation.y = -Math.atan2(tangent.z, tangent.x);
+        cargoTruckGroup.visible = t < 0.96;
+
+        cargoTruckGroup.traverse(child => {
+          if (child.name === 'truck_wheel') {
+            child.children.forEach(c => { c.rotation.y += delta * 16; });
+          }
+        });
+      } else {
+        cargoTruckGroup.visible = false;
       }
 
       // Rotating Windmill blades & cogs
@@ -1472,13 +1571,12 @@ export const GameScene: React.FC = () => {
     mbGroup.add(mbPost, mbBox, mbFlag);
     terrainGroup.add(mbGroup);
 
-    // Stepping stones
+    // Stepping stones in pedestrian garden square
     const pathMat = getCachedColorMaterial('#94A3B8', 0.9);
     const stoneGeo = new THREE.CylinderGeometry(0.35, 0.4, 0.03, 6);
     [
-      [-5, -4.5], [-5, -3.5], [-5, -2.5], [-4, -2.5], [-3, -2.5],
-      [-2, -4.5], [-1, -4.5], [-1, -3.5], [-7, -5], [-7, -3.5],
-      [-0.5, 0], [0.5, 0], [1.5, 0], [2.5, 0]
+      [-3.2, -4.5], [-2.4, -4.0], [-1.8, -3.5], [-1.2, -3.0], [-0.6, -2.5],
+      [-2.8, -2.5], [-2.0, -1.8], [-1.2, -1.2], [-0.4, -0.6]
     ].forEach(([sx, sz]) => {
       const stone = new THREE.Mesh(stoneGeo, pathMat);
       stone.position.set(sx, 0.03, sz);
@@ -2198,6 +2296,9 @@ export const GameScene: React.FC = () => {
             collectProduct(clickedEntity.id, 0);
           }
         }
+      } else if (tile && Math.abs(tile.x - (-4.6)) <= 2.2 && Math.abs(tile.z - (-2.2)) <= 2.2 && cargoTruckStateRef.current.isParkedWaiting) {
+        // Direct click on parked Cargo Semi-Truck (Фура) in Driveway 1 to unload goods!
+        claimCargoTruckUnload();
       } else if (tile && Math.abs(tile.x - (-4)) <= 1.2 && Math.abs(tile.z - (-8)) <= 1.2) {
         // Direct click on roadside Mailbox
         openModal('mailbox');

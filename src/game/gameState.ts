@@ -198,6 +198,22 @@ export interface GameStore {
   openModal: (modal: GameStore['activeModal']) => void;
   closeModal: () => void;
   addFloatingText: (text: string, x: number, y: number, color?: string) => void;
+  // Cargo Semi-Truck (Фура для бартера, обмена и посылок)
+  cargoTruckState: {
+    isParkedWaiting: boolean;
+    isDrivingIn: boolean;
+    isDrivingOut: boolean;
+    driveStartTime: number;
+    driveDuration: number;
+    loot?: {
+      dealTitle?: string;
+      coins?: number;
+      gems?: number;
+      xp?: number;
+      items?: Record<string, number>;
+    };
+  };
+  claimCargoTruckUnload: () => boolean;
   acceptMailboxDeal: (dealId: string) => boolean;
   claimMailboxGift: () => boolean;
   refreshMailboxDeals: () => void;
@@ -309,6 +325,13 @@ export const useGameStore = create<GameStore>((set, get) => ({
   mailboxDeals: generateMailboxDeals(),
   mailboxGiftClaimed: false,
   mailboxGiftClaimedAt: 0,
+  cargoTruckState: {
+    isParkedWaiting: false,
+    isDrivingIn: false,
+    isDrivingOut: false,
+    driveStartTime: 0,
+    driveDuration: 4000,
+  },
   
   activeSeason: getCurrentRealSeason(),
   activeEvent: GAME_EVENTS.sunny_day,
@@ -432,6 +455,28 @@ export const useGameStore = create<GameStore>((set, get) => ({
       });
     }
 
+    // Check cargo semi truck state
+    const cargoState = state.cargoTruckState;
+    if (cargoState.isDrivingIn && now >= cargoState.driveStartTime + cargoState.driveDuration) {
+      set(s => ({
+        cargoTruckState: {
+          ...s.cargoTruckState,
+          isDrivingIn: false,
+          isParkedWaiting: true,
+        },
+      }));
+      sounds.playLevelUp();
+      state.addFloatingText('📦 Фура прибыла на заезд 1! Нажмите на фуру, чтобы разгрузить!', 0, 0, '#F59E0B');
+    } else if (cargoState.isDrivingOut && now >= cargoState.driveStartTime + cargoState.driveDuration) {
+      set(s => ({
+        cargoTruckState: {
+          ...s.cargoTruckState,
+          isDrivingOut: false,
+          isParkedWaiting: false,
+        },
+      }));
+    }
+
     // Check production queue progression
     let entitiesChanged = false;
     const updatedEntities = state.entities.map(ent => {
@@ -526,19 +571,56 @@ export const useGameStore = create<GameStore>((set, get) => ({
     }, 1800);
   },
 
-  acceptMailboxDeal: (dealId: string) => {
+  claimCargoTruckUnload: () => {
+    const state = get();
+    if (!state.cargoTruckState.isParkedWaiting) return false;
+
+    const loot = state.cargoTruckState.loot;
+    if (loot) {
+      if (loot.coins) state.addCoins(loot.coins);
+      if (loot.gems) state.addGems(loot.gems);
+      if (loot.xp) state.addXP(loot.xp);
+      if (loot.items) {
+        Object.entries(loot.items).forEach(([itemId, count]) => {
+          state.addItem(itemId, count);
+        });
+      }
+    }
+
+    sounds.playCoin();
+    sounds.playLevelUp();
+    confetti({ particleCount: 65, spread: 80, origin: { y: 0.55 } });
+    state.addFloatingText('📦 Фура выгружена! Товары получены ✨', 0, 0, '#22C55E');
+
+    set(s => ({
+      cargoTruckState: {
+        ...s.cargoTruckState,
+        isParkedWaiting: false,
+        isDrivingIn: false,
+        isDrivingOut: true,
+        driveStartTime: Date.now(),
+        driveDuration: 4500,
+        loot: undefined,
+      },
+    }));
+    return true;
+  },
+
+  acceptMailboxDeal: (dealId) => {
     const state = get();
     const deal = state.mailboxDeals.find(d => d.id === dealId);
     if (!deal || deal.isCompleted) return false;
 
-    const hasCount = state.inventory[deal.requiredItemId] || 0;
-    if (hasCount < deal.requiredCount) {
+    // Check required item in inventory
+    const countInInv = state.inventory[deal.requiredItemId] || 0;
+    if (countInInv < deal.requiredCount) {
       return false;
     }
 
+    // Check storage capacity for reward item if any
     if (deal.rewardItemId && deal.rewardCount) {
-      const isSilo = Boolean(CROPS[deal.rewardItemId] || TREES_BUSHES[deal.rewardItemId]);
-      const storageType: 'silo' | 'barn' = isSilo ? 'silo' : 'barn';
+      const isSiloItem = Boolean(CROPS[deal.rewardItemId] || TREES_BUSHES[deal.rewardItemId]);
+      const storageType: 'silo' | 'barn' = isSiloItem ? 'silo' : 'barn';
       const cap = storageType === 'silo' ? state.siloCapacity : state.barnCapacity;
       const used = state.getStorageUsed(storageType);
       if (used + deal.rewardCount > cap) {
@@ -548,21 +630,31 @@ export const useGameStore = create<GameStore>((set, get) => ({
 
     state.removeItem(deal.requiredItemId, deal.requiredCount);
 
+    const lootItems: Record<string, number> = {};
     if (deal.rewardItemId && deal.rewardCount) {
-      state.addItem(deal.rewardItemId, deal.rewardCount);
-    }
-    if (deal.rewardCoins) {
-      state.addCoins(deal.rewardCoins);
-    }
-    if (deal.rewardXP) {
-      state.addXP(deal.rewardXP);
+      lootItems[deal.rewardItemId] = deal.rewardCount;
     }
 
-    sounds.playCoin();
-    confetti({ particleCount: 35, spread: 60, origin: { y: 0.6 } });
+    sounds.playCraftStart();
+    state.addFloatingText('🚚 Фура с обменом выехала на ферму (Заезд 1)!', 0, 0, '#38BDF8');
 
     set(s => ({
       mailboxDeals: s.mailboxDeals.map(d => d.id === dealId ? { ...d, isCompleted: true } : d),
+      cargoTruckState: {
+        isParkedWaiting: false,
+        isDrivingIn: true,
+        isDrivingOut: false,
+        driveStartTime: Date.now(),
+        driveDuration: 3800,
+        loot: {
+          dealTitle: deal.letterTitle,
+          coins: deal.rewardCoins,
+          gems: 0,
+          xp: deal.rewardXP,
+          items: lootItems,
+        },
+      },
+      activeModal: null,
     }));
     return true;
   },
@@ -571,18 +663,27 @@ export const useGameStore = create<GameStore>((set, get) => ({
     const state = get();
     if (state.mailboxGiftClaimed) return false;
 
-    state.addCoins(150);
-    state.addGems(3);
-    state.addXP(45);
-    state.addItem('axe', 1);
-    state.addItem('nail', 1);
-
-    sounds.playCoin();
-    confetti({ particleCount: 60, spread: 80, origin: { y: 0.5 } });
+    sounds.playCraftStart();
+    state.addFloatingText('🚚 Почтовая фура доставила посылку (Заезд 1)!', 0, 0, '#38BDF8');
 
     set({
       mailboxGiftClaimed: true,
       mailboxGiftClaimedAt: Date.now(),
+      cargoTruckState: {
+        isParkedWaiting: false,
+        isDrivingIn: true,
+        isDrivingOut: false,
+        driveStartTime: Date.now(),
+        driveDuration: 3800,
+        loot: {
+          dealTitle: 'Ежедневная посылка от почтальона',
+          coins: 150,
+          gems: 3,
+          xp: 45,
+          items: { axe: 1, nail: 1 },
+        },
+      },
+      activeModal: null,
     });
     return true;
   },
