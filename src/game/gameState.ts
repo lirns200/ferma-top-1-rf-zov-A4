@@ -190,11 +190,14 @@ export interface GameStore {
   unlockedLevelInfo: LevelConfig | null;
   floatingTexts: FloatingText[];
   soundMuted: boolean;
+  isActionStripOpen: boolean;
   
   // Actions
   initGame: () => void;
   tickGameLoop: () => void;
   setSoundMuted: (muted: boolean) => void;
+  toggleActionStrip: () => void;
+  setActionStripOpen: (open: boolean) => void;
   openModal: (modal: GameStore['activeModal']) => void;
   closeModal: () => void;
   addFloatingText: (text: string, x: number, y: number, color?: string) => void;
@@ -354,6 +357,9 @@ export const useGameStore = create<GameStore>((set, get) => ({
   unlockedLevelInfo: null,
   floatingTexts: [],
   soundMuted: false,
+  isActionStripOpen: false,
+  toggleActionStrip: () => set(state => ({ isActionStripOpen: !state.isActionStripOpen })),
+  setActionStripOpen: (open: boolean) => set({ isActionStripOpen: open }),
 
   initGame: () => {
     const saved = StorageService.loadGame();

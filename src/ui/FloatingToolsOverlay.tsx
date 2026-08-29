@@ -3,8 +3,6 @@ import { useGameStore } from '../game/gameState';
 import { CROPS, TREES_BUSHES } from '../config/crops';
 import { BUILDINGS } from '../config/buildings';
 import { DECORATIONS } from '../config/decorations';
-import { RECIPES } from '../config/recipes';
-import { PRODUCTS } from '../config/products';
 import { sounds } from '../audio/SoundManager';
 import { RotateCw, Check, X, Trash2, Info } from 'lucide-react';
 
@@ -19,17 +17,16 @@ export const FloatingToolsOverlay: React.FC = () => {
   const {
     entities, selectedEntityId, activeTool, placingBuildingConfigId,
     movingEntityId, movingRotation,
-    inventory, level, activeEvent,
+    inventory, isActionStripOpen, toggleActionStrip, setActionStripOpen,
     setActiveTool, setPlacingBuilding, rotatePlacingBuilding, setSelectedEntity,
     startMovingEntity, rotateMovingEntity, confirmMoveEntity, cancelMoveEntity, deleteEntity,
-    startProduction, collectProduct, speedUpProductionWithGems,
-    harvestCrop, plantCrop, feedAnimal, collectAnimalProduct, openModal,
+    harvestCrop, plantCrop, openModal, activeEvent,
   } = useGameStore();
 
   const selectedEntity = entities.find(e => e.id === selectedEntityId);
   const movingEntity = entities.find(e => e.id === movingEntityId);
 
-  // Total seeds available
+  // Total seeds count
   const totalSeeds = Object.keys(CROPS).reduce((acc, k) => acc + (inventory[k] || 0), 0);
 
   /* ── 1. Moving / Relocating Entity Toolbar ── */
@@ -188,10 +185,13 @@ export const FloatingToolsOverlay: React.FC = () => {
     growthPercent = 100;
   }
 
+  // Show toolbar if either user clicked "Использовать", or active tool is set, or entity is selected
+  const shouldShowActionStrip = isActionStripOpen || !!activeTool || !!selectedEntity;
+
   return (
     <div className="fixed bottom-20 sm:bottom-22 left-0 right-0 z-30 pointer-events-none select-none flex flex-col items-center gap-2 p-2 max-w-lg mx-auto">
       
-      {/* ── 1. SELECTED ENTITY INFO CARD (Exact as screenshot!) ── */}
+      {/* ── 1. SELECTED ENTITY INFO CARD ── */}
       {selectedEntity && (
         <div className="pointer-events-auto w-full hud-parchment p-2.5 sm:p-3 flex items-center justify-between gap-3 shadow-xl animate-pop-in">
           
@@ -235,7 +235,7 @@ export const FloatingToolsOverlay: React.FC = () => {
             </div>
           </div>
 
-          {/* Info Button (i) */}
+          {/* Quick Action / Info Button */}
           <button
             onClick={() => {
               sounds.playClick();
@@ -243,111 +243,117 @@ export const FloatingToolsOverlay: React.FC = () => {
                 harvestCrop(selectedEntity.id);
                 setActiveTool({ type: 'harvest' });
               } else {
-                openModal('shop');
+                startMovingEntity(selectedEntity.id);
               }
             }}
             className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-gradient-to-b from-amber-200 to-amber-400 border border-[#5C3718] text-[#3B1F0D] flex items-center justify-center font-serif font-black text-sm shadow cursor-pointer active:scale-90"
-            title="Информация"
+            title="Действие с объектом"
           >
             <Info size={16} />
           </button>
         </div>
       )}
 
-      {/* ── 2. TOOLS STRIP (Рука, Мотыга, Семена, Вода, Топор, Строить) ── */}
-      <div className="pointer-events-auto w-full flex items-center justify-between gap-1 sm:gap-2">
-        
-        {/* ✋ 1. Рука (Активный выбор / Сбор) */}
-        <button
-          onClick={() => {
-            sounds.playClick();
-            setActiveTool(null);
-          }}
-          className={`hud-tool-btn flex-1 py-1.5 sm:py-2 flex flex-col items-center justify-center gap-0.5 ${
-            !activeTool ? 'hud-tool-btn-active' : ''
-          }`}
-        >
-          <span className="text-xl sm:text-2xl">✋</span>
-          <span className="text-[9px] sm:text-[10px] font-extrabold tracking-tight">Рука</span>
-        </button>
+      {/* ── 2. ACTION STRIP (Появляется выше по кнопке «Использовать»: Рука, Посадить, Передвинуть, Строить, Вода, Топор) ── */}
+      {shouldShowActionStrip && (
+        <div className="pointer-events-auto w-full flex items-center justify-between gap-1 sm:gap-1.5 animate-pop-in">
+          
+          {/* ✋ 1. Рука */}
+          <button
+            onClick={() => {
+              sounds.playClick();
+              setActiveTool(null);
+            }}
+            className={`hud-tool-btn flex-1 py-1.5 sm:py-2 flex flex-col items-center justify-center gap-0.5 ${
+              !activeTool ? 'hud-tool-btn-active' : ''
+            }`}
+          >
+            <span className="text-xl sm:text-2xl">✋</span>
+            <span className="text-[9px] sm:text-[10px] font-extrabold tracking-tight">Рука</span>
+          </button>
 
-        {/* ⛏️ 2. Мотыга (Вспахать / Грядка) */}
-        <button
-          onClick={() => {
-            sounds.playClick();
-            setPlacingBuilding('field_plot');
-          }}
-          className={`hud-tool-btn flex-1 py-1.5 sm:py-2 flex flex-col items-center justify-center gap-0.5 ${
-            placingBuildingConfigId === 'field_plot' ? 'hud-tool-btn-active' : ''
-          }`}
-        >
-          <span className="text-xl sm:text-2xl">⛏️</span>
-          <span className="text-[9px] sm:text-[10px] font-extrabold tracking-tight">Мотыга</span>
-        </button>
+          {/* 🌱 2. Посадить */}
+          <button
+            onClick={() => {
+              sounds.playClick();
+              const firstCropId = Object.keys(CROPS)[0] || 'wheat';
+              setActiveTool({ type: 'plant', configId: firstCropId });
+            }}
+            className={`hud-tool-btn flex-1 py-1.5 sm:py-2 flex flex-col items-center justify-center gap-0.5 relative ${
+              activeTool?.type === 'plant' ? 'hud-tool-btn-active' : ''
+            }`}
+          >
+            <span className="absolute -top-1.5 right-0.5 px-1 py-0.2 bg-[#4A2810] border border-amber-400 rounded-full text-yellow-300 text-[8px] sm:text-[9px] font-black shadow">
+              {totalSeeds || 12}
+            </span>
+            <span className="text-xl sm:text-2xl">🌱</span>
+            <span className="text-[9px] sm:text-[10px] font-extrabold tracking-tight">Посадить</span>
+          </button>
 
-        {/* 🌾 3. Семена (Посев с бейджем количества) */}
-        <button
-          onClick={() => {
-            sounds.playClick();
-            const firstCropId = Object.keys(CROPS)[0] || 'wheat';
-            setActiveTool({ type: 'plant', configId: firstCropId });
-          }}
-          className={`hud-tool-btn flex-1 py-1.5 sm:py-2 flex flex-col items-center justify-center gap-0.5 relative ${
-            activeTool?.type === 'plant' ? 'hud-tool-btn-active' : ''
-          }`}
-        >
-          {/* Badge count */}
-          <span className="absolute -top-1.5 right-0.5 px-1 py-0.2 bg-[#4A2810] border border-amber-400 rounded-full text-yellow-300 text-[8px] sm:text-[9px] font-black shadow">
-            {totalSeeds || 12}
-          </span>
-          <span className="text-xl sm:text-2xl">🌾</span>
-          <span className="text-[9px] sm:text-[10px] font-extrabold tracking-tight">Семена</span>
-        </button>
+          {/* 🚜 3. Передвинуть */}
+          <button
+            onClick={() => {
+              sounds.playClick();
+              if (selectedEntity) {
+                startMovingEntity(selectedEntity.id);
+              } else {
+                const firstMovable = entities.find(e => e.type !== 'obstacle');
+                if (firstMovable) {
+                  startMovingEntity(firstMovable.id);
+                }
+              }
+            }}
+            className="hud-tool-btn flex-1 py-1.5 sm:py-2 flex flex-col items-center justify-center gap-0.5"
+          >
+            <span className="text-xl sm:text-2xl">🚜</span>
+            <span className="text-[9px] sm:text-[10px] font-extrabold tracking-tight">Двигать</span>
+          </button>
 
-        {/* 💧 4. Вода / Серп (Полив и Сбор) */}
-        <button
-          onClick={() => {
-            sounds.playClick();
-            setActiveTool({ type: 'harvest' });
-          }}
-          className={`hud-tool-btn flex-1 py-1.5 sm:py-2 flex flex-col items-center justify-center gap-0.5 relative ${
-            activeTool?.type === 'harvest' ? 'hud-tool-btn-active' : ''
-          }`}
-        >
-          <span className="absolute -top-1.5 right-0.5 px-1 py-0.2 bg-[#4A2810] border border-blue-400 rounded-full text-blue-200 text-[8px] sm:text-[9px] font-black shadow">
-            8
-          </span>
-          <span className="text-xl sm:text-2xl">💧</span>
-          <span className="text-[9px] sm:text-[10px] font-extrabold tracking-tight">Вода</span>
-        </button>
+          {/* 🔨 4. Строить */}
+          <button
+            onClick={() => {
+              sounds.playClick();
+              openModal('shop');
+            }}
+            className="hud-tool-btn flex-1 py-1.5 sm:py-2 flex flex-col items-center justify-center gap-0.5"
+          >
+            <span className="text-xl sm:text-2xl">🔨</span>
+            <span className="text-[9px] sm:text-[10px] font-extrabold tracking-tight">Строить</span>
+          </button>
 
-        {/* 🪓 5. Топор (Расчистка) */}
-        <button
-          onClick={() => {
-            sounds.playClick();
-            setActiveTool({ type: 'feed' });
-          }}
-          className={`hud-tool-btn flex-1 py-1.5 sm:py-2 flex flex-col items-center justify-center gap-0.5 ${
-            activeTool?.type === 'feed' ? 'hud-tool-btn-active' : ''
-          }`}
-        >
-          <span className="text-xl sm:text-2xl">🪓</span>
-          <span className="text-[9px] sm:text-[10px] font-extrabold tracking-tight">Топор</span>
-        </button>
+          {/* 💧 5. Вода / Серп */}
+          <button
+            onClick={() => {
+              sounds.playClick();
+              setActiveTool({ type: 'harvest' });
+            }}
+            className={`hud-tool-btn flex-1 py-1.5 sm:py-2 flex flex-col items-center justify-center gap-0.5 relative ${
+              activeTool?.type === 'harvest' ? 'hud-tool-btn-active' : ''
+            }`}
+          >
+            <span className="absolute -top-1.5 right-0.5 px-1 py-0.2 bg-[#4A2810] border border-blue-400 rounded-full text-blue-200 text-[8px] sm:text-[9px] font-black shadow">
+              8
+            </span>
+            <span className="text-xl sm:text-2xl">💧</span>
+            <span className="text-[9px] sm:text-[10px] font-extrabold tracking-tight">Вода</span>
+          </button>
 
-        {/* 🔨 6. Строить / Повернуть */}
-        <button
-          onClick={() => {
-            sounds.playClick();
-            openModal('shop');
-          }}
-          className="hud-tool-btn flex-1 py-1.5 sm:py-2 flex flex-col items-center justify-center gap-0.5"
-        >
-          <span className="text-xl sm:text-2xl">🔨</span>
-          <span className="text-[9px] sm:text-[10px] font-extrabold tracking-tight">Строить</span>
-        </button>
+          {/* 🪓 6. Топор */}
+          <button
+            onClick={() => {
+              sounds.playClick();
+              setActiveTool({ type: 'feed' });
+            }}
+            className={`hud-tool-btn flex-1 py-1.5 sm:py-2 flex flex-col items-center justify-center gap-0.5 ${
+              activeTool?.type === 'feed' ? 'hud-tool-btn-active' : ''
+            }`}
+          >
+            <span className="text-xl sm:text-2xl">🪓</span>
+            <span className="text-[9px] sm:text-[10px] font-extrabold tracking-tight">Топор</span>
+          </button>
 
-      </div>
+        </div>
+      )}
 
     </div>
   );

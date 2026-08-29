@@ -6,6 +6,7 @@ export const BottomActionDock: React.FC = () => {
   const {
     openModal,
     truckState, shopSlots, orders,
+    isActionStripOpen, toggleActionStrip,
   } = useGameStore();
 
   const hasSoldItems = shopSlots.some(s => s.isSold);
@@ -54,19 +55,23 @@ export const BottomActionDock: React.FC = () => {
           </span>
         </button>
 
-        {/* 3. 🏡 СТРОИТЬ (Большая выступающая желтая кнопка с домиком по центру!) */}
+        {/* 3. ⚡ ИСПОЛЬЗОВАТЬ (Большая выступающая желтая кнопка по центру!) */}
         <div className="relative -top-4 sm:-top-5 z-30">
           <button
-            id="btn-build-shop"
+            id="btn-use-action"
             onClick={() => {
               sounds.playClick();
-              openModal('shop');
+              toggleActionStrip();
             }}
-            className="hud-build-btn w-16 h-16 sm:w-20 sm:h-20 rounded-3xl flex flex-col items-center justify-center gap-0.5 shadow-2xl active:scale-90 transition-all duration-150 cursor-pointer"
+            className={`hud-build-btn w-16 h-16 sm:w-20 sm:h-20 rounded-3xl flex flex-col items-center justify-center gap-0.5 shadow-2xl active:scale-90 transition-all duration-150 cursor-pointer ${
+              isActionStripOpen ? 'ring-4 ring-yellow-300 brightness-110 scale-105' : ''
+            }`}
           >
-            <span className="text-2xl sm:text-3xl filter drop-shadow">🏡</span>
-            <span className="text-[10px] sm:text-xs font-black text-[#3B1F0D] uppercase tracking-tight">
-              Строить
+            <span className="text-2xl sm:text-3xl filter drop-shadow animate-bounce" style={{ animationDuration: '2.5s' }}>
+              ⚡
+            </span>
+            <span className="text-[9px] sm:text-[10px] font-black text-[#3B1F0D] uppercase tracking-tight text-center leading-tight">
+              {isActionStripOpen ? 'Закрыть' : 'Использовать'}
             </span>
           </button>
         </div>
