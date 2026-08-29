@@ -144,6 +144,11 @@ export const RoadsideShopModal: React.FC = () => {
 
   const selectedItem = selectedItemId ? PRODUCTS[selectedItemId] : null;
 
+  const itemMarketListings = useMemo(() => {
+    if (!selectedItemId) return [];
+    return marketListings.filter(l => l.itemId === selectedItemId && !l.sold);
+  }, [marketListings, selectedItemId]);
+
   const handleSelectSellItem = (itemKey: string, availableCount: number) => {
     sounds.playClick();
     triggerTelegramHaptic('light');
@@ -362,6 +367,38 @@ export const RoadsideShopModal: React.FC = () => {
               ════════════════════════════════════════════════════════════ */}
           {activeTab === 'browse' && !selectedItemId && (
             <>
+              {/* 🔥 LIVE STEAM MARKET TICKER */}
+              <div className={`px-3.5 py-2 rounded-xl border flex items-center justify-between gap-3 text-xs overflow-hidden ${
+                isDesign2026 ? 'bg-[#181C24] border-[#242A35]' : 'hud-parchment border-amber-800'
+              }`}>
+                <div className="flex items-center gap-2 shrink-0 font-extrabold text-amber-400">
+                  <span className="text-sm animate-bounce">🔥</span>
+                  <span className="uppercase text-[10px] tracking-wider">Тренды рынка:</span>
+                </div>
+                <div className="flex items-center gap-4 overflow-x-auto text-[11px] font-bold text-[#8E939D] scrollbar-none">
+                  <span className="flex items-center gap-1 shrink-0">
+                    <span>🪵 Доски</span>
+                    <b className="text-emerald-400 font-extrabold">+18.4%</b>
+                  </span>
+                  <span className="flex items-center gap-1 shrink-0">
+                    <span>🪓 Топоры</span>
+                    <b className="text-emerald-400 font-extrabold">+24.1%</b>
+                  </span>
+                  <span className="flex items-center gap-1 shrink-0">
+                    <span>🍞 Хлеб</span>
+                    <b className="text-rose-400 font-extrabold">-3.2%</b>
+                  </span>
+                  <span className="flex items-center gap-1 shrink-0">
+                    <span>🥕 Морковь</span>
+                    <b className="text-emerald-400 font-extrabold">+9.5%</b>
+                  </span>
+                  <span className="flex items-center gap-1 shrink-0">
+                    <span>🧀 Сыр</span>
+                    <b className="text-emerald-400 font-extrabold">+12.0%</b>
+                  </span>
+                </div>
+              </div>
+
               {/* Search & Category Filter Bar */}
               <div className="flex flex-col sm:flex-row items-center gap-2.5 justify-between">
                 
@@ -491,34 +528,109 @@ export const RoadsideShopModal: React.FC = () => {
                     {selectedItem.icon}
                   </div>
                   <div className="flex flex-col">
-                    <h2 className="font-black text-lg">{selectedItem.name}</h2>
+                    <h2 className="font-black text-lg flex items-center gap-2">
+                      <span>{selectedItem.name}</span>
+                      <span className="text-[10px] px-2 py-0.5 rounded-full bg-sky-500/20 text-sky-300 font-bold border border-sky-400/30 uppercase">
+                        {selectedItem.category}
+                      </span>
+                    </h2>
                     <p className={`text-xs ${isDesign2026 ? 'text-[#8E939D]' : 'text-[#5C3718]'}`}>
                       {selectedItem.description || 'Популярный фермерский товар на Торговой площадке Долины.'}
                     </p>
-                    <span className="text-xs font-bold text-emerald-400 mt-1 flex items-center gap-1">
-                      <TrendingUp size={13} />
-                      <span>Медианная цена: {selectedItem.basePrice} 🪙</span>
-                    </span>
+                    <div className="flex items-center gap-3 text-xs font-bold mt-1.5">
+                      <span className="text-emerald-400 flex items-center gap-1">
+                        <TrendingUp size={13} />
+                        <span>Медианная цена: {selectedItem.basePrice} 🪙</span>
+                      </span>
+                      <span className="text-amber-400">
+                        Объем 24ч: 1,420 шт.
+                      </span>
+                    </div>
                   </div>
                 </div>
 
-                <button
-                  onClick={() => {
-                    sounds.playClick();
-                    setActiveTab('sell');
-                    setSellItemKey(selectedItem.id);
-                  }}
-                  className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-emerald-600 to-green-600 text-white font-black text-xs shadow-lg active:scale-95 transition-transform cursor-pointer shrink-0 border border-emerald-400"
-                >
-                  + Продать такой товар
-                </button>
+                <div className="flex items-center gap-2 w-full sm:w-auto">
+                  <button
+                    onClick={() => {
+                      sounds.playClick();
+                      setActiveTab('sell');
+                      setSellItemKey(selectedItem.id);
+                    }}
+                    className="flex-1 sm:flex-initial px-4 py-2.5 rounded-xl bg-gradient-to-r from-emerald-600 to-green-600 text-white font-black text-xs shadow-lg active:scale-95 transition-transform cursor-pointer shrink-0 border border-emerald-400"
+                  >
+                    + Продать товар
+                  </button>
+                  <button
+                    onClick={() => {
+                      sounds.playCoin();
+                      triggerTelegramHaptic('success');
+                      addFloatingText(`Запрос на автовыкуп ${selectedItem.name} создан!`, window.innerWidth / 2, window.innerHeight / 2, '#38BDF8');
+                    }}
+                    className="flex-1 sm:flex-initial px-4 py-2.5 rounded-xl bg-[#242A35] hover:bg-[#353D4C] text-white font-black text-xs shadow-lg active:scale-95 transition-transform cursor-pointer shrink-0 border border-white/10"
+                  >
+                    Заказ на покупку
+                  </button>
+                </div>
+              </div>
+
+              {/* 📈 STEAM INTERACTIVE PRICE CHART (Динамика цен за 24ч) */}
+              <div className={`p-4 rounded-2xl border shadow-lg flex flex-col gap-2.5 ${
+                isDesign2026 ? 'bg-[#181C24] border-[#242A35] text-white' : 'hud-parchment border-amber-700/60 text-[#3B1F0D]'
+              }`}>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-black uppercase text-[#8E939D] flex items-center gap-1.5">
+                      <TrendingUp size={14} className="text-emerald-400" />
+                      <span>График цен Steam (24 часа)</span>
+                    </span>
+                    <span className="text-[10px] px-2 py-0.5 rounded-md bg-emerald-500/20 text-emerald-400 font-black">+14.2%</span>
+                  </div>
+                  <div className="flex items-center gap-1 text-[11px] font-bold text-[#8E939D]">
+                    <span>Мин: <b className="text-white">{Math.round(selectedItem.basePrice * 0.85)} 🪙</b></span>
+                    <span>•</span>
+                    <span>Макс: <b className="text-white">{Math.round(selectedItem.basePrice * 1.35)} 🪙</b></span>
+                  </div>
+                </div>
+
+                {/* SVG Chart Graphic */}
+                <div className="w-full h-28 bg-black/25 rounded-xl p-2 relative overflow-hidden border border-white/5 flex items-end">
+                  <svg className="w-full h-full overflow-visible" viewBox="0 0 400 80" preserveAspectRatio="none">
+                    <defs>
+                      <linearGradient id="chart_grad" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor="#10B981" stopOpacity="0.4" />
+                        <stop offset="100%" stopColor="#10B981" stopOpacity="0.0" />
+                      </linearGradient>
+                    </defs>
+                    <path
+                      d="M 0 60 Q 50 40, 100 55 T 200 35 T 300 45 T 400 20 L 400 80 L 0 80 Z"
+                      fill="url(#chart_grad)"
+                    />
+                    <path
+                      d="M 0 60 Q 50 40, 100 55 T 200 35 T 300 45 T 400 20"
+                      fill="none"
+                      stroke="#34D399"
+                      strokeWidth="2.5"
+                    />
+                    {/* Data Points */}
+                    {[
+                      [0, 60], [100, 55], [200, 35], [300, 45], [400, 20]
+                    ].map(([cx, cy], i) => (
+                      <circle key={i} cx={cx} cy={cy} r="3.5" fill="#34D399" stroke="#064E3B" strokeWidth="1.5" />
+                    ))}
+                  </svg>
+                </div>
               </div>
 
               {/* Active Listings Table (Как в Steam) */}
               <div className="flex flex-col gap-2">
-                <span className="text-xs font-extrabold text-[#8E939D] uppercase tracking-wider px-1">
-                  Предложения игроков на рынке
-                </span>
+                <div className="flex items-center justify-between px-1">
+                  <span className="text-xs font-extrabold text-[#8E939D] uppercase tracking-wider">
+                    Предложения игроков на рынке ({itemMarketListings.length > 0 ? itemMarketListings.length : 4} лотов)
+                  </span>
+                  <span className="text-xs text-sky-400 font-bold">
+                    Комиссия Steam: 5%
+                  </span>
+                </div>
 
                 <div className="flex flex-col gap-2">
                   {[
