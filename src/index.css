@@ -151,3 +151,21 @@ body, html {
   border-radius: 9999px;
 }
 
+/* ── Continuous Smooth Infinite Marquee ── */
+@keyframes continuousMarquee {
+  0% { transform: translate3d(0, 0, 0); }
+  100% { transform: translate3d(-50%, 0, 0); }
+}
+
+.animate-market-marquee {
+  display: flex;
+  width: max-content;
+  animation: continuousMarquee 35s linear infinite;
+  will-change: transform;
+}
+
+.animate-market-marquee:hover {
+  animation-play-state: paused;
+}
+
+
