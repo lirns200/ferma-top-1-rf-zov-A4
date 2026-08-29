@@ -58,7 +58,7 @@ export const FloatingToolsOverlay: React.FC = () => {
 
     return (
       <div
-        className={`fixed bottom-24 sm:bottom-28 left-1/2 -translate-x-1/2 z-40 flex items-center gap-2 sm:gap-3 px-4 py-2.5 rounded-2xl shadow-2xl animate-pop-in ${
+        className={`fixed bottom-20 sm:bottom-28 left-1/2 -translate-x-1/2 z-40 flex items-center gap-1.5 sm:gap-3 px-3 py-2 sm:px-4 sm:py-2.5 rounded-2xl shadow-2xl animate-pop-in max-w-[95vw] ${
           isDesign2026
             ? 'hud-ios26-dock bg-[#0F1115]/90 border border-white/20 text-white'
             : 'hud-parchment'
@@ -224,11 +224,11 @@ export const FloatingToolsOverlay: React.FC = () => {
   }
 
   return (
-    <div className="fixed bottom-22 sm:bottom-24 left-0 right-0 z-30 pointer-events-none select-none flex flex-col items-center gap-2 p-2 max-w-lg mx-auto">
+    <div className="fixed bottom-20 sm:bottom-24 left-0 right-0 z-30 pointer-events-none select-none flex flex-col items-center gap-2 p-2 max-w-lg mx-auto">
       
       {/* ── 1. SELECTED ENTITY INFO CARD ── */}
       {selectedEntity && (
-        <div className={`pointer-events-auto w-full p-2.5 sm:p-3 flex items-center justify-between gap-3 shadow-xl animate-pop-in ${
+        <div className={`pointer-events-auto w-full p-2 sm:p-3 flex items-center justify-between gap-2.5 sm:gap-3 shadow-xl animate-pop-in ${
           isDesign2026
             ? 'hud-ios26-dock bg-[#0F1115]/90 border border-white/20 text-white rounded-2xl'
             : 'hud-parchment'

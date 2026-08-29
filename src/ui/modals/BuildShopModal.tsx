@@ -155,27 +155,27 @@ export const BuildShopModal: React.FC = () => {
   };
 
   return (
-    <div className={`fixed inset-0 pt-14 sm:pt-16 pb-20 sm:pb-24 z-40 flex flex-col select-none animate-pop-in overflow-hidden transition-colors ${
+    <div className={`fixed inset-0 pt-12 sm:pt-14 pb-16 sm:pb-20 z-40 flex flex-col select-none animate-pop-in overflow-hidden transition-colors ${
       isDesign2026 ? 'bg-[#0F1115] text-white' : 'bg-[#2A1406] text-[#3B1F0D]'
     }`}>
       
       {/* ── TOP HEADER ── */}
-      <div className={`px-4 sm:px-6 py-2.5 flex items-center justify-between border-b shrink-0 ${
+      <div className={`px-3.5 sm:px-6 py-2 sm:py-2.5 flex items-center justify-between border-b shrink-0 ${
         isDesign2026 ? 'bg-[#181C24] border-[#242A35]' : 'bg-[#3D2008] border-[#5C3718]'
       }`}>
         <div className="flex items-center gap-2">
           <div className="w-7 h-7 rounded-lg bg-amber-500/20 border border-amber-500/40 flex items-center justify-center text-sm shadow">
             🎪
           </div>
-          <span className="font-extrabold text-sm tracking-wide uppercase">
+          <span className="font-extrabold text-xs sm:text-sm tracking-wide uppercase">
             Магазин Доната и Банк
           </span>
         </div>
       </div>
 
       {/* ── SCROLLABLE CONTENT AREA ── */}
-      <div className="flex-1 overflow-y-auto p-3 sm:p-5">
-        <div className="max-w-lg mx-auto flex flex-col gap-4 pb-12">
+      <div className="flex-1 overflow-y-auto p-2.5 sm:p-5">
+        <div className="max-w-lg mx-auto flex flex-col gap-3 sm:gap-4 pb-12">
           
           {/* ════════════════════════════════════════════════════════════
               1. TOP: ЦИКЛИЧЕСКАЯ КАРУСЕЛЬ АКЦИЙ (С 3D МОДЕЛЬЮ)
@@ -183,25 +183,25 @@ export const BuildShopModal: React.FC = () => {
           <div className="relative">
             <div
               key={currentPromo.id}
-              className={`p-4 sm:p-5 rounded-2xl border shadow-2xl flex flex-col justify-between relative transition-all duration-300 ${
+              className={`p-3 sm:p-5 rounded-2xl border shadow-2xl flex flex-col justify-between relative transition-all duration-300 ${
                 isDesign2026
                   ? 'bg-[#181C24] border-amber-400/60 shadow-amber-950/30 text-white'
                   : 'hud-parchment border-amber-600 text-[#3B1F0D]'
               }`}
             >
               {/* Promo Badge */}
-              <div className={`absolute top-3 right-3 px-2.5 py-0.5 rounded-full text-white text-[10px] font-black uppercase tracking-wider shadow ${currentPromo.badgeColor}`}>
+              <div className={`absolute top-2.5 right-2.5 px-2 py-0.5 rounded-full text-white text-[9px] sm:text-[10px] font-black uppercase tracking-wider shadow ${currentPromo.badgeColor}`}>
                 {currentPromo.badge}
               </div>
 
               {/* 3D Model Rendered Thumbnail */}
-              <div className="flex items-center gap-4 my-1">
-                <div className="w-20 h-20 sm:w-24 sm:h-24 shrink-0 flex items-center justify-center filter drop-shadow-xl">
-                  <Building3DThumbnail buildingId={currentPromo.modelId} size={88} />
+              <div className="flex items-center gap-3 sm:gap-4 my-1">
+                <div className="w-16 h-16 sm:w-24 sm:h-24 shrink-0 flex items-center justify-center filter drop-shadow-xl">
+                  <Building3DThumbnail buildingId={currentPromo.modelId} size={72} />
                 </div>
                 <div className="flex flex-col">
-                  <h3 className="font-black text-base sm:text-lg mb-0.5 leading-tight">{currentPromo.title}</h3>
-                  <p className={`text-xs leading-relaxed ${isDesign2026 ? 'text-[#8E939D]' : 'text-[#5C3718]'}`}>
+                  <h3 className="font-black text-sm sm:text-lg mb-0.5 leading-tight">{currentPromo.title}</h3>
+                  <p className={`text-[11px] sm:text-xs leading-relaxed ${isDesign2026 ? 'text-[#8E939D]' : 'text-[#5C3718]'}`}>
                     {currentPromo.desc}
                   </p>
                 </div>

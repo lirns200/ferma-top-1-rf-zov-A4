@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useGameStore } from '../game/gameState';
 import { PRODUCTS } from '../config/products';
 import { sounds } from '../audio/SoundManager';
@@ -50,7 +50,7 @@ export const MarketDeliveryBanner: React.FC = () => {
   };
 
   return (
-    <div className="fixed top-16 sm:top-20 left-1/2 -translate-x-1/2 z-50 w-[92%] max-w-md animate-pop-in pointer-events-auto">
+    <div className="fixed top-13 sm:top-20 left-1/2 -translate-x-1/2 z-50 w-[94%] max-w-md animate-pop-in pointer-events-auto">
       <div
         className={`p-3 sm:p-4 rounded-2xl border shadow-2xl backdrop-blur-xl transition-all duration-300 ${
           isArrived

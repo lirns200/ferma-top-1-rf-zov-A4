@@ -1,4 +1,4 @@
-﻿import React from 'react';
+import React from 'react';
 import { useGameStore } from '../../game/gameState';
 import { PRODUCTS } from '../../config/products';
 import { sounds } from '../../audio/SoundManager';
@@ -19,25 +19,25 @@ export const OrderBoardModal: React.FC = () => {
   if (activeModal !== 'orders') return null;
 
   return (
-    <div className={`fixed inset-0 pt-14 sm:pt-16 pb-20 sm:pb-24 z-40 flex flex-col select-none animate-pop-in overflow-hidden transition-colors ${
+    <div className={`fixed inset-0 pt-12 sm:pt-14 pb-16 sm:pb-20 z-40 flex flex-col select-none animate-pop-in overflow-hidden transition-colors ${
       isDesign2026 ? 'bg-[#0F1115] text-white' : 'bg-[#2A1406] text-[#3B1F0D]'
     }`}>
 
       {/* ── TRUCK DELIVERY STATUS BANNER ── */}
       {truckState.isDelivering && (
-        <div className="flex items-center justify-center gap-3 bg-blue-900/90 px-4 py-2 text-white font-bold text-xs sm:text-sm border-b border-blue-500/50 animate-pulse shrink-0">
-          <span className="text-xl">🛻</span>
+        <div className="flex items-center justify-center gap-2.5 bg-blue-900/90 px-3 py-1.5 text-white font-bold text-xs sm:text-sm border-b border-blue-500/50 animate-pulse shrink-0">
+          <span className="text-lg sm:text-xl">🛻</span>
           <span>Красный пикап везет заказ в город...</span>
           <div className="flex items-center gap-1 text-cyan-300 font-mono">
-            <Clock size={14} />
+            <Clock size={13} />
             <span>{Math.max(0, Math.ceil((truckState.deliveringUntil - Date.now()) / 1000))}с</span>
           </div>
         </div>
       )}
 
       {/* ── ORDERS CARDS GRID ── */}
-      <div className="flex-1 overflow-y-auto p-3 sm:p-6">
-        <div className="max-w-5xl mx-auto grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4 pb-12">
+      <div className="flex-1 overflow-y-auto p-2.5 sm:p-6">
+        <div className="max-w-5xl mx-auto grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2.5 sm:gap-4 pb-12">
           {orders.map(order => {
             const allItemsAvailable = order.items.every(
               req => (inventory[req.itemId] || 0) >= req.count
@@ -46,7 +46,7 @@ export const OrderBoardModal: React.FC = () => {
             return (
               <div
                 key={order.id}
-                className={`flex flex-col justify-between p-4 rounded-2xl shadow-lg border transition-all ${
+                className={`flex flex-col justify-between p-3 sm:p-4 rounded-2xl shadow-lg border transition-all ${
                   isDesign2026
                     ? allItemsAvailable
                       ? 'bg-[#181C24] border-emerald-500 shadow-emerald-950/40 text-white'

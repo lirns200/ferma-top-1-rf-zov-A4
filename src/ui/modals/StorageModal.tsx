@@ -1,4 +1,4 @@
-﻿import React, { useState } from 'react';
+import React, { useState } from 'react';
 import { useGameStore } from '../../game/gameState';
 import { PRODUCTS } from '../../config/products';
 import { sounds } from '../../audio/SoundManager';
@@ -54,12 +54,12 @@ export const StorageModal: React.FC = () => {
   const canUpgrade = currentMats.every(m => m.have >= reqCount);
 
   return (
-    <div className={`fixed inset-0 pt-14 sm:pt-16 pb-20 sm:pb-24 z-40 flex flex-col select-none animate-pop-in overflow-hidden transition-colors ${
+    <div className={`fixed inset-0 pt-12 sm:pt-14 pb-16 sm:pb-20 z-40 flex flex-col select-none animate-pop-in overflow-hidden transition-colors ${
       isDesign2026 ? 'bg-[#0F1115] text-white' : 'bg-[#2A1406] text-[#3B1F0D]'
     }`}>
       
       {/* ── TABS SWITCHER ── */}
-      <div className={`px-3 sm:px-6 py-2.5 flex items-center gap-2 border-b shrink-0 ${
+      <div className={`px-2.5 sm:px-6 py-2 sm:py-2.5 flex items-center gap-1.5 sm:gap-2 border-b shrink-0 ${
         isDesign2026 ? 'bg-[#181C24] border-[#242A35]' : 'bg-[#3D2008] border-[#5C3718]'
       }`}>
         <button
@@ -68,17 +68,17 @@ export const StorageModal: React.FC = () => {
             triggerTelegramHaptic('light');
             setActiveTab('silo');
           }}
-          className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-extrabold transition-all cursor-pointer ${
+          className={`flex items-center gap-1.5 px-3 py-1.5 sm:px-4 sm:py-2 rounded-xl text-[11px] sm:text-xs font-extrabold transition-all cursor-pointer ${
             activeTab === 'silo'
               ? isDesign2026
-                ? 'bg-purple-600 text-white shadow-lg border border-purple-400 scale-105'
-                : 'hud-parchment shadow-lg border-2 border-yellow-400 scale-105 text-[#3B1F0D]'
+                ? 'bg-purple-600 text-white shadow-lg border border-purple-400 scale-[1.02]'
+                : 'hud-parchment shadow-lg border-2 border-yellow-400 scale-[1.02] text-[#3B1F0D]'
               : isDesign2026
               ? 'bg-[#242A35] text-[#8E939D] hover:text-white'
               : 'bg-[#2A1406]/80 text-amber-200 border border-amber-900 hover:bg-[#2A1406]'
           }`}
         >
-          <span className="text-base">🌾</span>
+          <span className="text-sm sm:text-base">🌾</span>
           <span>Силос ({getStorageUsed('silo')}/{siloCapacity})</span>
         </button>
 
@@ -88,17 +88,17 @@ export const StorageModal: React.FC = () => {
             triggerTelegramHaptic('light');
             setActiveTab('barn');
           }}
-          className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-extrabold transition-all cursor-pointer ${
+          className={`flex items-center gap-1.5 px-3 py-1.5 sm:px-4 sm:py-2 rounded-xl text-[11px] sm:text-xs font-extrabold transition-all cursor-pointer ${
             activeTab === 'barn'
               ? isDesign2026
-                ? 'bg-purple-600 text-white shadow-lg border border-purple-400 scale-105'
-                : 'hud-parchment shadow-lg border-2 border-yellow-400 scale-105 text-[#3B1F0D]'
+                ? 'bg-purple-600 text-white shadow-lg border border-purple-400 scale-[1.02]'
+                : 'hud-parchment shadow-lg border-2 border-yellow-400 scale-[1.02] text-[#3B1F0D]'
               : isDesign2026
               ? 'bg-[#242A35] text-[#8E939D] hover:text-white'
               : 'bg-[#2A1406]/80 text-amber-200 border border-amber-900 hover:bg-[#2A1406]'
           }`}
         >
-          <span className="text-base">🏚️</span>
+          <span className="text-sm sm:text-base">🏚️</span>
           <span>Амбар ({getStorageUsed('barn')}/{barnCapacity})</span>
         </button>
       </div>
