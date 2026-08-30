@@ -1265,25 +1265,31 @@ export function createMountainWaterfallGroup(season: SeasonType): THREE.Group {
   const waterMaterial = new THREE.MeshStandardMaterial({
     map: waterFlowTex,
     color: season === 'winter' ? 0xBAE6FD : 0x38BDF8,
-    roughness: 0.1,
+    emissive: season === 'winter' ? 0x60A5FA : 0x0284C7,
+    emissiveIntensity: 0.20,
+    roughness: 0.08,
     metalness: 0.15,
     transparent: true,
-    opacity: 0.92,
+    opacity: 0.94,
     side: THREE.DoubleSide,
   });
 
   const foamMaterial = new THREE.MeshStandardMaterial({
     map: foamFlowTex,
     color: 0xFFFFFF,
-    roughness: 0.2,
+    emissive: 0xFFFFFF,
+    emissiveIntensity: 0.15,
+    roughness: 0.15,
     metalness: 0.05,
     transparent: true,
-    opacity: 0.86,
+    opacity: 0.88,
     side: THREE.DoubleSide,
   });
 
   const solidFoamMat = new THREE.MeshStandardMaterial({
     color: 0xFFFFFF,
+    emissive: 0xFFFFFF,
+    emissiveIntensity: 0.15,
     roughness: 0.2,
     metalness: 0.05,
     transparent: true,
@@ -1291,7 +1297,7 @@ export function createMountainWaterfallGroup(season: SeasonType): THREE.Group {
   });
 
   // ── 1. Grand Wide Continuous Cascading Water Mesh (8.5m - 11.2m Wide) ──
-  // Smooth natural parabolic cataract profile (No horizontal staircase shelves!)
+  // Smooth natural parabolic cataract profile (No blocking obstacles!)
   const streamProfile: [number, number, number][] = [
     [-9.0, 14.5, 8.5],  // Alpine mountain canyon summit cleft
     [-8.0, 13.6, 8.8],  // Mountain stream acceleration
@@ -1364,17 +1370,7 @@ export function createMountainWaterfallGroup(season: SeasonType): THREE.Group {
   foamMesh.name = 'waterfall_foam_mesh';
   group.add(foamMesh);
 
-  // ── 2. Natural Sloped Granite Bedrock Ramp Under the Water ───────────
-  // Single organic angled bedrock ramp following the slope (No horizontal box stairs!)
-  const rampGeo = new THREE.BoxGeometry(11.4, 1.2, 16.5);
-  const ramp = new THREE.Mesh(rampGeo, rockDarkMat);
-  ramp.position.set(0, 6.2, -2.8);
-  ramp.rotation.x = 0.68; // Matching the slope angle perfectly
-  ramp.castShadow = true;
-  ramp.receiveShadow = true;
-  group.add(ramp);
-
-  // ── 3. 3D Frothing Foam Lip Crests & River Entry Whitewater ──────────
+  // ── 2. 3D Frothing Foam Lip Crests & River Entry Whitewater ──────────
   const foamLipGeo = new THREE.DodecahedronGeometry(0.45, 0);
   const foamLips = [
     // Summit Cleft Foam (y = 13.6)
@@ -1392,17 +1388,17 @@ export function createMountainWaterfallGroup(season: SeasonType): THREE.Group {
     group.add(fMesh);
   });
 
-  // ── 4. Natural Low-Poly Flanking Boulders & Mountain Cliffs ──────────
+  // ── 3. Natural Low-Poly Flanking Boulders & Mountain Cliffs ──────────
   const rockDodec = new THREE.DodecahedronGeometry(1.6, 0);
 
-  // Left Canyon Wall Boulders (Cascading naturally along the mountain slope)
+  // Left Canyon Wall Boulders (Pushed wide so water is 100% visible)
   const leftRockData = [
-    { x: -6.2, y: 1.5, z: 3.2, s: [2.2, 2.2, 2.2], mat: rockMidMat },
-    { x: -6.8, y: 4.5, z: 0.2, s: [2.5, 2.8, 2.4], mat: rockDarkMat },
-    { x: -7.4, y: 8.0, z: -3.0, s: [2.8, 3.2, 2.6], mat: rockMidMat },
-    { x: -8.0, y: 12.0, z: -6.5, s: [3.2, 3.8, 3.0], mat: rockDarkMat },
-    { x: -5.2, y: 1.0, z: 4.5, s: [1.6, 1.4, 1.7], mat: rockMossMat },
-    { x: -5.8, y: 6.5, z: -1.2, s: [1.8, 2.0, 1.7], mat: rockMossMat },
+    { x: -7.0, y: 1.5, z: 3.2, s: [2.2, 2.2, 2.2], mat: rockMidMat },
+    { x: -7.6, y: 4.5, z: 0.2, s: [2.5, 2.8, 2.4], mat: rockDarkMat },
+    { x: -8.2, y: 8.0, z: -3.0, s: [2.8, 3.2, 2.6], mat: rockMidMat },
+    { x: -8.8, y: 12.0, z: -6.5, s: [3.2, 3.8, 3.0], mat: rockDarkMat },
+    { x: -6.0, y: 1.0, z: 4.5, s: [1.6, 1.4, 1.7], mat: rockMossMat },
+    { x: -6.6, y: 6.5, z: -1.2, s: [1.8, 2.0, 1.7], mat: rockMossMat },
   ];
   leftRockData.forEach(r => {
     const rock = new THREE.Mesh(rockDodec, r.mat);
@@ -1414,14 +1410,14 @@ export function createMountainWaterfallGroup(season: SeasonType): THREE.Group {
     group.add(rock);
   });
 
-  // Right Canyon Wall Boulders
+  // Right Canyon Wall Boulders (Pushed wide so water is 100% visible)
   const rightRockData = [
-    { x: 6.2, y: 1.5, z: 3.2, s: [2.2, 2.2, 2.2], mat: rockMidMat },
-    { x: 6.8, y: 4.5, z: 0.2, s: [2.5, 2.8, 2.4], mat: rockDarkMat },
-    { x: 7.4, y: 8.0, z: -3.0, s: [2.8, 3.2, 2.6], mat: rockMidMat },
-    { x: 8.0, y: 12.0, z: -6.5, s: [3.2, 3.8, 3.0], mat: rockDarkMat },
-    { x: 5.2, y: 1.0, z: 4.5, s: [1.6, 1.4, 1.7], mat: rockMossMat },
-    { x: 5.8, y: 6.5, z: -1.2, s: [1.8, 2.0, 1.7], mat: rockMossMat },
+    { x: 7.0, y: 1.5, z: 3.2, s: [2.2, 2.2, 2.2], mat: rockMidMat },
+    { x: 7.6, y: 4.5, z: 0.2, s: [2.5, 2.8, 2.4], mat: rockDarkMat },
+    { x: 8.2, y: 8.0, z: -3.0, s: [2.8, 3.2, 2.6], mat: rockMidMat },
+    { x: 8.8, y: 12.0, z: -6.5, s: [3.2, 3.8, 3.0], mat: rockDarkMat },
+    { x: 6.0, y: 1.0, z: 4.5, s: [1.6, 1.4, 1.7], mat: rockMossMat },
+    { x: 6.6, y: 6.5, z: -1.2, s: [1.8, 2.0, 1.7], mat: rockMossMat },
   ];
   rightRockData.forEach(r => {
     const rock = new THREE.Mesh(rockDodec, r.mat);
