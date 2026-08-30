@@ -360,13 +360,13 @@ export const GameScene: React.FC = () => {
     }
 
     const birdConfigs = [
-      { color: '#F8FAFC', accent: '#E2E8F0', behavior: 'soar_circle' as const, cx: 6, cz: -8, rx: 22, rz: 18, h: 14.5, speed: 0.35, scale: 0.95 }, // White Dove Leader
-      { color: '#F1F5F9', accent: '#CBD5E1', behavior: 'soar_circle' as const, cx: 6, cz: -8, rx: 24, rz: 20, h: 15.2, speed: 0.35, scale: 0.90 }, // White Dove Follower
-      { color: '#38BDF8', accent: '#0284C7', behavior: 'river_flyby' as const, cx: 16, cz: 0, rx: 6, rz: 30, h: 4.8, speed: 0.52, scale: 0.85 }, // Blue Jay over River
-      { color: '#FACC15', accent: '#CA8A04', behavior: 'field_flutter' as const, cx: -12, cz: 8, rx: 14, rz: 12, h: 5.5, speed: 0.65, scale: 0.80 }, // Goldfinch Meadow
-      { color: '#FB923C', accent: '#78350F', behavior: 'tree_perch' as const, cx: -16, cz: -14, rx: 16, rz: 14, h: 7.2, speed: 0.45, scale: 0.82 }, // Tree Robin
-      { color: '#4ADE80', accent: '#15803D', behavior: 'tree_perch' as const, cx: 4, cz: 16, rx: 15, rz: 15, h: 6.8, speed: 0.48, scale: 0.82 }, // Meadow Finch
-      { color: '#94A3B8', accent: '#334155', behavior: 'night_owl' as const, cx: -4, cz: -4, rx: 28, rz: 22, h: 16.0, speed: 0.28, scale: 1.15 }, // Night Owl
+      { color: '#F8FAFC', accent: '#E2E8F0', behavior: 'soar_circle' as const, cx: 4, cz: -6, rx: 20, rz: 16, h: 20.5, speed: 0.32, scale: 0.95 }, // White Dove Leader (High sky above summits)
+      { color: '#F1F5F9', accent: '#CBD5E1', behavior: 'soar_circle' as const, cx: 4, cz: -6, rx: 22, rz: 18, h: 21.2, speed: 0.32, scale: 0.90 }, // White Dove Follower
+      { color: '#38BDF8', accent: '#0284C7', behavior: 'river_flyby' as const, cx: 16, cz: 0, rx: 4.5, rz: 28, h: 6.5, speed: 0.50, scale: 0.85 }, // Blue Jay over River Channel
+      { color: '#FACC15', accent: '#CA8A04', behavior: 'field_flutter' as const, cx: -10, cz: 6, rx: 11, rz: 9, h: 7.2, speed: 0.60, scale: 0.80 }, // Goldfinch Meadow
+      { color: '#FB923C', accent: '#78350F', behavior: 'tree_perch' as const, cx: -12, cz: -10, rx: 12, rz: 10, h: 8.8, speed: 0.42, scale: 0.82 }, // Tree Robin
+      { color: '#4ADE80', accent: '#15803D', behavior: 'tree_perch' as const, cx: 2, cz: 14, rx: 11, rz: 11, h: 8.5, speed: 0.45, scale: 0.82 }, // Meadow Finch
+      { color: '#94A3B8', accent: '#334155', behavior: 'night_owl' as const, cx: -2, cz: -2, rx: 26, rz: 20, h: 22.0, speed: 0.25, scale: 1.15 }, // Night Owl (High sky)
     ];
 
     const activeBirds: BirdState[] = birdConfigs.map((cfg, idx) => {
@@ -1310,6 +1310,40 @@ export const GameScene: React.FC = () => {
           const glideWobble = Math.sin(elapsed * 3 + b.seed) * 0.04;
           if (b.wingL) b.wingL.rotation.z = 0.08 + glideWobble;
           if (b.wingR) b.wingR.rotation.z = -0.08 - glideWobble;
+        }
+      });
+
+      // ── Animate Cascading Mountain Waterfall (Rushing curtains, pulsing foam, expanding spray rings & mist) ──
+      terrainGroup.traverse(child => {
+        if (child.name === 'waterfall_curtain_1') {
+          child.position.z = -3.0 + Math.sin(elapsed * 18) * 0.04;
+          child.rotation.x = -Math.PI / 2 + 0.35 + Math.sin(elapsed * 12) * 0.02;
+        } else if (child.name === 'waterfall_curtain_2') {
+          child.position.z = 1.5 + Math.sin(elapsed * 18 + 1.2) * 0.04;
+          child.rotation.x = -Math.PI / 2 + 0.42 + Math.sin(elapsed * 14 + 1.0) * 0.02;
+        } else if (child.name === 'waterfall_foam_1' || child.name === 'waterfall_foam_2') {
+          child.scale.set(1.0 + Math.sin(elapsed * 14) * 0.08, 1.0 + Math.cos(elapsed * 16) * 0.2, 1.0);
+        } else if (child.name?.startsWith('waterfall_foam_ring_')) {
+          const ringIdx = parseInt(child.name.replace('waterfall_foam_ring_', '')) || 0;
+          const cycle = (elapsed * 1.6 + ringIdx * 0.65) % 2.0;
+          const scale = 0.8 + cycle * 0.8;
+          child.scale.set(scale, scale, 1);
+          const mat = (child as THREE.Mesh).material as THREE.Material;
+          if (mat && 'opacity' in mat) {
+            (mat as THREE.MeshStandardMaterial).opacity = Math.max(0, 0.85 * (1 - cycle / 2.0));
+          }
+        } else if (child.name === 'waterfall_mist_particles') {
+          const p = (child as THREE.Points).geometry.attributes.position.array as Float32Array;
+          for (let m = 0; m < p.length / 3; m++) {
+            p[m * 3 + 1] += delta * 1.8;
+            p[m * 3] += Math.sin(elapsed * 2 + m) * 0.01;
+            if (p[m * 3 + 1] > 3.8) {
+              p[m * 3 + 1] = 0.2;
+              p[m * 3] = (Math.random() - 0.5) * 4.6;
+              p[m * 3 + 2] = 2.4 + Math.random() * 3.4;
+            }
+          }
+          (child as THREE.Points).geometry.attributes.position.needsUpdate = true;
         }
       });
 

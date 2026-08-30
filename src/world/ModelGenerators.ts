@@ -1334,6 +1334,28 @@ export function createMountainWaterfallGroup(season: SeasonType): THREE.Group {
     group.add(rock);
   });
 
+  // ── Waterfall Rising Mist & Spray Particles ──────────────────────────
+  const mistCount = 28;
+  const mistGeo = new THREE.BufferGeometry();
+  const mistPos = new Float32Array(mistCount * 3);
+  for (let m = 0; m < mistCount; m++) {
+    mistPos[m * 3] = (Math.random() - 0.5) * 4.6;
+    mistPos[m * 3 + 1] = 0.2 + Math.random() * 2.8;
+    mistPos[m * 3 + 2] = 2.4 + Math.random() * 3.4;
+  }
+  mistGeo.setAttribute('position', new THREE.BufferAttribute(mistPos, 3));
+  const mistMat = new THREE.PointsMaterial({
+    color: 0xE0F2FE,
+    size: 0.48,
+    transparent: true,
+    opacity: 0.70,
+    blending: THREE.AdditiveBlending,
+    depthWrite: false,
+  });
+  const mistPoints = new THREE.Points(mistGeo, mistMat);
+  mistPoints.name = 'waterfall_mist_particles';
+  group.add(mistPoints);
+
   // ── 4. Pine Trees along Waterfall Cliffs ─────────────────────────────
   const pineTrunkGeo = new THREE.CylinderGeometry(0.12, 0.16, 1.4, 5);
   [
