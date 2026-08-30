@@ -17,9 +17,18 @@ const CoinSvg = () => (
     </defs>
   </svg>
 );
+const ScrollSvg = () => (
+  <svg viewBox="0 0 24 24" fill="none" className="w-4 h-4 shrink-0">
+    <path d="M19 3H7C5.34315 3 4 4.34315 4 6C4 7.65685 5.34315 9 7 9H17C18.6569 9 20 10.3431 20 12V18C20 19.6569 18.6569 21 17 21H7C5.34315 21 4 19.6569 4 18V6" stroke="#FEF08A" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+    <path d="M8 7H16" stroke="#FDE047" strokeWidth="1.2" strokeLinecap="round" />
+    <path d="M8 13H15" stroke="#FEF3C7" strokeWidth="1.2" strokeLinecap="round" />
+    <path d="M8 17H13" stroke="#FEF3C7" strokeWidth="1.2" strokeLinecap="round" />
+    <circle cx="16" cy="17" r="2.5" fill="#EF4444" stroke="#991B1B" strokeWidth="0.8" />
+  </svg>
+);
 
 export const DailyMissionsWidget: React.FC = () => {
-  const { dailyMissions, dailyMissionsExpiresAt, claimDailyMission, isDesign2026 } = useGameStore();
+  const { dailyMissions, dailyMissionsExpiresAt, claimDailyMission } = useGameStore();
   const [isOpen, setIsOpen] = useState(false);
   const [timeLeftStr, setTimeLeftStr] = useState('');
   const popoverRef = useRef<HTMLDivElement>(null);
@@ -44,9 +53,7 @@ export const DailyMissionsWidget: React.FC = () => {
         setIsOpen(false);
       }
     };
-    if (isOpen) {
-      document.addEventListener('mousedown', handleClickOutside);
-    }
+    document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [isOpen]);
 
@@ -56,28 +63,28 @@ export const DailyMissionsWidget: React.FC = () => {
   return (
     <div ref={popoverRef} className="relative z-40">
       
-      {/* ── SIMPLE & CLEAN BUTTON "🎯 Миссии" UNDER LEVEL ── */}
+      {/* ── CARVED WOOD QUEST BOARD BUTTON ── */}
       <button
         onClick={() => {
           sounds.playClick();
           triggerTelegramHaptic('light');
           setIsOpen(prev => !prev);
         }}
-        className={`w-full flex items-center justify-between px-2.5 py-1.5 rounded-2xl border shadow-lg backdrop-blur-md transition-all active:scale-95 cursor-pointer text-xs font-black group ${
-          hasReadyToClaim
-            ? 'bg-gradient-to-r from-emerald-950 to-green-950 border-emerald-400 ring-2 ring-emerald-400/50 text-white animate-pulse'
-            : isDesign2026
-            ? 'bg-[#181C24]/90 border-[#283244] text-amber-300 hover:border-amber-400/40 hover:text-white'
-            : 'hud-parchment border-amber-800 text-[#3B1F0D]'
+        className={`game-badge-wood w-full flex items-center justify-between px-2 py-1 sm:py-1.5 active:scale-95 transition-all cursor-pointer ${
+          hasReadyToClaim ? 'ring-2 ring-emerald-400 animate-pulse' : ''
         }`}
-        title="Ежедневные миссии"
+        title="Ежедневные задания"
       >
         <div className="flex items-center gap-1.5">
-          <span className="text-xs">{hasReadyToClaim ? '🎁' : '🎯'}</span>
-          <span className="tracking-tight text-white/90">Миссии</span>
+          <ScrollSvg />
+          <span className="text-[10.5px] sm:text-xs font-black text-amber-100 game-text-shadow">
+            Задания
+          </span>
         </div>
-        <span className={`text-[9px] px-1.5 py-0.5 rounded-md font-black ${
-          hasReadyToClaim ? 'bg-emerald-500 text-white' : 'bg-white/10 text-white/70'
+        <span className={`text-[9px] px-1.5 py-0.2 rounded-full font-black ${
+          hasReadyToClaim
+            ? 'bg-emerald-500 text-white shadow'
+            : 'bg-black/40 text-amber-200 border border-amber-800'
         }`}>
           {completedCount}/3
         </span>
@@ -90,12 +97,12 @@ export const DailyMissionsWidget: React.FC = () => {
           {/* Header */}
           <div className="flex items-center justify-between border-b border-white/10 pb-2.5">
             <div className="flex items-center gap-2 min-w-0">
-              <div className="w-8 h-8 rounded-xl bg-emerald-500/20 border border-emerald-400/40 flex items-center justify-center text-base shrink-0">
-                🎯
+              <div className="w-8 h-8 rounded-xl bg-amber-500/20 border border-amber-400/40 flex items-center justify-center text-base shrink-0">
+                📜
               </div>
               <div className="flex flex-col min-w-0">
                 <span className="font-black text-xs sm:text-sm text-white flex items-center gap-1.5 truncate">
-                  <span>Миссии дня</span>
+                  <span>Задания дня</span>
                   <span className="text-[9px] px-1.5 py-0.2 rounded bg-amber-500/20 text-yellow-300 font-bold">
                     24ч
                   </span>

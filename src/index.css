@@ -151,21 +151,64 @@ body, html {
   border-radius: 9999px;
 }
 
-/* ── Continuous Smooth Infinite Marquee ── */
-@keyframes continuousMarquee {
-  0% { transform: translate3d(0, 0, 0); }
-  100% { transform: translate3d(-50%, 0, 0); }
+/* ── High-Production Casual Game HUD Styles (Hay Day / Supercell aesthetic) ── */
+.game-badge-wood {
+  background: linear-gradient(180deg, #2D1A0C 0%, #1B0F07 100%);
+  border: 1.5px solid #A16207;
+  border-radius: 16px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.75), inset 0 1px 1px rgba(254, 240, 138, 0.35), inset 0 -2px 0 rgba(0, 0, 0, 0.6);
+  position: relative;
 }
 
-.animate-market-marquee {
-  display: flex;
-  width: max-content;
-  animation: continuousMarquee 35s linear infinite;
-  will-change: transform;
+.game-badge-slot {
+  background: rgba(10, 5, 2, 0.65);
+  border: 1px solid rgba(161, 98, 7, 0.3);
+  border-radius: 10px;
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.8), 0 1px 0 rgba(255, 255, 255, 0.08);
 }
 
-.animate-market-marquee:hover {
-  animation-play-state: paused;
+.game-btn-plus {
+  background: linear-gradient(180deg, #22C55E 0%, #15803D 100%);
+  border: 1.5px solid #86EFAC;
+  border-radius: 9px;
+  box-shadow: 0 2.5px 0 #14532D, 0 4px 8px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.6);
+  transition: all 0.1s ease;
+  cursor: pointer;
 }
+.game-btn-plus:active {
+  transform: translateY(1.5px);
+  box-shadow: 0 1px 0 #14532D, 0 2px 4px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.4);
+}
+
+.game-level-star {
+  background: radial-gradient(circle at 35% 35%, #FDE047 0%, #EAB308 50%, #B45309 100%);
+  border: 1.5px solid #FEF08A;
+  border-radius: 8px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.65), inset 0 1px 1px rgba(255, 255, 255, 0.8);
+}
+
+.game-side-medal {
+  background: linear-gradient(180deg, #381E0D 0%, #1F0F06 100%);
+  border: 2px solid #D97706;
+  border-radius: 20px;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.8), inset 0 1px 1.5px rgba(254, 240, 138, 0.4), inset 0 -2px 0 rgba(0, 0, 0, 0.7);
+}
+
+.game-ribbon-tag {
+  background: linear-gradient(180deg, #EF4444 0%, #B91C1C 100%);
+  border: 1px solid #FCA5A5;
+  border-radius: 9999px;
+  box-shadow: 0 2px 6px rgba(185, 28, 28, 0.8), inset 0 1px 0 rgba(255, 255, 255, 0.6);
+}
+
+.game-text-shadow {
+  text-shadow: 0 1.5px 3px rgba(0, 0, 0, 0.9), 0 0 2px #000;
+}
+
+.game-text-gold {
+  color: #FEF08A;
+  text-shadow: 0 1.5px 3px #78350F, 0 0 2px #451A03;
+}
+
 
 
