@@ -137,7 +137,7 @@ export const VehicleGarageModal: React.FC = () => {
               </div>
 
               <div className="shrink-0 text-right">
-                <div className="px-2.5 py-1 rounded-xl bg-amber-500/15 border border-amber-500/30 text-amber-950 font-black text-xs">
+                <div className="px-2 py-1 rounded-xl bg-amber-500/15 border border-amber-500/30 text-amber-950 font-black text-[10px] sm:text-xs max-w-[170px] text-right">
                   {currentPreviewCfg.perkDescription}
                 </div>
               </div>
