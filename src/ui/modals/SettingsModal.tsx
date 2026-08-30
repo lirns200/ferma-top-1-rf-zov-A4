@@ -49,7 +49,7 @@ export const SettingsModal: React.FC = () => {
   };
 
   return (
-    <div className="fixed inset-0 pt-14 sm:pt-16 pb-20 sm:pb-24 z-40 flex flex-col bg-[#0F1115] text-white select-none animate-pop-in overflow-hidden font-sans">
+    <div className="fixed inset-0 pt-14 sm:pt-16 pb-20 sm:pb-24 z-40 flex flex-col game-screen-bg text-amber-100 select-none animate-pop-in overflow-hidden font-sans">
       
       {/* ── SCROLLABLE TELEGRAM PROFILE CONTENT ── */}
       <div className="flex-1 overflow-y-auto px-4 py-4 sm:px-6">
@@ -58,7 +58,7 @@ export const SettingsModal: React.FC = () => {
           {/* ── 1. AVATAR WITH ONLINE BADGE ── */}
           <div className="flex flex-col items-center gap-2 mt-2">
             <div className="relative">
-              <div className="w-24 h-24 sm:w-28 sm:h-28 rounded-full overflow-hidden border-2 border-[#242A35] shadow-2xl bg-gradient-to-tr from-amber-500 to-orange-600 flex items-center justify-center">
+              <div className="w-24 h-24 sm:w-28 sm:h-28 rounded-full overflow-hidden border-3 border-amber-400 shadow-2xl bg-gradient-to-tr from-amber-600 to-yellow-500 flex items-center justify-center">
                 {profile.photoUrl ? (
                   <img
                     src={profile.photoUrl}
@@ -73,26 +73,26 @@ export const SettingsModal: React.FC = () => {
                 )}
               </div>
               {/* Green Online Dot */}
-              <div className="absolute bottom-1 right-1 w-5 h-5 bg-[#22C55E] border-3 border-[#0F1115] rounded-full shadow" />
+              <div className="absolute bottom-1 right-1 w-5 h-5 bg-[#22C55E] border-2 border-black rounded-full shadow" />
             </div>
 
             {/* Display Name */}
-            <h1 className="text-2xl sm:text-3xl font-black tracking-wide text-white">
+            <h1 className="text-2xl sm:text-3xl font-black tracking-wide text-yellow-300 game-text-gold">
               {profile.name}
             </h1>
 
             {/* Username / Handle */}
-            <span className="text-sm font-medium text-[#8E939D]">
+            <span className="text-sm font-bold text-amber-200/80">
               {profile.username}
             </span>
 
             {/* Connected Telegram Pill */}
-            <div className="flex items-center gap-1.5 text-xs font-semibold text-[#8E939D] mt-0.5">
+            <div className="flex items-center gap-1.5 text-xs font-bold text-amber-300/80 mt-0.5">
               <span className="text-blue-400">✈️</span>
               <span>Аккаунт Telegram</span>
-              <span className="text-zinc-600">•</span>
-              <span className="text-[#22C55E] flex items-center gap-1">
-                <span className="w-2 h-2 rounded-full bg-[#22C55E] inline-block animate-pulse" />
+              <span className="text-amber-600">•</span>
+              <span className="text-emerald-400 flex items-center gap-1">
+                <span className="w-2 h-2 rounded-full bg-emerald-400 inline-block animate-pulse" />
                 Подключено
               </span>
             </div>
@@ -100,64 +100,64 @@ export const SettingsModal: React.FC = () => {
 
           {/* ── 2. SECTION: АККАУНТ ── */}
           <div className="w-full flex flex-col gap-1.5">
-            <span className="text-[11px] font-bold text-[#8E939D] uppercase tracking-wider px-2">
+            <span className="text-[11px] font-black text-yellow-300 uppercase tracking-wider px-2 game-text-gold">
               Аккаунт
             </span>
 
-            <div className="w-full bg-[#181C24] border border-[#242A35] rounded-2xl overflow-hidden shadow-lg flex flex-col">
+            <div className="w-full game-card border border-amber-700/60 rounded-2xl overflow-hidden shadow-lg flex flex-col">
               
               {/* Row 1: Имя */}
-              <div className="flex items-center gap-3.5 p-3.5 border-b border-[#242A35]/60">
-                <div className="w-9 h-9 rounded-xl bg-[#242A35] flex items-center justify-center text-[#8E939D]">
+              <div className="flex items-center gap-3.5 p-3.5 border-b border-amber-900/40">
+                <div className="w-9 h-9 rounded-xl bg-black/40 border border-amber-700/50 flex items-center justify-center text-amber-300">
                   <User size={18} />
                 </div>
                 <div className="flex flex-col flex-1">
-                  <span className="text-xs text-[#8E939D]">Имя</span>
-                  <span className="text-sm font-bold text-white">{profile.name}</span>
+                  <span className="text-xs text-amber-300/70">Имя</span>
+                  <span className="text-sm font-bold text-amber-100">{profile.name}</span>
                 </div>
               </div>
 
               {/* Row 2: Почта */}
-              <div className="flex items-center justify-between p-3.5 border-b border-[#242A35]/60">
+              <div className="flex items-center justify-between p-3.5 border-b border-amber-900/40">
                 <div className="flex items-center gap-3.5">
-                  <div className="w-9 h-9 rounded-xl bg-[#242A35] flex items-center justify-center text-[#8E939D]">
+                  <div className="w-9 h-9 rounded-xl bg-black/40 border border-amber-700/50 flex items-center justify-center text-amber-300">
                     <Mail size={18} />
                   </div>
                   <div className="flex flex-col">
-                    <span className="text-xs text-[#8E939D]">Почта</span>
-                    <span className="text-sm font-medium text-[#8E939D]">Не подключена</span>
+                    <span className="text-xs text-amber-300/70">Почта</span>
+                    <span className="text-sm font-medium text-amber-300/50">Не подключена</span>
                   </div>
                 </div>
-                <span className="text-xs text-[#8E939D] pr-2">Нет</span>
+                <span className="text-xs text-amber-300/50 pr-2">Нет</span>
               </div>
 
               {/* Row 3: С нами с */}
-              <div className="flex items-center gap-3.5 p-3.5 border-b border-[#242A35]/60">
-                <div className="w-9 h-9 rounded-xl bg-[#242A35] flex items-center justify-center text-[#8E939D]">
+              <div className="flex items-center gap-3.5 p-3.5 border-b border-amber-900/40">
+                <div className="w-9 h-9 rounded-xl bg-black/40 border border-amber-700/50 flex items-center justify-center text-amber-300">
                   <Calendar size={18} />
                 </div>
                 <div className="flex flex-col">
-                  <span className="text-xs text-[#8E939D]">С нами с</span>
-                  <span className="text-sm font-medium text-white">{profile.joinedDate}</span>
+                  <span className="text-xs text-amber-300/70">С нами с</span>
+                  <span className="text-sm font-bold text-amber-100">{profile.joinedDate}</span>
                 </div>
               </div>
 
               {/* Row 4: Telegram ID */}
               <div 
                 onClick={handleCopyId}
-                className="flex items-center justify-between p-3.5 cursor-pointer hover:bg-[#202530] transition-colors"
+                className="flex items-center justify-between p-3.5 cursor-pointer hover:bg-black/30 transition-colors"
               >
                 <div className="flex items-center gap-3.5">
-                  <div className="w-9 h-9 rounded-xl bg-[#242A35] flex items-center justify-center text-[#8E939D]">
+                  <div className="w-9 h-9 rounded-xl bg-black/40 border border-amber-700/50 flex items-center justify-center text-amber-300">
                     <Key size={18} />
                   </div>
                   <div className="flex flex-col">
-                    <span className="text-xs text-[#8E939D]">Telegram ID</span>
-                    <span className="text-sm font-mono font-bold text-white">{profile.id}</span>
+                    <span className="text-xs text-amber-300/70">Telegram ID</span>
+                    <span className="text-sm font-mono font-bold text-amber-200">{profile.id}</span>
                   </div>
                 </div>
-                <button className="text-xs text-[#8E939D] flex items-center gap-1 hover:text-white px-2 py-1 bg-[#242A35] rounded-lg">
-                  {copiedId ? <Check size={14} className="text-green-400" /> : <Copy size={14} />}
+                <button className="text-xs text-amber-200 flex items-center gap-1 hover:text-white px-2.5 py-1 bg-black/40 border border-amber-700/60 rounded-lg cursor-pointer">
+                  {copiedId ? <Check size={14} className="text-emerald-400" /> : <Copy size={14} />}
                   <span>{copiedId ? 'Скопировано' : 'Копировать'}</span>
                 </button>
               </div>
@@ -165,107 +165,47 @@ export const SettingsModal: React.FC = () => {
             </div>
           </div>
 
-          {/* ── 3. SECTION: ВХОД ПО ПОЧТЕ ── */}
+          {/* ── 3. SECTION: ФЕРМА И ДОСТИЖЕНИЯ ── */}
           <div className="w-full flex flex-col gap-1.5">
-            <span className="text-[11px] font-bold text-[#8E939D] uppercase tracking-wider px-2">
-              Вход по почте
-            </span>
-
-            <div className="w-full bg-[#181C24] border border-[#242A35] rounded-2xl p-3.5 shadow-lg flex items-center justify-between gap-3">
-              <div className="flex items-center gap-3.5 flex-1 min-w-0">
-                <div className="w-9 h-9 rounded-xl bg-[#242A35] flex items-center justify-center text-[#8E939D] shrink-0">
-                  <Mail size={18} />
-                </div>
-                <div className="flex flex-col min-w-0">
-                  <span className="text-sm font-bold text-white leading-tight">Почта не подключена</span>
-                  <span className="text-xs text-[#8E939D] truncate">Входите без Telegram по коду из пись...</span>
-                </div>
-              </div>
-
-              <button
-                onClick={() => {
-                  sounds.playClick();
-                  triggerTelegramHaptic('light');
-                  alert('Функция привязки почты будет доступна в следующем обновлении!');
-                }}
-                className="px-3.5 py-2 rounded-xl bg-[#242A35] hover:bg-[#2E3644] border border-[#353D4C] text-white text-xs font-bold shrink-0 transition-all active:scale-95 cursor-pointer"
-              >
-                Подключить
-              </button>
-            </div>
-          </div>
-
-          {/* ── 4. SECTION: ФЕРМА И ДОСТИЖЕНИЯ ── */}
-          <div className="w-full flex flex-col gap-1.5">
-            <span className="text-[11px] font-bold text-[#8E939D] uppercase tracking-wider px-2">
+            <span className="text-[11px] font-black text-yellow-300 uppercase tracking-wider px-2 game-text-gold">
               Ферма и Достижения
             </span>
 
-            <div className="w-full bg-[#181C24] border border-[#242A35] rounded-2xl p-4 shadow-lg grid grid-cols-2 sm:grid-cols-4 gap-2.5">
-              <div className="bg-[#242A35]/60 p-2.5 rounded-xl border border-[#353D4C]/40 flex flex-col">
-                <span className="text-[10px] text-[#8E939D]">Уровень</span>
-                <span className="text-base font-black text-yellow-400">⭐ {level}</span>
+            <div className="w-full game-card border border-amber-700/60 rounded-2xl p-4 shadow-lg grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+              <div className="game-badge-wood p-2.5 rounded-xl border border-amber-600/60 flex flex-col">
+                <span className="text-[10px] text-amber-300/80 font-bold">Уровень</span>
+                <span className="text-base font-black text-yellow-300 game-text-gold">⭐ {level}</span>
               </div>
-              <div className="bg-[#242A35]/60 p-2.5 rounded-xl border border-[#353D4C]/40 flex flex-col">
-                <span className="text-[10px] text-[#8E939D]">Грядок</span>
-                <span className="text-base font-black text-green-400">🌾 {fieldsCount}</span>
+              <div className="game-badge-wood p-2.5 rounded-xl border border-amber-600/60 flex flex-col">
+                <span className="text-[10px] text-amber-300/80 font-bold">Грядок</span>
+                <span className="text-base font-black text-emerald-300 game-text-shadow">🌾 {fieldsCount}</span>
               </div>
-              <div className="bg-[#242A35]/60 p-2.5 rounded-xl border border-[#353D4C]/40 flex flex-col">
-                <span className="text-[10px] text-[#8E939D]">Заводов</span>
-                <span className="text-base font-black text-amber-400">🏭 {buildingsCount}</span>
+              <div className="game-badge-wood p-2.5 rounded-xl border border-amber-600/60 flex flex-col">
+                <span className="text-[10px] text-amber-300/80 font-bold">Заводов</span>
+                <span className="text-base font-black text-amber-300 game-text-shadow">🏭 {buildingsCount}</span>
               </div>
-              <div className="bg-[#242A35]/60 p-2.5 rounded-xl border border-[#353D4C]/40 flex flex-col">
-                <span className="text-[10px] text-[#8E939D]">Вылов рыбы</span>
-                <span className="text-base font-black text-cyan-400">🐟 {fishingStats.fishCaughtCount}</span>
+              <div className="game-badge-wood p-2.5 rounded-xl border border-amber-600/60 flex flex-col">
+                <span className="text-[10px] text-amber-300/80 font-bold">Вылов рыбы</span>
+                <span className="text-base font-black text-sky-300 game-text-shadow">🐟 {fishingStats.fishCaughtCount}</span>
               </div>
             </div>
           </div>
 
-          {/* ── 5. SECTION: НАСТРОЙКИ ── */}
+          {/* ── 4. SECTION: НАСТРОЙКИ ── */}
           <div className="w-full flex flex-col gap-1.5">
-            <span className="text-[11px] font-bold text-[#8E939D] uppercase tracking-wider px-2">
-              Настройки
+            <span className="text-[11px] font-black text-yellow-300 uppercase tracking-wider px-2 game-text-gold">
+              Настройки игры
             </span>
 
-            <div className="w-full bg-[#181C24] border border-[#242A35] rounded-2xl overflow-hidden shadow-lg flex flex-col">
+            <div className="w-full game-card border border-amber-700/60 rounded-2xl overflow-hidden shadow-lg flex flex-col">
               
-              {/* 🔮 Дизайн 2026 (iOS 26 Стекло & Прозрачный фон) */}
-              <div className="flex items-center justify-between p-3.5 border-b border-[#242A35]/60 bg-gradient-to-r from-blue-950/30 to-purple-950/30">
-                <div className="flex items-center gap-3">
-                  <div className="w-9 h-9 rounded-xl bg-purple-900/60 border border-purple-500/50 flex items-center justify-center text-purple-300 text-lg shadow">
-                    🔮
-                  </div>
-                  <div className="flex flex-col">
-                    <span className="text-sm font-bold text-white flex items-center gap-1.5">
-                      <span>Дизайн 2026 (iOS Стекло)</span>
-                      <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-purple-500 text-black font-black uppercase">Новинка</span>
-                    </span>
-                    <span className="text-[11px] text-[#8E939D]">Овальное парящее стекло и прозрачный док</span>
-                  </div>
-                </div>
-                <button
-                  onClick={() => {
-                    sounds.playClick();
-                    triggerTelegramHaptic('medium');
-                    useGameStore.getState().toggleDesign2026();
-                  }}
-                  className={`px-3.5 py-1.5 rounded-xl text-xs font-black transition-all cursor-pointer shadow ${
-                    useGameStore.getState().isDesign2026
-                      ? 'bg-gradient-to-r from-purple-500 to-indigo-500 text-white border border-purple-300 shadow-lg scale-105'
-                      : 'bg-[#242A35] text-[#8E939D]'
-                  }`}
-                >
-                  {useGameStore.getState().isDesign2026 ? 'ВКЛ' : 'ВЫКЛ'}
-                </button>
-              </div>
-
               {/* Sound Setting */}
-              <div className="flex items-center justify-between p-3.5 border-b border-[#242A35]/60">
+              <div className="flex items-center justify-between p-3.5 border-b border-amber-900/40">
                 <div className="flex items-center gap-3">
-                  <div className="w-9 h-9 rounded-xl bg-[#242A35] flex items-center justify-center text-amber-400">
+                  <div className="w-9 h-9 rounded-xl bg-black/40 border border-amber-700/50 flex items-center justify-center text-amber-400">
                     {soundMuted ? <VolumeX size={18} /> : <Volume2 size={18} />}
                   </div>
-                  <span className="text-sm font-semibold text-white">Звуки и музыка</span>
+                  <span className="text-sm font-bold text-amber-100">Звуки и музыка</span>
                 </div>
                 <button
                   onClick={() => {
@@ -274,7 +214,7 @@ export const SettingsModal: React.FC = () => {
                     setSoundMuted(!soundMuted);
                   }}
                   className={`px-3.5 py-1.5 rounded-xl text-xs font-black transition-all cursor-pointer ${
-                    soundMuted ? 'bg-[#242A35] text-[#8E939D]' : 'bg-[#22C55E] text-black shadow'
+                    soundMuted ? 'bg-black/50 text-amber-500/50 border border-amber-900/50' : 'game-btn-plus text-white'
                   }`}
                 >
                   {soundMuted ? 'ВЫКЛ' : 'ВКЛ'}
@@ -282,14 +222,14 @@ export const SettingsModal: React.FC = () => {
               </div>
 
               {/* ☁️ Облака на небе и тени */}
-              <div className="flex items-center justify-between p-3.5 border-b border-[#242A35]/60">
+              <div className="flex items-center justify-between p-3.5 border-b border-amber-900/40">
                 <div className="flex items-center gap-3">
                   <div className="w-9 h-9 rounded-xl bg-sky-900/60 border border-sky-500/40 flex items-center justify-center text-sky-300 text-lg shadow">
                     ☁️
                   </div>
                   <div className="flex flex-col">
-                    <span className="text-sm font-semibold text-white">3D Облака и тени</span>
-                    <span className="text-[11px] text-[#8E939D]">Плавающие облака в небе и тени на земле</span>
+                    <span className="text-sm font-bold text-amber-100">3D Облака и тени</span>
+                    <span className="text-[11px] text-amber-200/60">Плавающие облака в небе и тени на земле</span>
                   </div>
                 </div>
                 <button
@@ -298,10 +238,10 @@ export const SettingsModal: React.FC = () => {
                     triggerTelegramHaptic('medium');
                     useGameStore.getState().toggleClouds();
                   }}
-                  className={`px-3.5 py-1.5 rounded-xl text-xs font-black transition-all cursor-pointer shadow ${
+                  className={`px-3.5 py-1.5 rounded-xl text-xs font-black transition-all cursor-pointer ${
                     useGameStore.getState().showClouds
-                      ? 'bg-[#22C55E] text-black shadow'
-                      : 'bg-[#242A35] text-[#8E939D]'
+                      ? 'game-btn-plus text-white'
+                      : 'bg-black/50 text-amber-500/50 border border-amber-900/50'
                   }`}
                 >
                   {useGameStore.getState().showClouds ? 'ВКЛ' : 'ВЫКЛ'}
@@ -309,12 +249,12 @@ export const SettingsModal: React.FC = () => {
               </div>
 
               {/* Haptic Setting */}
-              <div className="flex items-center justify-between p-3.5 border-b border-[#242A35]/60">
+              <div className="flex items-center justify-between p-3.5 border-b border-amber-900/40">
                 <div className="flex items-center gap-3">
-                  <div className="w-9 h-9 rounded-xl bg-[#242A35] flex items-center justify-center text-blue-400">
+                  <div className="w-9 h-9 rounded-xl bg-black/40 border border-amber-700/50 flex items-center justify-center text-sky-400">
                     <Vibrate size={18} />
                   </div>
-                  <span className="text-sm font-semibold text-white">Вибрация Telegram</span>
+                  <span className="text-sm font-bold text-amber-100">Вибрация Telegram</span>
                 </div>
                 <button
                   onClick={() => {
@@ -323,7 +263,7 @@ export const SettingsModal: React.FC = () => {
                     setHapticsEnabled(!hapticsEnabled);
                   }}
                   className={`px-3.5 py-1.5 rounded-xl text-xs font-black transition-all cursor-pointer ${
-                    !hapticsEnabled ? 'bg-[#242A35] text-[#8E939D]' : 'bg-[#22C55E] text-black shadow'
+                    !hapticsEnabled ? 'bg-black/50 text-amber-500/50 border border-amber-900/50' : 'game-btn-plus text-white'
                   }`}
                 >
                   {hapticsEnabled ? 'ВКЛ' : 'ВЫКЛ'}
@@ -333,23 +273,23 @@ export const SettingsModal: React.FC = () => {
               {/* Save Game */}
               <div 
                 onClick={handleSave}
-                className="flex items-center justify-between p-3.5 border-b border-[#242A35]/60 hover:bg-[#202530] transition-colors cursor-pointer"
+                className="flex items-center justify-between p-3.5 border-b border-amber-900/40 hover:bg-black/30 transition-colors cursor-pointer"
               >
                 <div className="flex items-center gap-3">
-                  <div className="w-9 h-9 rounded-xl bg-[#242A35] flex items-center justify-center text-emerald-400">
+                  <div className="w-9 h-9 rounded-xl bg-black/40 border border-amber-700/50 flex items-center justify-center text-emerald-400">
                     <Save size={18} />
                   </div>
                   <div className="flex flex-col">
-                    <span className="text-sm font-semibold text-white">Сохранить прогресс</span>
-                    <span className="text-[11px] text-[#8E939D]">Синхронизация с Telegram Cloud</span>
+                    <span className="text-sm font-bold text-amber-100">Сохранить прогресс</span>
+                    <span className="text-[11px] text-amber-200/60">Синхронизация с Telegram Cloud</span>
                   </div>
                 </div>
                 {saveSuccess ? (
-                  <span className="text-xs text-green-400 font-bold flex items-center gap-1">
+                  <span className="text-xs text-emerald-400 font-bold flex items-center gap-1">
                     <Check size={14} /> Сохранено
                   </span>
                 ) : (
-                  <span className="text-xs text-[#8E939D] px-2 py-1 bg-[#242A35] rounded-lg">
+                  <span className="text-xs text-yellow-300 font-bold px-2.5 py-1 game-btn-gold rounded-lg">
                     Сохранить
                   </span>
                 )}
@@ -363,12 +303,12 @@ export const SettingsModal: React.FC = () => {
                   useGameStore.getState().restartTutorial();
                   closeModal();
                 }}
-                className="flex items-center gap-3 p-3.5 border-b border-[#242A35]/60 hover:bg-[#202530] transition-colors cursor-pointer text-amber-200"
+                className="flex items-center gap-3 p-3.5 border-b border-amber-900/40 hover:bg-black/30 transition-colors cursor-pointer text-amber-200"
               >
-                <div className="w-9 h-9 rounded-xl bg-[#242A35] flex items-center justify-center text-lg">
+                <div className="w-9 h-9 rounded-xl bg-black/40 border border-amber-700/50 flex items-center justify-center text-lg">
                   👨‍🌾
                 </div>
-                <span className="text-sm font-semibold">Пройти обучение заново</span>
+                <span className="text-sm font-bold">Пройти обучение заново</span>
               </div>
 
               {/* Reset Farm */}
@@ -380,12 +320,12 @@ export const SettingsModal: React.FC = () => {
                     closeModal();
                   }
                 }}
-                className="flex items-center gap-3 p-3.5 hover:bg-red-950/40 transition-colors cursor-pointer text-red-400"
+                className="flex items-center gap-3 p-3.5 hover:bg-red-950/40 transition-colors cursor-pointer text-rose-400"
               >
                 <div className="w-9 h-9 rounded-xl bg-red-950/60 border border-red-800/60 flex items-center justify-center">
                   <RotateCcw size={16} />
                 </div>
-                <span className="text-sm font-semibold">Сбросить ферму и начать сначала</span>
+                <span className="text-sm font-bold">Сбросить ферму и начать сначала</span>
               </div>
 
             </div>

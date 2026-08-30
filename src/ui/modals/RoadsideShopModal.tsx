@@ -381,10 +381,6 @@ export const RoadsideShopModal: React.FC = () => {
       coins: state.coins + order.totalPrice,
       inventory: {
         ...state.inventory,
-        [order.itemId]: Math.max(0, (state.inventory[order.itemId] || 0) - order.count),
-      },
-    }));
-
     // Remove fulfilled order
     setBuyOrdersList(prev => prev.filter(o => o.id !== order.id));
 
@@ -409,29 +405,25 @@ export const RoadsideShopModal: React.FC = () => {
   if (activeModal !== 'roadside' && activeModal !== 'market') return null;
 
   return (
-    <div className={`fixed inset-0 pt-12 sm:pt-14 pb-16 sm:pb-20 z-40 flex flex-col select-none animate-pop-in overflow-hidden transition-colors ${
-      isDesign2026 ? 'bg-[#0F1115] text-white' : 'bg-[#2A1406] text-[#3B1F0D]'
-    }`}>
+    <div className="fixed inset-0 pt-12 sm:pt-14 pb-16 sm:pb-20 z-40 flex flex-col select-none animate-pop-in overflow-hidden game-screen-bg text-amber-100">
       
       {/* ── TOP MARKET HEADER ── */}
-      <div className={`px-2.5 sm:px-6 py-2 sm:py-3 flex flex-col gap-2 sm:gap-2.5 border-b shrink-0 ${
-        isDesign2026 ? 'bg-[#181C24] border-[#242A35]' : 'bg-[#3D2008] border-[#5C3718]'
-      }`}>
+      <div className="px-2.5 sm:px-6 py-2.5 sm:py-3 flex flex-col gap-2 sm:gap-2.5 game-screen-header shrink-0">
         <div className="flex items-center justify-between gap-2">
           
           {/* Market Title Badge */}
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-gradient-to-tr from-sky-500 to-indigo-600 flex items-center justify-center text-base sm:text-lg shadow-md border border-sky-400/40">
+            <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl game-side-medal flex items-center justify-center text-base sm:text-lg shadow-md">
               🏪
             </div>
             <div className="flex flex-col">
-              <span className="font-black text-xs sm:text-base tracking-wide flex items-center gap-1.5">
+              <span className="font-black text-xs sm:text-base tracking-wide flex items-center gap-1.5 text-yellow-300 game-text-gold">
                 <span>Рынок Долины</span>
-                <span className="text-[9px] sm:text-[10px] px-1.5 py-0.5 rounded-md bg-sky-500/20 text-sky-300 font-bold border border-sky-400/30">
+                <span className="text-[8.5px] sm:text-[9px] px-1.5 py-0.2 rounded-full game-ribbon-tag text-white font-black">
                   Онлайн
                 </span>
               </span>
-              <span className={`text-[10px] sm:text-[11px] font-semibold ${isDesign2026 ? 'text-[#8E939D]' : 'text-amber-200'}`}>
+              <span className="text-[10px] sm:text-[11px] font-bold text-amber-200/80">
                 Торговая площадка между игроками
               </span>
             </div>
@@ -439,7 +431,7 @@ export const RoadsideShopModal: React.FC = () => {
 
         </div>
 
-        {/* ── MARKET NAVIGATION TABS (MODERN SQUARISH BUTTONS) ── */}
+        {/* ── MARKET NAVIGATION TABS ── */}
         <div className="flex items-center gap-1.5 sm:gap-2 overflow-x-auto pb-0.5 scrollbar-none">
           
           {/* Tab 1: Торговая площадка */}
@@ -450,14 +442,8 @@ export const RoadsideShopModal: React.FC = () => {
               setActiveTab('browse');
               setSelectedItemId(null);
             }}
-            className={`flex items-center gap-1.5 px-3 py-1.5 sm:px-4 sm:py-2 rounded-xl text-[11px] sm:text-xs font-black transition-all cursor-pointer shrink-0 border ${
-              activeTab === 'browse'
-                ? isDesign2026
-                  ? 'bg-sky-600 text-white shadow-lg border-sky-400 scale-[1.02]'
-                  : 'bg-amber-400 text-[#3B1F0D] shadow-lg border-amber-200 scale-[1.02]'
-                : isDesign2026
-                ? 'bg-[#242A35] text-[#8E939D] border-[#353D4C] hover:text-white hover:bg-[#2D3543]'
-                : 'bg-[#2A1406]/80 text-amber-200 border-amber-900 hover:bg-[#2A1406]'
+            className={`flex items-center gap-1.5 px-3 py-1.5 sm:px-4 sm:py-2 rounded-xl text-[11px] sm:text-xs font-black transition-all cursor-pointer shrink-0 ${
+              activeTab === 'browse' ? 'game-tab-btn-active' : 'game-tab-btn'
             }`}
           >
             <ShoppingBag size={14} />
@@ -472,14 +458,8 @@ export const RoadsideShopModal: React.FC = () => {
               setActiveTab('sell');
               setSelectedItemId(null);
             }}
-            className={`flex items-center gap-1.5 px-3 py-1.5 sm:px-4 sm:py-2 rounded-xl text-[11px] sm:text-xs font-black transition-all cursor-pointer shrink-0 border ${
-              activeTab === 'sell'
-                ? isDesign2026
-                  ? 'bg-emerald-600 text-white shadow-lg border-emerald-400 scale-[1.02]'
-                  : 'bg-emerald-500 text-white shadow-lg border-emerald-300 scale-[1.02]'
-                : isDesign2026
-                ? 'bg-[#242A35] text-[#8E939D] border-[#353D4C] hover:text-white hover:bg-[#2D3543]'
-                : 'bg-[#2A1406]/80 text-amber-200 border-amber-900 hover:bg-[#2A1406]'
+            className={`flex items-center gap-1.5 px-3 py-1.5 sm:px-4 sm:py-2 rounded-xl text-[11px] sm:text-xs font-black transition-all cursor-pointer shrink-0 ${
+              activeTab === 'sell' ? 'game-tab-btn-active' : 'game-tab-btn'
             }`}
           >
             <Plus size={14} />
@@ -494,14 +474,8 @@ export const RoadsideShopModal: React.FC = () => {
               setActiveTab('my_listings');
               setSelectedItemId(null);
             }}
-            className={`flex items-center gap-1.5 px-3 py-1.5 sm:px-4 sm:py-2 rounded-xl text-[11px] sm:text-xs font-black transition-all cursor-pointer shrink-0 relative border ${
-              activeTab === 'my_listings'
-                ? isDesign2026
-                  ? 'bg-purple-600 text-white shadow-lg border-purple-400 scale-[1.02]'
-                  : 'bg-amber-500 text-white shadow-lg border-amber-300 scale-[1.02]'
-                : isDesign2026
-                ? 'bg-[#242A35] text-[#8E939D] border-[#353D4C] hover:text-white hover:bg-[#2D3543]'
-                : 'bg-[#2A1406]/80 text-amber-200 border-amber-900 hover:bg-[#2A1406]'
+            className={`flex items-center gap-1.5 px-3 py-1.5 sm:px-4 sm:py-2 rounded-xl text-[11px] sm:text-xs font-black transition-all cursor-pointer shrink-0 relative ${
+              activeTab === 'my_listings' ? 'game-tab-btn-active' : 'game-tab-btn'
             }`}
           >
             <Tag size={14} />
@@ -519,11 +493,6 @@ export const RoadsideShopModal: React.FC = () => {
               setActiveTab('history');
               setSelectedItemId(null);
             }}
-            className={`flex items-center gap-1.5 px-3 py-1.5 sm:px-4 sm:py-2 rounded-xl text-[11px] sm:text-xs font-black transition-all cursor-pointer shrink-0 border ${
-              activeTab === 'history'
-                ? isDesign2026
-                  ? 'bg-amber-600 text-white shadow-lg border-amber-400 scale-[1.02]'
-                  : 'bg-amber-600 text-white shadow-lg border-amber-400 scale-[1.02]'
                 : isDesign2026
                 ? 'bg-[#242A35] text-[#8E939D] border-[#353D4C] hover:text-white hover:bg-[#2D3543]'
                 : 'bg-[#2A1406]/80 text-amber-200 border-amber-900 hover:bg-[#2A1406]'

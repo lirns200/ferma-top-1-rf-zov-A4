@@ -155,19 +155,15 @@ export const BuildShopModal: React.FC = () => {
   };
 
   return (
-    <div className={`fixed inset-0 pt-12 sm:pt-14 pb-16 sm:pb-20 z-40 flex flex-col select-none animate-pop-in overflow-hidden transition-colors ${
-      isDesign2026 ? 'bg-[#0F1115] text-white' : 'bg-[#2A1406] text-[#3B1F0D]'
-    }`}>
+    <div className="fixed inset-0 pt-12 sm:pt-14 pb-16 sm:pb-20 z-40 flex flex-col select-none animate-pop-in overflow-hidden game-screen-bg text-amber-100">
       
       {/* ── TOP HEADER ── */}
-      <div className={`px-3.5 sm:px-6 py-2 sm:py-2.5 flex items-center justify-between border-b shrink-0 ${
-        isDesign2026 ? 'bg-[#181C24] border-[#242A35]' : 'bg-[#3D2008] border-[#5C3718]'
-      }`}>
+      <div className="px-3.5 sm:px-6 py-2.5 sm:py-3 flex items-center justify-between game-screen-header shrink-0">
         <div className="flex items-center gap-2">
-          <div className="w-7 h-7 rounded-lg bg-amber-500/20 border border-amber-500/40 flex items-center justify-center text-sm shadow">
+          <div className="w-8 h-8 rounded-xl game-side-medal flex items-center justify-center text-base shadow">
             🎪
           </div>
-          <span className="font-extrabold text-xs sm:text-sm tracking-wide uppercase">
+          <span className="font-black text-xs sm:text-sm tracking-wide uppercase text-yellow-300 game-text-gold">
             Магазин Доната и Банк
           </span>
         </div>
@@ -183,14 +179,10 @@ export const BuildShopModal: React.FC = () => {
           <div className="relative">
             <div
               key={currentPromo.id}
-              className={`p-3 sm:p-5 rounded-2xl border shadow-2xl flex flex-col justify-between relative transition-all duration-300 ${
-                isDesign2026
-                  ? 'bg-[#181C24] border-amber-400/60 shadow-amber-950/30 text-white'
-                  : 'hud-parchment border-amber-600 text-[#3B1F0D]'
-              }`}
+              className="p-3.5 sm:p-5 rounded-2xl game-card border-2 border-amber-500/80 shadow-2xl flex flex-col justify-between relative transition-all duration-300"
             >
               {/* Promo Badge */}
-              <div className={`absolute top-2.5 right-2.5 px-2 py-0.5 rounded-full text-white text-[9px] sm:text-[10px] font-black uppercase tracking-wider shadow ${currentPromo.badgeColor}`}>
+              <div className={`absolute top-2.5 right-2.5 px-2.5 py-0.5 rounded-full text-white text-[9px] sm:text-[10px] font-black uppercase tracking-wider shadow ${currentPromo.badgeColor}`}>
                 {currentPromo.badge}
               </div>
 
@@ -200,15 +192,15 @@ export const BuildShopModal: React.FC = () => {
                   <Building3DThumbnail buildingId={currentPromo.modelId} size={72} />
                 </div>
                 <div className="flex flex-col">
-                  <h3 className="font-black text-sm sm:text-lg mb-0.5 leading-tight">{currentPromo.title}</h3>
-                  <p className={`text-[11px] sm:text-xs leading-relaxed ${isDesign2026 ? 'text-[#8E939D]' : 'text-[#5C3718]'}`}>
+                  <h3 className="font-black text-sm sm:text-lg mb-0.5 leading-tight text-yellow-300 game-text-gold">{currentPromo.title}</h3>
+                  <p className="text-[11px] sm:text-xs leading-relaxed text-amber-200/80 font-medium">
                     {currentPromo.desc}
                   </p>
                 </div>
               </div>
 
               {/* Perks with Vector Icons */}
-              <div className="flex flex-col gap-1.5 my-3 bg-black/25 p-3 rounded-xl text-xs font-bold border border-white/5">
+              <div className="flex flex-col gap-1.5 my-3 game-badge-slot p-3 rounded-xl text-xs font-bold">
                 {currentPromo.perks.map((perk, i) => (
                   <div key={i} className="flex items-center gap-2">
                     {perk.type === 'coins' && <CoinSvg />}
@@ -216,7 +208,7 @@ export const BuildShopModal: React.FC = () => {
                     {perk.type === 'wood' && <WoodSvg />}
                     {perk.type === 'vip' && <Crown size={14} className="text-amber-400" />}
                     <span className={
-                      perk.type === 'coins' ? 'text-amber-300' : perk.type === 'energy' ? 'text-sky-300' : 'text-emerald-300'
+                      perk.type === 'coins' ? 'text-amber-300 font-extrabold' : perk.type === 'energy' ? 'text-sky-300 font-extrabold' : 'text-emerald-300 font-extrabold'
                     }>
                       {perk.text}
                     </span>
@@ -227,7 +219,7 @@ export const BuildShopModal: React.FC = () => {
               {/* Buy Action Button */}
               <button
                 onClick={() => handlePurchase(currentPromo.title, currentPromo.coins, currentPromo.energy, currentPromo.stars)}
-                className="w-full py-3 rounded-xl bg-gradient-to-r from-amber-500 to-yellow-400 hover:from-amber-400 hover:to-yellow-300 text-amber-950 font-black text-xs sm:text-sm shadow-xl flex items-center justify-center gap-1.5 transition-transform active:scale-95 cursor-pointer"
+                className="w-full py-3 game-btn-gold text-xs sm:text-sm flex items-center justify-center gap-1.5 transition-transform active:scale-95 cursor-pointer shadow-lg"
               >
                 <Star size={15} className="fill-amber-950" />
                 <span>Купить за {currentPromo.stars} ⭐ ({currentPromo.rub})</span>
@@ -241,7 +233,7 @@ export const BuildShopModal: React.FC = () => {
                   sounds.playClick();
                   setActivePromoIndex(prev => (prev - 1 + PROMO_DEALS.length) % PROMO_DEALS.length);
                 }}
-                className="w-7 h-7 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center text-xs transition-colors cursor-pointer"
+                className="w-7 h-7 rounded-full game-dock-btn text-amber-200 hover:text-white flex items-center justify-center text-xs transition-colors cursor-pointer"
               >
                 <ChevronLeft size={16} />
               </button>
@@ -257,8 +249,8 @@ export const BuildShopModal: React.FC = () => {
                     }}
                     className={`h-2 rounded-full transition-all duration-300 cursor-pointer ${
                       activePromoIndex === idx
-                        ? 'w-6 bg-amber-400'
-                        : 'w-2 bg-white/30 hover:bg-white/50'
+                        ? 'w-6 bg-yellow-400 shadow-[0_0_6px_rgba(250,204,21,0.8)]'
+                        : 'w-2 bg-amber-900/60 hover:bg-amber-700'
                     }`}
                   />
                 ))}
@@ -269,7 +261,7 @@ export const BuildShopModal: React.FC = () => {
                   sounds.playClick();
                   setActivePromoIndex(prev => (prev + 1) % PROMO_DEALS.length);
                 }}
-                className="w-7 h-7 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center text-xs transition-colors cursor-pointer"
+                className="w-7 h-7 rounded-full game-dock-btn text-amber-200 hover:text-white flex items-center justify-center text-xs transition-colors cursor-pointer"
               >
                 <ChevronRight size={16} />
               </button>
@@ -277,22 +269,18 @@ export const BuildShopModal: React.FC = () => {
           </div>
 
           {/* ── DAILY FREE BONUS BANNER ── */}
-          <div className={`p-3.5 rounded-2xl border shadow-lg flex items-center justify-between gap-3 ${
-            isDesign2026
-              ? 'bg-gradient-to-r from-emerald-950/40 via-[#181C24] to-teal-950/40 border-emerald-500/40 text-white'
-              : 'hud-parchment border-emerald-600 text-[#3B1F0D]'
-          }`}>
+          <div className="p-3.5 rounded-2xl game-card border border-amber-600/70 shadow-lg flex items-center justify-between gap-3">
             <div className="flex items-center gap-3">
               <div className="w-12 h-12 shrink-0 flex items-center justify-center filter drop-shadow-md">
                 <Building3DThumbnail buildingId="daily_gift_box" size={56} />
               </div>
               <div className="flex flex-col">
-                <span className="font-extrabold text-xs sm:text-sm">Ежедневный подарок</span>
+                <span className="font-black text-xs sm:text-sm text-yellow-300 game-text-gold">Ежедневный подарок</span>
                 <div className="flex items-center gap-1.5 text-[11px] font-bold text-emerald-300">
                   <span className="flex items-center gap-1">+500 <CoinSvg /></span>
                   <span>и</span>
                   <span className="flex items-center gap-0.5 text-sky-400">+5 <Zap size={12} /></span>
-                  <span className="text-zinc-400">бесплатно</span>
+                  <span className="text-amber-400/60">бесплатно</span>
                 </div>
               </div>
             </div>
@@ -302,8 +290,8 @@ export const BuildShopModal: React.FC = () => {
               disabled={dailyClaimed}
               className={`px-3.5 py-2 rounded-xl text-xs font-black shadow flex items-center gap-1 transition-all active:scale-95 cursor-pointer shrink-0 ${
                 dailyClaimed
-                  ? 'bg-zinc-800 text-zinc-500 border border-zinc-700 cursor-default'
-                  : 'bg-gradient-to-r from-emerald-500 to-green-600 text-white hover:brightness-110 border border-emerald-300 animate-pulse'
+                  ? 'bg-black/40 text-amber-500/40 border border-amber-900/40 cursor-default'
+                  : 'game-btn-plus text-white animate-pulse'
               }`}
             >
               {dailyClaimed ? <Check size={13} className="text-emerald-400" /> : <Sparkles size={13} />}
@@ -319,7 +307,7 @@ export const BuildShopModal: React.FC = () => {
           <div className="flex flex-col gap-2">
             <div className="flex items-center gap-1.5 px-1">
               <CoinSvg />
-              <span className="text-xs font-extrabold text-[#8E939D] uppercase tracking-wider">
+              <span className="text-xs font-black text-yellow-300 uppercase tracking-wider game-text-gold">
                 Пакеты монет
               </span>
             </div>
@@ -333,21 +321,19 @@ export const BuildShopModal: React.FC = () => {
               ].map(item => (
                 <div
                   key={item.name}
-                  className={`p-3 rounded-2xl border shadow flex flex-col items-center justify-between text-center gap-1.5 ${
-                    isDesign2026 ? 'bg-[#181C24] border-[#242A35] text-white' : 'hud-parchment border-amber-700/60 text-[#3B1F0D]'
-                  }`}
+                  className="p-3 rounded-2xl game-card border border-amber-700/60 shadow flex flex-col items-center justify-between text-center gap-1.5"
                 >
                   <div className="w-16 h-16 sm:w-18 sm:h-18 flex items-center justify-center my-0.5 filter drop-shadow-md">
                     <Building3DThumbnail buildingId={item.modelId} size={64} />
                   </div>
-                  <span className="font-bold text-xs">{item.name}</span>
+                  <span className="font-bold text-xs text-amber-100">{item.name}</span>
                   <div className="flex items-center gap-1">
                     <CoinSvg />
-                    <span className="font-black text-sm text-amber-400">+{item.coins.toLocaleString('ru-RU')}</span>
+                    <span className="font-black text-sm text-yellow-300 game-text-gold">+{item.coins.toLocaleString('ru-RU')}</span>
                   </div>
                   <button
                     onClick={() => handlePurchase(item.name, item.coins, 0, item.stars)}
-                    className="w-full mt-1 py-2 rounded-xl bg-gradient-to-r from-amber-500 to-yellow-400 text-amber-950 font-black text-xs shadow transition-transform active:scale-95 cursor-pointer"
+                    className="w-full mt-1 py-2 game-btn-gold text-xs shadow transition-transform active:scale-95 cursor-pointer"
                   >
                     {item.stars} ⭐ ({item.price})
                   </button>
@@ -360,7 +346,7 @@ export const BuildShopModal: React.FC = () => {
           <div className="flex flex-col gap-2">
             <div className="flex items-center gap-1.5 px-1">
               <Zap size={14} className="text-sky-400" />
-              <span className="text-xs font-extrabold text-[#8E939D] uppercase tracking-wider">
+              <span className="text-xs font-black text-sky-300 uppercase tracking-wider game-text-shadow">
                 Пакеты энергии
               </span>
             </div>
@@ -374,21 +360,19 @@ export const BuildShopModal: React.FC = () => {
               ].map(item => (
                 <div
                   key={item.name}
-                  className={`p-3 rounded-2xl border shadow flex flex-col items-center justify-between text-center gap-1.5 ${
-                    isDesign2026 ? 'bg-[#181C24] border-[#242A35] text-white' : 'hud-parchment border-amber-700/60 text-[#3B1F0D]'
-                  }`}
+                  className="p-3 rounded-2xl game-card border border-sky-700/60 shadow flex flex-col items-center justify-between text-center gap-1.5"
                 >
                   <div className="w-16 h-16 sm:w-18 sm:h-18 flex items-center justify-center my-0.5 filter drop-shadow-md">
                     <Building3DThumbnail buildingId={item.modelId} size={64} />
                   </div>
-                  <span className="font-bold text-xs">{item.name}</span>
+                  <span className="font-bold text-xs text-amber-100">{item.name}</span>
                   <div className="flex items-center gap-1">
                     <Zap size={13} className="text-sky-400" />
-                    <span className="font-black text-sm text-sky-400">+{item.energy} ⚡</span>
+                    <span className="font-black text-sm text-sky-300 game-text-shadow">+{item.energy} ⚡</span>
                   </div>
                   <button
                     onClick={() => handlePurchase(item.name, 0, item.energy, item.stars)}
-                    className="w-full mt-1 py-2 rounded-xl bg-gradient-to-r from-sky-500 to-blue-600 text-white font-black text-xs shadow transition-transform active:scale-95 cursor-pointer"
+                    className="w-full mt-1 py-2 rounded-xl bg-gradient-to-r from-sky-500 to-blue-600 border border-sky-300 text-white font-black text-xs shadow-md transition-transform active:scale-95 cursor-pointer"
                   >
                     {item.stars} ⭐ ({item.price})
                   </button>

@@ -81,14 +81,10 @@ export const FriendsModal: React.FC = () => {
   };
 
   return (
-    <div className={`fixed inset-0 pt-14 sm:pt-16 pb-20 sm:pb-24 z-40 flex flex-col select-none animate-pop-in overflow-hidden transition-colors ${
-      isDesign2026 ? 'bg-[#0F1115] text-white' : 'bg-[#2A1406] text-[#3B1F0D]'
-    }`}>
+    <div className="fixed inset-0 pt-14 sm:pt-16 pb-20 sm:pb-24 z-40 flex flex-col select-none animate-pop-in overflow-hidden game-screen-bg text-amber-100">
       
       {/* ── TOP TABS BAR ── */}
-      <div className={`px-3 sm:px-6 py-2.5 flex items-center justify-between gap-2 border-b shrink-0 ${
-        isDesign2026 ? 'bg-[#181C24] border-[#242A35]' : 'bg-[#3D2008] border-[#5C3718]'
-      }`}>
+      <div className="px-3 sm:px-6 py-2.5 sm:py-3 flex items-center justify-between gap-2 game-screen-header shrink-0">
         <div className="flex items-center gap-2">
           <button
             onClick={() => {
@@ -96,14 +92,8 @@ export const FriendsModal: React.FC = () => {
               triggerTelegramHaptic('light');
               setActiveTab('friends');
             }}
-            className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-extrabold transition-all cursor-pointer ${
-              activeTab === 'friends'
-                ? isDesign2026
-                  ? 'bg-purple-600 text-white shadow-lg border border-purple-400 scale-105'
-                  : 'hud-parchment shadow-lg border-2 border-yellow-400 scale-105 text-[#3B1F0D]'
-                : isDesign2026
-                ? 'bg-[#242A35] text-[#8E939D] hover:text-white'
-                : 'bg-[#2A1406]/80 text-amber-200 border border-amber-900 hover:bg-[#2A1406]'
+            className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-black transition-all cursor-pointer ${
+              activeTab === 'friends' ? 'game-tab-btn-active' : 'game-tab-btn'
             }`}
           >
             <Users size={16} />
@@ -116,18 +106,12 @@ export const FriendsModal: React.FC = () => {
               triggerTelegramHaptic('light');
               setActiveTab('leaderboard');
             }}
-            className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-extrabold transition-all cursor-pointer ${
-              activeTab === 'leaderboard'
-                ? isDesign2026
-                  ? 'bg-purple-600 text-white shadow-lg border border-purple-400 scale-105'
-                  : 'hud-parchment shadow-lg border-2 border-yellow-400 scale-105 text-[#3B1F0D]'
-                : isDesign2026
-                ? 'bg-[#242A35] text-[#8E939D] hover:text-white'
-                : 'bg-[#2A1406]/80 text-amber-200 border border-amber-900 hover:bg-[#2A1406]'
+            className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-black transition-all cursor-pointer ${
+              activeTab === 'leaderboard' ? 'game-tab-btn-active' : 'game-tab-btn'
             }`}
           >
             <Trophy size={16} />
-            <span>Рейтинг Долины</span>
+            <span>Таблица лидеров</span>
           </button>
         </div>
 
