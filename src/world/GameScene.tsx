@@ -29,6 +29,7 @@ import {
 } from './ModelGenerators';
 import { createLandscapeDetailGroup } from './LandscapeDetails';
 import { sounds } from '../audio/SoundManager';
+import { triggerTelegramHaptic } from '../utils/telegram';
 
 export const GameScene: React.FC = () => {
   const containerRef = useRef<HTMLDivElement>(null);
