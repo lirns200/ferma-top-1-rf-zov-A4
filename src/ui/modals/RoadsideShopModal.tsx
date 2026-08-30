@@ -497,9 +497,8 @@ export const RoadsideShopModal: React.FC = () => {
               setActiveTab('history');
               setSelectedItemId(null);
             }}
-                : isDesign2026
-                ? 'bg-[#242A35] text-[#8E939D] border-[#353D4C] hover:text-white hover:bg-[#2D3543]'
-                : 'bg-[#2A1406]/80 text-amber-200 border-amber-900 hover:bg-[#2A1406]'
+            className={`flex items-center gap-1.5 px-3 py-1.5 sm:px-4 sm:py-2 rounded-xl text-[11px] sm:text-xs font-black transition-all cursor-pointer shrink-0 ${
+              activeTab === 'history' ? 'game-tab-btn-active' : 'game-tab-btn'
             }`}
           >
             <History size={14} />
