@@ -281,7 +281,8 @@ export function createFarmhouseGroup(season: SeasonType): THREE.Group {
   ].forEach(([wx, wy, wz]) => {
     const wFrame = new THREE.Mesh(winFrameGeo, winFrameMat);
     wFrame.position.set(wx, wy, wz);
-    const wGlass = new THREE.Mesh(winGlassGeo, winGlassMat);
+    const wGlass = new THREE.Mesh(winGlassGeo, winGlassMat.clone());
+    wGlass.name = 'window_glow';
     wGlass.position.set(wx, wy, wz);
     group.add(wFrame, wGlass);
 
@@ -303,12 +304,27 @@ export function createFarmhouseGroup(season: SeasonType): THREE.Group {
   });
 
   // Attic round window on front gable
-  const atticWin = new THREE.Mesh(new THREE.CylinderGeometry(0.22, 0.22, 0.06, 12), getCachedColorMaterial('#7DD3FC', 0.1, 0.6));
+  const atticWinMat = winGlassMat.clone();
+  const atticWin = new THREE.Mesh(new THREE.CylinderGeometry(0.22, 0.22, 0.06, 12), atticWinMat);
+  atticWin.name = 'window_glow';
   atticWin.rotation.x = Math.PI / 2;
   atticWin.position.set(0, 2.45, 1.22);
   const atticTrim = new THREE.Mesh(new THREE.TorusGeometry(0.22, 0.04, 8, 16), getCachedColorMaterial('#FFFFFF', 0.4));
   atticTrim.position.set(0, 2.45, 1.22);
   group.add(atticWin, atticTrim);
+
+  // Porch Cozy Hanging Lantern
+  const pLanternGeo = new THREE.CylinderGeometry(0.08, 0.06, 0.18, 6);
+  const pLanternMat = new THREE.MeshStandardMaterial({
+    color: 0xFEF08A,
+    emissive: new THREE.Color(0xF59E0B),
+    emissiveIntensity: 0.1,
+    roughness: 0.2,
+  });
+  const pLantern = new THREE.Mesh(pLanternGeo, pLanternMat);
+  pLantern.name = 'lantern_glow';
+  pLantern.position.set(0.65, 1.45, 1.9);
+  group.add(pLantern);
 
   // Cobblestone Chimney with puffing smoke
   const chimGeo = new THREE.BoxGeometry(0.48, 1.8, 0.48);
@@ -432,11 +448,24 @@ export function createBarnGroup(season: SeasonType): THREE.Group {
 
   // Hayloft window & Hoist Beam with rope
   const hayWinGeo = new THREE.BoxGeometry(0.7, 0.55, 0.08);
-  const hayWinMat = getCachedColorMaterial('#1E293B', 0.8);
+  const hayWinMat = new THREE.MeshStandardMaterial({ color: 0x7DD3FC, roughness: 0.2, metalness: 0.1 });
   const hayWin = new THREE.Mesh(hayWinGeo, hayWinMat);
+  hayWin.name = 'window_glow';
   hayWin.position.set(0, 2.35, 1.26);
   const hayWinFrame = new THREE.Mesh(new THREE.BoxGeometry(0.8, 0.65, 0.06), getCachedColorMaterial('#F8FAFC', 0.5));
   hayWinFrame.position.set(0, 2.35, 1.24);
+  group.add(hayWinFrame, hayWin);
+
+  // Barn Door Wall Sconce Lanterns
+  [-0.85, 0.85].forEach(lx => {
+    const bLantern = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.07, 0.05, 0.16, 6),
+      new THREE.MeshStandardMaterial({ color: 0xFEF08A, emissive: new THREE.Color(0xF59E0B), emissiveIntensity: 0.1, roughness: 0.2 })
+    );
+    bLantern.name = 'lantern_glow';
+    bLantern.position.set(lx, 1.55, 1.32);
+    group.add(bLantern);
+  });
   group.add(hayWinFrame, hayWin);
 
   const beamGeo = new THREE.BoxGeometry(0.12, 0.12, 0.6);

@@ -237,24 +237,105 @@ export const GameScene: React.FC = () => {
     fillLight.position.set(-25, 25, -25);
     scene.add(fillLight);
 
-    // Glowing Night Fireflies (active during night hours)
-    const firefliesCount = 28;
+    // ── Glowing Night Fireflies (65 bioluminescent points) ──
+    const firefliesCount = 65;
     const firefliesGeo = new THREE.BufferGeometry();
     const firefliesPos = new Float32Array(firefliesCount * 3);
+    const firefliesColors = new Float32Array(firefliesCount * 3);
+    const ffPal = [
+      new THREE.Color(0xFACC15), // Warm Amber Gold
+      new THREE.Color(0xA3E635), // Lime Bioluminescence
+      new THREE.Color(0x38BDF8), // Cyan Moon Spark
+      new THREE.Color(0x4ADE80), // Emerald Forest Glow
+    ];
+
     for (let f = 0; f < firefliesCount; f++) {
-      firefliesPos[f * 3] = (Math.random() - 0.5) * 44;
-      firefliesPos[f * 3 + 1] = 0.4 + Math.random() * 2.2;
-      firefliesPos[f * 3 + 2] = (Math.random() - 0.5) * 44;
+      firefliesPos[f * 3] = (Math.random() - 0.5) * 52;
+      firefliesPos[f * 3 + 1] = 0.35 + Math.random() * 2.6;
+      firefliesPos[f * 3 + 2] = (Math.random() - 0.5) * 52;
+
+      const col = ffPal[f % ffPal.length];
+      firefliesColors[f * 3] = col.r;
+      firefliesColors[f * 3 + 1] = col.g;
+      firefliesColors[f * 3 + 2] = col.b;
     }
     firefliesGeo.setAttribute('position', new THREE.BufferAttribute(firefliesPos, 3));
+    firefliesGeo.setAttribute('color', new THREE.BufferAttribute(firefliesColors, 3));
+
     const firefliesMat = new THREE.PointsMaterial({
-      color: 0xFDE047,
-      size: 0.28,
+      size: 0.32,
+      vertexColors: true,
       transparent: true,
       opacity: 0.0,
+      blending: THREE.AdditiveBlending,
+      depthWrite: false,
     });
     const firefliesPoints = new THREE.Points(firefliesGeo, firefliesMat);
     scene.add(firefliesPoints);
+
+    // ── Twinkling Night Starfield (240 celestial stars) ──
+    const starsCount = 240;
+    const starsGeo = new THREE.BufferGeometry();
+    const starsPos = new Float32Array(starsCount * 3);
+    const starsColors = new Float32Array(starsCount * 3);
+    const starColorChoices = [
+      new THREE.Color(0xFFFFFF), // Diamond White
+      new THREE.Color(0xBAE6FD), // Sky Ice Blue
+      new THREE.Color(0xFEF08A), // Warm Golden Tint
+      new THREE.Color(0xE0E7FF), // Celestial Lavender
+    ];
+
+    for (let s = 0; s < starsCount; s++) {
+      // Dome distribution high in the sky
+      const theta = Math.random() * Math.PI * 2;
+      const phi = 0.18 + Math.random() * 0.72;
+      const r = 55 + Math.random() * 35;
+
+      starsPos[s * 3] = r * Math.sin(phi) * Math.cos(theta);
+      starsPos[s * 3 + 1] = 28 + r * Math.cos(phi);
+      starsPos[s * 3 + 2] = r * Math.sin(phi) * Math.sin(theta);
+
+      const sc = starColorChoices[Math.floor(Math.random() * starColorChoices.length)];
+      starsColors[s * 3] = sc.r;
+      starsColors[s * 3 + 1] = sc.g;
+      starsColors[s * 3 + 2] = sc.b;
+    }
+    starsGeo.setAttribute('position', new THREE.BufferAttribute(starsPos, 3));
+    starsGeo.setAttribute('color', new THREE.BufferAttribute(starsColors, 3));
+
+    const starsMat = new THREE.PointsMaterial({
+      size: 0.42,
+      vertexColors: true,
+      transparent: true,
+      opacity: 0.0,
+      blending: THREE.AdditiveBlending,
+      depthWrite: false,
+    });
+    const starsPoints = new THREE.Points(starsGeo, starsMat);
+    scene.add(starsPoints);
+
+    // ── Shooting Star / Meteor Streak Mesh ──
+    const shootingStarGeo = new THREE.BufferGeometry();
+    const ssPositions = new Float32Array([0, 0, 0, -4.5, 2.2, -3.0]);
+    shootingStarGeo.setAttribute('position', new THREE.BufferAttribute(ssPositions, 3));
+    const shootingStarMat = new THREE.LineBasicMaterial({
+      color: 0x93C5FD,
+      transparent: true,
+      opacity: 0.0,
+      linewidth: 2,
+      blending: THREE.AdditiveBlending,
+    });
+    const shootingStarLine = new THREE.Line(shootingStarGeo, shootingStarMat);
+    shootingStarLine.position.set(0, 50, 0);
+    shootingStarLine.visible = false;
+    scene.add(shootingStarLine);
+
+    let nextMeteorTime = 8.0;
+    let meteorActive = false;
+    let meteorProgress = 0.0;
+    let meteorStartX = -35;
+    let meteorStartY = 48;
+    let meteorStartZ = -28;
 
     // 5. Terrain Group
     const terrainGroup = new THREE.Group();
@@ -961,15 +1042,15 @@ export const GameScene: React.FC = () => {
         baseSunY = 45 - t * 28;
         baseSunZ = 28 - t * 16;
       } else {
-        // 🌙 Night (21:30 - 05:00)
-        baseSkyColor = '#0B1120';
-        baseAmbientColor = 0x1E293B;
-        baseAmbientIntensity = 0.46;
-        baseSunColor = 0x93C5FD; // Silvery moonlight
-        baseSunIntensity = 0.62;
-        baseSunX = -25;
-        baseSunY = 45;
-        baseSunZ = -20;
+        // 🌙 Magical Midnight (21:30 - 05:00)
+        baseSkyColor = '#070B19'; // Deep rich celestial midnight
+        baseAmbientColor = 0x1E1B4B; // Deep royal navy-violet fill
+        baseAmbientIntensity = 0.54;
+        baseSunColor = 0x99C2FE; // Silvery lunar directional moonlight
+        baseSunIntensity = 0.78;
+        baseSunX = -28;
+        baseSunY = 48;
+        baseSunZ = -22;
         isNightMode = true;
       }
 
@@ -986,16 +1067,67 @@ export const GameScene: React.FC = () => {
         sunLight.position.set(baseSunX, baseSunY, baseSunZ);
       }
 
-      // Fireflies Animation in Night mode
-      if (firefliesPoints && firefliesMat) {
+      // ── Twinkling Starfield Animation ──
+      const isNightOrTwilight = isNightMode || hourVal >= 18.5 || hourVal < 8.0;
+      if (starsPoints && starsMat) {
+        if (isNightOrTwilight) {
+          const starAlpha = isNightMode ? 0.95 : hourVal >= 18.5 ? ((hourVal - 18.5) / 3.0) * 0.95 : ((8.0 - hourVal) / 3.0) * 0.95;
+          starsMat.opacity = starAlpha;
+          starsPoints.rotation.y = elapsed * 0.003; // Slow celestial dome drift
+        } else {
+          starsMat.opacity = 0.0;
+        }
+      }
+
+      // ── Periodic Shooting Star / Meteor Streaks ──
+      if (shootingStarLine && shootingStarMat) {
         if (isNightMode) {
-          firefliesMat.opacity = 0.85 + Math.sin(elapsed * 4) * 0.15;
+          if (!meteorActive && elapsed >= nextMeteorTime) {
+            meteorActive = true;
+            meteorProgress = 0.0;
+            meteorStartX = (Math.random() - 0.5) * 40 - 15;
+            meteorStartY = 42 + Math.random() * 12;
+            meteorStartZ = (Math.random() - 0.5) * 40 - 15;
+            nextMeteorTime = elapsed + 10.0 + Math.random() * 12.0;
+          }
+
+          if (meteorActive) {
+            meteorProgress += delta * 1.8; // Meteor crosses in ~0.55s
+            if (meteorProgress < 1.0) {
+              const mx = meteorStartX + meteorProgress * 36;
+              const my = meteorStartY - meteorProgress * 16;
+              const mz = meteorStartZ + meteorProgress * 24;
+              shootingStarLine.position.set(mx, my, mz);
+              shootingStarLine.visible = true;
+              shootingStarMat.opacity = Math.sin(meteorProgress * Math.PI) * 0.95;
+            } else {
+              meteorActive = false;
+              shootingStarLine.visible = false;
+              shootingStarMat.opacity = 0.0;
+            }
+          }
+        } else {
+          shootingStarLine.visible = false;
+        }
+      }
+
+      // ── Bioluminescent Fireflies Animation ──
+      if (firefliesPoints && firefliesMat) {
+        if (isNightOrTwilight) {
+          firefliesMat.opacity = 0.92 + Math.sin(elapsed * 4.5) * 0.08;
           const fArr = firefliesGeo.attributes.position.array as Float32Array;
           for (let f = 0; f < firefliesCount; f++) {
             const fIdx = f * 3;
-            fArr[fIdx + 1] = 0.4 + Math.sin(elapsed * 1.5 + f * 1.8) * 0.8 + 0.6;
-            fArr[fIdx] += Math.sin(elapsed * 0.8 + f) * 0.01;
-            fArr[fIdx + 2] += Math.cos(elapsed * 0.6 + f) * 0.01;
+            // 3D Lissajous floating curves around crops, water, trees
+            fArr[fIdx + 1] = 0.35 + Math.sin(elapsed * 1.6 + f * 1.5) * 0.75 + Math.cos(elapsed * 0.8 + f) * 0.35 + 0.6;
+            fArr[fIdx] += Math.sin(elapsed * 0.9 + f * 0.8) * 0.018;
+            fArr[fIdx + 2] += Math.cos(elapsed * 0.7 + f * 0.6) * 0.018;
+
+            // Soft boundary wrap
+            if (fArr[fIdx] > 28) fArr[fIdx] = -28;
+            if (fArr[fIdx] < -28) fArr[fIdx] = 28;
+            if (fArr[fIdx + 2] > 28) fArr[fIdx + 2] = -28;
+            if (fArr[fIdx + 2] < -28) fArr[fIdx + 2] = 28;
           }
           firefliesGeo.attributes.position.needsUpdate = true;
         } else {
@@ -1004,7 +1136,6 @@ export const GameScene: React.FC = () => {
       }
 
       // ── Headlights and Road Spotlights (turn ON at Dusk / Night / Dawn) ──
-      const isNightOrTwilight = isNightMode || hourVal >= 18.0 || hourVal < 8.5;
       truckGroup.traverse(child => {
         if (child.name === 'truck_headlight_beam') {
           child.visible = isNightOrTwilight;
@@ -1023,6 +1154,7 @@ export const GameScene: React.FC = () => {
         }
       });
 
+      // ── Cozy Night Window Glow, Lanterns, & Street Lamps ──
       scene.traverse(child => {
         if (child.name === 'lamp_light_cone' || child.name === 'lamp_glow_sprite') {
           child.visible = isNightOrTwilight;
@@ -1033,7 +1165,19 @@ export const GameScene: React.FC = () => {
         if (child.name === 'lantern_glow') {
           const mat = (child as THREE.Mesh).material as THREE.MeshStandardMaterial;
           if (mat && mat.emissiveIntensity !== undefined) {
-            mat.emissiveIntensity = isNightOrTwilight ? 3.0 + Math.sin(elapsed * 2) * 0.4 : 0.05;
+            mat.emissiveIntensity = isNightOrTwilight ? 3.6 + Math.sin(elapsed * 4.0 + (child.id % 7)) * 0.35 : 0.05;
+          }
+        }
+        if (child.name === 'window_glow') {
+          const mat = (child as THREE.Mesh).material as THREE.MeshStandardMaterial;
+          if (mat && mat.emissive !== undefined) {
+            if (isNightOrTwilight) {
+              mat.emissive = new THREE.Color(0xF59E0B);
+              mat.emissiveIntensity = 2.4 + Math.sin(elapsed * 3.2 + (child.id % 5)) * 0.45;
+            } else {
+              mat.emissive = new THREE.Color(0x000000);
+              mat.emissiveIntensity = 0.0;
+            }
           }
         }
       });
