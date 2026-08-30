@@ -2317,6 +2317,10 @@ export const GameScene: React.FC = () => {
   // 4. ULTRA-FAST ZERO-ALLOCATION POINTER EVENTS
   // -------------------------------------------------------------------
   const onPointerDown = (e: React.PointerEvent) => {
+    try {
+      (e.currentTarget as HTMLElement)?.setPointerCapture?.(e.pointerId);
+    } catch (_) {}
+
     isDraggingRef.current = true;
     hasMovedRef.current = false;
     isSwipingGestureRef.current = false;
@@ -2352,6 +2356,19 @@ export const GameScene: React.FC = () => {
           harvestCrop(hitEntity.id);
           swipedEntitiesRef.current.add(hitEntity.id);
           triggerTelegramHaptic('medium');
+          return;
+        }
+      } else if (hitEntity.type === 'field' && !hitEntity.cropId) {
+        // Smart plant auto-detect: if touching empty field, plant last selected crop and start planting swipe!
+        const cropId = useGameStore.getState().lastPlantedCropId || 'wheat';
+        const invCount = useGameStore.getState().inventory[cropId] || 0;
+        if (invCount > 0) {
+          isSwipingGestureRef.current = true;
+          setActiveTool({ type: 'plant', configId: cropId });
+          activeToolRef.current = { type: 'plant', configId: cropId };
+          plantCrop(hitEntity.id, cropId);
+          swipedEntitiesRef.current.add(hitEntity.id);
+          triggerTelegramHaptic('light');
           return;
         }
       } else if (hitEntity.type === 'fruit_tree' && !hitEntity.isDead) {
@@ -2446,6 +2463,10 @@ export const GameScene: React.FC = () => {
   };
 
   const onPointerUp = (e: React.PointerEvent) => {
+    try {
+      (e.currentTarget as HTMLElement)?.releasePointerCapture?.(e.pointerId);
+    } catch (_) {}
+
     isDraggingRef.current = false;
     touchDistanceRef.current = null;
     const wasSwiping = isSwipingGestureRef.current;
