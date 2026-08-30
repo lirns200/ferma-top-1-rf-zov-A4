@@ -81,7 +81,7 @@ export const TopBar: React.FC = () => {
     coins,
     gems,
     getStorageUsed,
-    getStorageCapacity,
+    barnCapacity,
     openModal,
     activeModal,
   } = useGameStore();
@@ -92,7 +92,7 @@ export const TopBar: React.FC = () => {
   const xpNeeded = currentLevelConfig ? currentLevelConfig.xpRequired : 1000;
   const xpPercent = Math.min(100, Math.round((xp / xpNeeded) * 100));
   const barnUsed = getStorageUsed('barn');
-  const barnCap = getStorageCapacity('barn');
+  const barnCap = barnCapacity || 50;
 
   return (
     <header className="fixed top-0 left-0 right-0 z-50 pointer-events-none p-1.5 sm:p-3 select-none">
