@@ -1,214 +1,188 @@
 import React from 'react';
 import { useGameStore } from '../game/gameState';
 import { sounds } from '../audio/SoundManager';
-import confetti from 'canvas-confetti';
+import { triggerTelegramHaptic } from '../utils/telegram';
+import { CheckCircle2, ChevronRight, X, Sparkles } from 'lucide-react';
 
-const TOTAL_STEPS = 9;
+const TOTAL_STEPS = 6;
 
 export const TutorialOverlay: React.FC = () => {
   const {
     tutorialStep,
     tutorialCompleted,
-    introStage,
     advanceTutorial,
     skipTutorial,
-    openModal,
-    addCoins,
-    addGems,
-    addXP,
-    addFloatingText
+    setSelectedEntity,
   } = useGameStore();
 
-  // If tutorial completed or intro is running, don't show
-  if (tutorialCompleted || introStage !== 'completed' || tutorialStep > TOTAL_STEPS) {
+  if (tutorialCompleted || tutorialStep > TOTAL_STEPS) {
     return null;
   }
 
-  const stepsInfo: Record<number, {
+  const stepsConfig: Record<number, {
     title: string;
-    mentorText: string;
-    actionHint: string;
-    buttonLabel: string;
+    mentorPhrase: string;
+    hint: string;
+    targetName: string;
     icon: string;
-    suggestedAction?: () => void;
+    targetId?: string;
   }> = {
     1: {
-      title: 'ШАГ 1: ФЕРМЕРСКИЙ ДОМ',
-      mentorText: 'Приветствую, юный фермер! Я Дядя Семён, староста Долины. Первым делом построим уютный Фермерский Дом! Откройте Магазин, выберите Дом, используйте кнопку 🔄 Повернуть и поставьте на зеленую клетку.',
-      actionHint: 'Нажмите кнопку 🚜 Магазин (слева внизу) ➔ вкладка «Здания» ➔ Дом',
-      buttonLabel: 'ПОНЯТНО ▶',
-      icon: '🏡',
-      suggestedAction: () => openModal('shop'),
+      title: 'СБОР ПШЕНИЦЫ',
+      mentorPhrase: 'Привет, юный фермер! 🌾 Добро пожаловать на твою новую ферму! Пора собрать спелую пшеницу — нажми на грядку и смахни урожай!',
+      hint: 'Нажмите на грядку со спелой пшеницей',
+      targetName: 'Спелая грядка',
+      icon: '🌾',
+      targetId: 'field_1',
     },
     2: {
-      title: 'ШАГ 2: ПЕРВЫЕ ГРЯДКИ',
-      mentorText: 'Отличный дом! Теперь нашей ферме нужны поля для выращивания урожая. Откройте магазин и разместите 4 грядки на свободном газоне рядом с домом.',
-      actionHint: 'Магазин 🚜 ➔ Вкладка «Грядки» ➔ поставьте поля',
-      buttonLabel: 'ДАЛЕЕ ▶',
-      icon: '🌾',
-      suggestedAction: () => openModal('shop'),
+      title: 'ПОСЕВ СЕМЯН',
+      mentorPhrase: 'Отличная работа! 🌾 Теперь давай засеем пустые грядки новыми семенами пшеницы, чтобы урожай рос снова!',
+      hint: 'Нажмите на пустую грядку ➔ посадите пшеницу',
+      targetName: 'Свободная грядка',
+      icon: '🌱',
+      targetId: 'field_1',
     },
     3: {
-      title: 'ШАГ 3: ПОСЕВ ПШЕНИЦЫ',
-      mentorText: 'Пора засеять поля! Нажмите на любую пустую грядку, выберите колосок Пшеницы 🌾 и проведите пальцем или мышкой по всем грядкам.',
-      actionHint: 'Нажмите на грядку ➔ проведите Пшеницей 🌾 по полям',
-      buttonLabel: 'ДАЛЕЕ ▶',
-      icon: '🌱',
+      title: 'КОРМЛЕНИЕ КУР',
+      mentorPhrase: 'Смотри, курочки в курятнике проголодались! 🐔 Нажми на курятник и покорми их пшеничным кормом!',
+      hint: 'Нажмите на Курятник ➔ Покормить',
+      targetName: 'Курятник',
+      icon: '🥣',
+      targetId: 'ent_chicken_coop_default',
     },
     4: {
-      title: 'ШАГ 4: СБОР УРОЖАЯ СЕРПОМ',
-      mentorText: 'В нашей солнечной долине урожай растет быстро! Когда колоски станут золотыми, нажмите на поле, возьмите Серп 🌾 и смахните созревшую пшеницу.',
-      actionHint: 'Нажмите на созревшее поле ➔ смахните Серпом',
-      buttonLabel: 'ДАЛЕЕ ▶',
-      icon: '🚜',
+      title: 'СБОР СВЕЖИХ ЯИЦ',
+      mentorPhrase: 'Сытые курочки снесли свежие яйца! 🥚 Нажми на курятник и собери свежую продукцию в амбар!',
+      hint: 'Нажмите на Курятник ➔ Собрать яйца',
+      targetName: 'Курятник',
+      icon: '🥚',
+      targetId: 'ent_chicken_coop_default',
     },
     5: {
-      title: 'ШАГ 5: ЗЕРНОХРАНИЛИЩЕ СИЛОС',
-      mentorText: 'Урожая становится больше! Чтобы хранить зерно и семена, постройте Зернохранилище (Силос). Откройте магазин и установите его на ферме.',
-      actionHint: 'Магазин 🚜 ➔ вкладка «Здания» ➔ Силос (Silo)',
-      buttonLabel: 'ДАЛЕЕ ▶',
-      icon: '🥖',
-      suggestedAction: () => openModal('shop'),
+      title: 'ВЫПЕЧКА ХЛЕБА',
+      mentorPhrase: 'А теперь давай испечем свежий ароматный хлеб! 🍞 Нажми на Пекарню и начни выпечку первой буханки!',
+      hint: 'Нажмите на Пекарню ➔ Скрафтить Хлеб',
+      targetName: 'Пекарня',
+      icon: '🍞',
+      targetId: 'ent_bakery_default',
     },
     6: {
-      title: 'ШАГ 6: КУРЯТНИК И КОРМЛЕНИЕ',
-      mentorText: 'Время завести первых животных! Поставьте Курятник из вкладки «Животные». Нажмите на него и накормите курочек свежей пшеницей — они снесут свежие яйца!',
-      actionHint: 'Магазин 🚜 ➔ «Животные» ➔ Курятник ➔ Покормить 🌾',
-      buttonLabel: 'ДАЛЕЕ ▶',
-      icon: '🐔',
-      suggestedAction: () => openModal('shop'),
-    },
-    7: {
-      title: 'ШАГ 7: ДОСКА ЗАКАЗОВ',
-      mentorText: 'Жители соседнего городка ждут свежие продукты! Поставьте Доску Заказов 📋. Выполняйте контракты, и наш красный пикап повезет товары по деревянному мосту в город за монеты и опыт!',
-      actionHint: 'Магазин 🚜 ➔ Доска Заказов ➔ Выполнить контракт',
-      buttonLabel: 'ДАЛЕЕ ▶',
+      title: 'ОТПРАВКА ЗАКАЗА',
+      mentorPhrase: 'Жители соседнего городка прислали заказ! 📋 Нажми на Доску Заказов и отправь наш красный грузовик!',
+      hint: 'Нажмите на Доску Заказов ➔ Отправить',
+      targetName: 'Доска Заказов',
       icon: '📋',
-      suggestedAction: () => openModal('shop'),
-    },
-    8: {
-      title: 'ШАГ 8: ПОЧТОВЫЙ ЯЩИК И ФУРА',
-      mentorText: 'У въезда на ферму стоит Почтовый Ящик 📬. Соседи присылают письма с обменом и ежедневные подарки. При подтверждении обмена в Заезд 1 приедет большая грузовая Фура с товарами!',
-      actionHint: 'Нажмите на Почтовый Ящик 📬 возле дороги',
-      buttonLabel: 'ДАЛЕЕ ▶',
-      icon: '📬',
-      suggestedAction: () => openModal('mailbox'),
-    },
-    9: {
-      title: 'ШАГ 9: ПРИДОРОЖНАЯ ЛАВКА (РЫНОК)',
-      mentorText: 'Поставьте Придорожную Лавку 🏪 возле Заезда 2! В ней вы сможете продавать излишки продуктов другим фермерам по вашей цене. Вы великолепно справились со всеми основами!',
-      actionHint: 'Магазин 🚜 ➔ Придорожная Лавка ➔ Завершить обучение',
-      buttonLabel: '✓ ЗАВЕРШИТЬ ОБУЧЕНИЕ',
-      icon: '🏪',
-      suggestedAction: () => openModal('shop'),
+      targetId: 'ent_order_board_default',
     },
   };
 
-  const current = stepsInfo[tutorialStep] || stepsInfo[1];
-  const isLastStep = tutorialStep === TOTAL_STEPS;
+  const current = stepsConfig[tutorialStep] || stepsConfig[1];
 
-  const handleNext = () => {
-    sounds.playClick();
-    if (isLastStep) {
-      // Tutorial completion reward
-      sounds.playLevelUp();
-      confetti({ particleCount: 100, spread: 90, origin: { y: 0.5 } });
-      addCoins(500);
-      addGems(25);
-      addXP(150);
-      addFloatingText('🎉 Обучение завершено! +500 🪙 +25 💎 ✨', 0, 0, '#22C55E');
+  const handleFocusTarget = () => {
+    if (current.targetId) {
+      sounds.playClick();
+      triggerTelegramHaptic('light');
+      setSelectedEntity(current.targetId);
     }
-    advanceTutorial();
   };
 
   return (
-    <div className="fixed bottom-20 left-2 right-2 sm:left-4 sm:right-auto sm:max-w-md z-40 pointer-events-auto select-none animate-fade-in">
+    <div className="fixed top-14 sm:top-16 left-3 right-3 sm:left-6 sm:right-auto sm:max-w-md z-40 select-none animate-fade-in pointer-events-none">
       <div 
-        className="rounded-2xl p-3.5 sm:p-4 shadow-2xl border-2 sm:border-3 border-amber-500/80 flex flex-col gap-2.5 text-white"
+        className="pointer-events-auto p-3.5 sm:p-4 rounded-3xl game-dock-tray border-2 border-amber-400/90 shadow-2xl shadow-black/90 text-amber-100 flex flex-col gap-2.5 transform transition-all backdrop-blur-md"
         style={{
-          background: 'linear-gradient(180deg, rgba(45, 24, 6, 0.96) 0%, rgba(25, 12, 4, 0.98) 100%)',
-          boxShadow: '0 16px 40px rgba(0,0,0,0.85), inset 0 2px 4px rgba(255,255,255,0.15)',
+          background: 'linear-gradient(180deg, rgba(53, 28, 8, 0.96) 0%, rgba(26, 13, 4, 0.98) 100%)',
+          boxShadow: '0 20px 45px rgba(0,0,0,0.85), inset 0 2px 4px rgba(255,255,255,0.2)',
         }}
       >
-        {/* Header with Uncle Semyon Avatar */}
-        <div className="flex items-start gap-3.5">
-          <div 
-            className="w-14 h-14 rounded-2xl bg-gradient-to-tr from-amber-700 to-yellow-500 border-2 border-yellow-300 flex items-center justify-center text-3xl shadow-lg shrink-0 animate-bounce"
-            style={{ animationDuration: '2.5s' }}
-          >
-            👨‍🌾
-          </div>
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center justify-between gap-2">
-              <span className="font-['Press_Start_2P'] text-[9px] sm:text-[10px] text-yellow-400 tracking-wide truncate">
+        {/* Top Mentor Row: Avatar, Name, Step & Close */}
+        <div className="flex items-center justify-between gap-2.5 border-b border-amber-900/60 pb-2 px-0.5">
+          <div className="flex items-center gap-2.5 min-w-0">
+            {/* Friendly Uncle Semyon Avatar with pulsing ring */}
+            <div className="relative">
+              <div 
+                className="w-11 h-11 sm:w-12 sm:h-12 rounded-2xl bg-gradient-to-tr from-amber-600 via-yellow-500 to-amber-300 border-2 border-yellow-200 flex items-center justify-center text-2xl shadow-lg shrink-0"
+              >
+                👨‍🌾
+              </div>
+              <span className="absolute -bottom-1 -right-1 flex h-3.5 w-3.5">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-yellow-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-3.5 w-3.5 bg-yellow-500 border border-black"></span>
+              </span>
+            </div>
+
+            <div className="flex flex-col min-w-0">
+              <div className="flex items-center gap-1.5">
+                <span className="font-black text-xs sm:text-sm text-yellow-300 game-text-gold truncate">
+                  Дядя Семён
+                </span>
+                <span className="text-[10px] bg-yellow-500/20 text-yellow-300 border border-yellow-500/40 px-1.5 py-0.2 rounded-full font-bold">
+                  {tutorialStep}/{TOTAL_STEPS}
+                </span>
+              </div>
+              <span className="text-[10.5px] font-bold text-amber-200/80 truncate">
                 {current.title}
               </span>
-              <button
-                onClick={skipTutorial}
-                className="text-[9px] text-amber-400/80 hover:text-yellow-200 underline shrink-0 font-sans cursor-pointer"
-              >
-                Пропустить
-              </button>
             </div>
-            <p className="text-xs text-amber-100 mt-1.5 font-sans leading-relaxed">
-              {current.mentorText}
-            </p>
-          </div>
-        </div>
-
-        {/* Action Hint Banner */}
-        <div className="bg-amber-950/80 p-2.5 rounded-xl border border-amber-500/60 flex items-center gap-2">
-          <span className="text-lg">{current.icon}</span>
-          <span className="text-xs text-yellow-300 font-sans font-medium">
-            💡 {current.actionHint}
-          </span>
-        </div>
-
-        {/* Progress Dots & Buttons */}
-        <div className="flex items-center justify-between pt-1 border-t border-amber-800/80">
-          {/* Step Indicator Dots */}
-          <div className="flex items-center gap-1.5">
-            {Array.from({ length: TOTAL_STEPS }).map((_, i) => {
-              const stepNum = i + 1;
-              const isDone = stepNum < tutorialStep;
-              const isActive = stepNum === tutorialStep;
-              return (
-                <div
-                  key={stepNum}
-                  className={`h-2 rounded-full transition-all duration-300 ${
-                    isActive
-                      ? 'w-6 bg-yellow-400 shadow-[0_0_8px_#facc15]'
-                      : isDone
-                      ? 'w-2.5 bg-green-500'
-                      : 'w-2 bg-amber-950 border border-amber-700'
-                  }`}
-                />
-              );
-            })}
           </div>
 
-          {/* Action Button */}
-          <div className="flex items-center gap-2">
-            {current.suggestedAction && (
-              <button
-                onClick={current.suggestedAction}
-                className="px-3 py-2 bg-amber-700 hover:bg-amber-600 border border-amber-400 rounded-xl text-[9px] font-['Press_Start_2P'] text-yellow-200 shadow active:scale-95 transition-all"
-              >
-                ОТКРЫТЬ
-              </button>
-            )}
-            <button
-              onClick={handleNext}
-              className="px-4 py-2 rounded-xl text-[9px] font-['Press_Start_2P'] text-white shadow-lg transition-all active:scale-95 border-2 border-green-300 animate-pulse hover:brightness-110"
-              style={{
-                background: 'linear-gradient(180deg, #22C55E 0%, #15803D 100%)',
-                boxShadow: '0 4px 14px rgba(34, 197, 94, 0.4)',
-              }}
-            >
-              {current.buttonLabel}
-            </button>
-          </div>
+          {/* Skip Button */}
+          <button
+            onClick={() => {
+              sounds.playClick();
+              triggerTelegramHaptic('light');
+              skipTutorial();
+            }}
+            className="text-[11px] text-amber-400/70 hover:text-amber-200 underline font-bold cursor-pointer shrink-0 px-1"
+            title="Пропустить всё обучение"
+          >
+            Пропустить
+          </button>
         </div>
+
+        {/* Step Progress Bar */}
+        <div className="w-full h-2 game-badge-slot p-[1px] overflow-hidden rounded-full">
+          <div 
+            className="h-full bg-gradient-to-r from-amber-500 via-yellow-400 to-green-400 rounded-full transition-all duration-500 shadow-[0_0_8px_rgba(250,204,21,0.7)]"
+            style={{ width: `${(tutorialStep / TOTAL_STEPS) * 100}%` }}
+          />
+        </div>
+
+        {/* Mentor Speech Text */}
+        <div className="text-xs sm:text-[12.5px] font-medium text-amber-100/95 leading-snug px-0.5">
+          {current.mentorPhrase}
+        </div>
+
+        {/* Action Hint Card with Quick Pointer Button */}
+        <div className="flex items-center justify-between gap-2 p-2 rounded-2xl bg-black/40 border border-amber-700/60 shadow-inner">
+          <div className="flex items-center gap-2 min-w-0">
+            <span className="text-lg shrink-0 animate-bounce" style={{ animationDuration: '2s' }}>
+              {current.icon}
+            </span>
+            <span className="text-[11px] font-bold text-yellow-200 game-text-gold truncate">
+              {current.hint}
+            </span>
+          </div>
+
+          {/* Quick Focus / Next button */}
+          <button
+            onClick={() => {
+              sounds.playClick();
+              triggerTelegramHaptic('medium');
+              if (current.targetId) {
+                handleFocusTarget();
+              } else {
+                advanceTutorial(tutorialStep);
+              }
+            }}
+            className="px-3 py-1.5 rounded-xl game-btn-gold text-amber-950 font-black text-xs flex items-center gap-1 shadow cursor-pointer active:scale-95 shrink-0"
+          >
+            <span>Показать</span>
+            <ChevronRight size={14} />
+          </button>
+        </div>
+
       </div>
     </div>
   );

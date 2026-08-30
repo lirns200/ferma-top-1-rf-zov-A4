@@ -75,6 +75,8 @@ export const GameScene: React.FC = () => {
     rotateMovingEntity,
     setActiveTool,
     showClouds,
+    tutorialStep,
+    tutorialCompleted,
   } = useGameStore();
 
   const showCloudsRef = useRef(showClouds);
@@ -1623,6 +1625,25 @@ export const GameScene: React.FC = () => {
         if (child.name === 'mill_blades') child.rotation.z += delta * 2.8;
         if (child.name === 'distant_mill_blades') child.rotation.z += delta * 1.5;
         if (child.name === 'sugar_cog') child.rotation.z += delta * 3.2;
+
+        // 3D Overhead Checkmarks & Hay Day Tutorial Pointer Hand (👆) Animation
+        if (child.name === 'overhead_checkmark_badge') {
+          const sprite = child.children[0] as THREE.Sprite;
+          if (sprite) {
+            const phase = (sprite.userData?.phase || 0);
+            sprite.position.y = Math.sin(elapsed * 3.6 + phase) * 0.14;
+            const sc = 1.45 + Math.sin(elapsed * 4.2 + phase) * 0.08;
+            sprite.scale.set(sc, sc, sc);
+          }
+        }
+        if (child.name === 'tutorial_pointer_badge') {
+          const sprite = child.children[0] as THREE.Sprite;
+          if (sprite) {
+            sprite.position.y = Math.sin(elapsed * 5.0) * 0.22;
+            const sc = 1.85 + Math.sin(elapsed * 4.0) * 0.12;
+            sprite.scale.set(sc, sc, sc);
+          }
+        }
       });
 
       // ── Animate Animals (walk, idle, peck, wing flap) ──────────────────
@@ -2444,6 +2465,78 @@ function createOverheadCheckmarkBadge(count = 1): THREE.Group {
   return badgeGroup;
 }
 
+// Reusable Texture cache for 3D Hay Day Tutorial Pointer Hand (👆)
+const tutorialPointerTextureCache = new Map<string, THREE.CanvasTexture>();
+
+function getTutorialPointerTexture(label: string): THREE.CanvasTexture {
+  if (tutorialPointerTextureCache.has(label)) {
+    return tutorialPointerTextureCache.get(label)!;
+  }
+
+  const canvas = document.createElement('canvas');
+  canvas.width = 256;
+  canvas.height = 256;
+  const ctx = canvas.getContext('2d')!;
+
+  // 1. Soft pulsing glow
+  const glowGrad = ctx.createRadialGradient(128, 128, 30, 128, 128, 115);
+  glowGrad.addColorStop(0, 'rgba(250, 204, 21, 0.95)');
+  glowGrad.addColorStop(0.5, 'rgba(234, 179, 8, 0.55)');
+  glowGrad.addColorStop(1, 'rgba(202, 138, 4, 0)');
+  ctx.fillStyle = glowGrad;
+  ctx.fillRect(0, 0, 256, 256);
+
+  // 2. Large pointing hand icon
+  ctx.font = '80px sans-serif';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.shadowColor = 'rgba(0,0,0,0.85)';
+  ctx.shadowBlur = 10;
+  ctx.shadowOffsetY = 4;
+  ctx.fillText('👆', 128, 90);
+
+  // 3. Crisp action banner
+  ctx.shadowColor = 'rgba(0,0,0,0.6)';
+  ctx.shadowBlur = 8;
+  ctx.fillStyle = '#78350F';
+  ctx.beginPath();
+  ctx.roundRect(16, 165, 224, 52, 26);
+  ctx.fill();
+
+  ctx.strokeStyle = '#FEF08A';
+  ctx.lineWidth = 4;
+  ctx.stroke();
+
+  ctx.shadowBlur = 0;
+  ctx.fillStyle = '#FEF08A';
+  ctx.font = 'bold 22px sans-serif';
+  ctx.fillText(label, 128, 192);
+
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.colorSpace = THREE.SRGBColorSpace;
+  tutorialPointerTextureCache.set(label, texture);
+  return texture;
+}
+
+function createTutorialPointerBadge(label = 'НАЖМИ СЮДА'): THREE.Group {
+  const badgeGroup = new THREE.Group();
+  badgeGroup.name = 'tutorial_pointer_badge';
+
+  const texture = getTutorialPointerTexture(label);
+  const spriteMat = new THREE.SpriteMaterial({
+    map: texture,
+    transparent: true,
+    depthTest: false,
+  });
+
+  const sprite = new THREE.Sprite(spriteMat);
+  sprite.scale.set(1.85, 1.85, 1.85);
+  sprite.userData = { baseY: 0 };
+  badgeGroup.add(sprite);
+
+  return badgeGroup;
+}
+
   // -------------------------------------------------------------------
   // 3. REBUILD ENTITIES WHEN ENTITIES / SELECTION / EVENT CHANGE
   // -------------------------------------------------------------------
@@ -2457,6 +2550,37 @@ function createOverheadCheckmarkBadge(count = 1): THREE.Group {
     const now = Date.now();
     const weatherMult = activeEvent?.growthSpeedMultiplier || 1.0;
 
+    // ── Tutorial Target Pointer (Hay Day Style 👆) ─────────────────────
+    let tutorialTargetEntityId: string | null = null;
+    let tutorialPointerLabel = 'НАЖМИ СЮДА';
+    if (!tutorialCompleted) {
+      if (tutorialStep === 1) {
+        const ripeField = entities.find(e => e.type === 'field' && e.cropId && e.plantedAt && (now >= e.plantedAt + ((CROPS[e.cropId]?.growTimeSeconds || 60) * 1000) / weatherMult));
+        tutorialTargetEntityId = ripeField?.id || entities.find(e => e.type === 'field')?.id || null;
+        tutorialPointerLabel = 'СБОР ПШЕНИЦЫ';
+      } else if (tutorialStep === 2) {
+        const emptyField = entities.find(e => e.type === 'field' && !e.cropId);
+        tutorialTargetEntityId = emptyField?.id || entities.find(e => e.type === 'field')?.id || null;
+        tutorialPointerLabel = 'ПОСАДИ СЕМЕНА';
+      } else if (tutorialStep === 3) {
+        const coop = entities.find(e => e.type === 'animal_pen' && e.configId === 'chicken_coop');
+        tutorialTargetEntityId = coop?.id || null;
+        tutorialPointerLabel = 'ПОКОРМИ КУР';
+      } else if (tutorialStep === 4) {
+        const coop = entities.find(e => e.type === 'animal_pen' && e.configId === 'chicken_coop');
+        tutorialTargetEntityId = coop?.id || null;
+        tutorialPointerLabel = 'СОБЕРИ ЯЙЦА';
+      } else if (tutorialStep === 5) {
+        const bakery = entities.find(e => e.type === 'production' && e.configId === 'bakery');
+        tutorialTargetEntityId = bakery?.id || null;
+        tutorialPointerLabel = 'ИСПЕКИ ХЛЕБ';
+      } else if (tutorialStep === 6) {
+        const orderBoard = entities.find(e => e.type === 'special' && e.configId === 'order_board');
+        tutorialTargetEntityId = orderBoard?.id || null;
+        tutorialPointerLabel = 'ОТПРАВЬ ЗАКАЗ';
+      }
+    }
+
     entities.forEach(ent => {
       const isMovingThis = ent.id === movingEntityId;
       const currentPos = isMovingThis && movingPos ? movingPos : { x: ent.x, z: ent.z };
@@ -2468,6 +2592,14 @@ function createOverheadCheckmarkBadge(count = 1): THREE.Group {
       entGroup.position.set(currentPos.x + curW / 2, isMovingThis ? 0.35 : 0, currentPos.z + curD / 2);
       entGroup.rotation.y = (currentRot * Math.PI) / 2;
       entGroup.userData = { entityId: ent.id, entity: ent };
+
+      // Render Hay Day Animated Pointer Hand (👆) over target tutorial objective
+      if (ent.id === tutorialTargetEntityId) {
+        const pointerBadge = createTutorialPointerBadge(tutorialPointerLabel);
+        const pHeight = ent.type === 'field' ? 1.9 : ent.configId === 'bakery' ? 3.8 : ent.configId === 'chicken_coop' ? 3.0 : 2.8;
+        pointerBadge.position.set(0, pHeight, 0);
+        entGroup.add(pointerBadge);
+      }
 
       if (ent.type === 'special') {
         if (ent.configId === 'farmhouse') {
@@ -2579,7 +2711,7 @@ function createOverheadCheckmarkBadge(count = 1): THREE.Group {
 
       entitiesGroup.add(entGroup);
     });
-  }, [entities, selectedEntityId, activeEvent, activeSeason, movingEntityId, movingPos, movingRotation]);
+  }, [entities, selectedEntityId, activeEvent, activeSeason, movingEntityId, movingPos, movingRotation, tutorialStep, tutorialCompleted]);
 
   // Update placement preview grid without React re-renders
   const updatePlacementPreview = useCallback((tile: { x: number; z: number } | null) => {

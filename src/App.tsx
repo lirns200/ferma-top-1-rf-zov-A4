@@ -59,7 +59,6 @@ export function App() {
       <BottomActionDock />
       <FloatingToolsOverlay />
       <TutorialOverlay />
-      <CinematicIntroOverlay />
       <FloatingTextsOverlay />
       <MarketDeliveryBanner />
       <MarketNotificationToasts />

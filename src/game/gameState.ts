@@ -531,7 +531,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
     biggestCatch: {},
   },
   
-  introStage: 'story',
+  introStage: 'completed',
   setIntroStage: (stage) => set({ introStage: stage }),
   tutorialStep: 1,
   tutorialCompleted: false,
@@ -1480,8 +1480,8 @@ export const useGameStore = create<GameStore>((set, get) => ({
 
     state.addFloatingText(`Посажено: ${crop.name}`, 0, 0, crop.color);
 
-    if (state.tutorialStep === 3) {
-      state.advanceTutorial(3);
+    if (state.tutorialStep === 2) {
+      state.advanceTutorial(2);
     }
 
     return true;
@@ -1524,8 +1524,8 @@ export const useGameStore = create<GameStore>((set, get) => ({
 
     state.addFloatingText(`+${crop.harvestYield} ${crop.icon} (+${crop.xpGain} XP)`, 0, 0, '#22C55E');
 
-    if (state.tutorialStep === 4) {
-      state.advanceTutorial(4);
+    if (state.tutorialStep === 1) {
+      state.advanceTutorial(1);
     }
 
     return true;
@@ -1665,6 +1665,9 @@ export const useGameStore = create<GameStore>((set, get) => ({
     }));
 
     state.addFloatingText('Животное накормлено', 0, 0, '#22C55E');
+    if (state.tutorialStep === 3) {
+      state.advanceTutorial(3);
+    }
     return true;
   },
 
@@ -1727,6 +1730,9 @@ export const useGameStore = create<GameStore>((set, get) => ({
 
     const prod = PRODUCTS[cfg.produceItemId];
     state.addFloatingText(`+1 ${prod?.icon || '🥚'} (+${cfg.xpGain} XP)`, 0, 0, '#22C55E');
+    if (state.tutorialStep === 4) {
+      state.advanceTutorial(4);
+    }
     return true;
   },
 
@@ -1802,8 +1808,8 @@ export const useGameStore = create<GameStore>((set, get) => ({
 
     state.addFloatingText(`Производство: ${recipe.name}`, 0, 0, '#38BDF8');
 
-    if (state.tutorialStep === 6) {
-      state.advanceTutorial(6);
+    if (state.tutorialStep === 5) {
+      state.advanceTutorial(5);
     }
 
     return true;
@@ -1975,8 +1981,8 @@ export const useGameStore = create<GameStore>((set, get) => ({
 
     state.addFloatingText('Грузовик уехал доставлять заказ!', 0, 0, '#38BDF8');
 
-    if (state.tutorialStep === 7) {
-      state.advanceTutorial(7);
+    if (state.tutorialStep === 6) {
+      state.advanceTutorial(6);
     }
 
     return true;
@@ -2182,8 +2188,8 @@ export const useGameStore = create<GameStore>((set, get) => ({
     const state = get();
     if (expectedStep !== undefined && state.tutorialStep !== expectedStep) return;
     const next = state.tutorialStep + 1;
-    if (next > 9) {
-      set({ tutorialStep: 10, tutorialCompleted: true, introStage: 'completed' });
+    if (next > 6) {
+      set({ tutorialStep: 7, tutorialCompleted: true, introStage: 'completed' });
       sounds.playLevelUp();
       confetti({ particleCount: 150, spread: 90 });
       state.addFloatingText('🎉 Обучение завершено! +500 🪙 +25 💎 ✨', 0, 0, '#22C55E');
@@ -2192,17 +2198,18 @@ export const useGameStore = create<GameStore>((set, get) => ({
       state.addXP(150);
     } else {
       set({ tutorialStep: next });
-      sounds.playClick();
+      sounds.playLevelUp();
+      confetti({ particleCount: 35, spread: 60 });
     }
   },
 
   skipTutorial: () => {
-    set({ tutorialStep: 10, tutorialCompleted: true, introStage: 'completed' });
+    set({ tutorialStep: 7, tutorialCompleted: true, introStage: 'completed' });
     sounds.playClick();
   },
 
   restartTutorial: () => {
-    set({ tutorialStep: 1, tutorialCompleted: false, introStage: 'story' });
+    set({ tutorialStep: 1, tutorialCompleted: false, introStage: 'completed' });
     sounds.playClick();
   },
 
