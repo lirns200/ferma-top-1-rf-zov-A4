@@ -1180,6 +1180,71 @@ export function createStylizedCargoSemiTruck(): THREE.Group {
 }
 
 /**
+ * Procedural Dynamic Waterfall Flow Texture
+ */
+function createWaterfallFlowTexture(isFoam: boolean): THREE.CanvasTexture {
+  const canvas = document.createElement('canvas');
+  canvas.width = 256;
+  canvas.height = 1024;
+  const ctx = canvas.getContext('2d')!;
+
+  if (!isFoam) {
+    // Deep crystal turquoise glacier water with subtle stream veins
+    const grad = ctx.createLinearGradient(0, 0, 256, 0);
+    grad.addColorStop(0.0, '#0369A1');
+    grad.addColorStop(0.18, '#0284C7');
+    grad.addColorStop(0.5, '#38BDF8');
+    grad.addColorStop(0.82, '#0284C7');
+    grad.addColorStop(1.0, '#0369A1');
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, 256, 1024);
+
+    // Fast-flowing vertical water streaks
+    for (let i = 0; i < 110; i++) {
+      const x = Math.random() * 256;
+      const y = Math.random() * 1024;
+      const w = 1.5 + Math.random() * 5.0;
+      const h = 40 + Math.random() * 160;
+      const alpha = 0.2 + Math.random() * 0.45;
+      ctx.fillStyle = `rgba(255, 255, 255, ${alpha})`;
+      ctx.fillRect(x, y, w, h);
+    }
+  } else {
+    // Frothing white-water foam & bubbling spray overlay
+    ctx.fillStyle = 'rgba(0, 0, 0, 0)';
+    ctx.fillRect(0, 0, 256, 1024);
+
+    // Thick foaming rapid streaks and boiling foam clusters
+    for (let i = 0; i < 240; i++) {
+      const x = Math.random() * 256;
+      const y = Math.random() * 1024;
+      const w = 2.0 + Math.random() * 7.0;
+      const h = 30 + Math.random() * 120;
+      const alpha = 0.35 + Math.random() * 0.60;
+      ctx.fillStyle = `rgba(255, 255, 255, ${alpha})`;
+      ctx.fillRect(x, y, w, h);
+    }
+
+    for (let i = 0; i < 280; i++) {
+      const x = Math.random() * 256;
+      const y = Math.random() * 1024;
+      const r = 2.5 + Math.random() * 8.0;
+      const alpha = 0.3 + Math.random() * 0.65;
+      ctx.fillStyle = `rgba(255, 255, 255, ${alpha})`;
+      ctx.beginPath();
+      ctx.arc(x, y, r, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  }
+
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.wrapS = THREE.RepeatWrapping;
+  texture.wrapT = THREE.RepeatWrapping;
+  texture.repeat.set(1, isFoam ? 2.5 : 3.5);
+  return texture;
+}
+
+/**
  * Cascading Multi-Tier Mountain Waterfall & Alpine Gorge
  * Features sheer granite rock cliffs, multi-step plunging water curtains,
  * churning white-water rapids, foaming plunge pool, and mist particles.
@@ -1191,72 +1256,78 @@ export function createMountainWaterfallGroup(season: SeasonType): THREE.Group {
   const rockDarkMat = getCachedColorMaterial(season === 'winter' ? '#475569' : '#3F3F46', 0.85);
   const rockMidMat = getCachedColorMaterial(season === 'winter' ? '#64748B' : '#52525B', 0.80);
   const rockMossMat = getCachedColorMaterial(season === 'winter' ? '#94A3B8' : '#2D6A24', 0.85);
-  const waterDeepMat = getCachedColorMaterial(season === 'winter' ? '#60A5FA' : '#0284C7', 0.2, 0.4);
   const pineMat = getCachedColorMaterial(season === 'winter' ? '#E2E8F0' : '#14532D', 0.8);
   const trunkMat = getCachedColorMaterial('#78350F', 0.9);
 
+  const waterFlowTex = createWaterfallFlowTexture(false);
+  const foamFlowTex = createWaterfallFoamTexture();
+
   const waterMaterial = new THREE.MeshStandardMaterial({
-    color: season === 'winter' ? 0x93C5FD : 0x0EA5E9,
+    map: waterFlowTex,
+    color: season === 'winter' ? 0xBAE6FD : 0x38BDF8,
     roughness: 0.1,
     metalness: 0.15,
     transparent: true,
-    opacity: 0.88,
+    opacity: 0.92,
     side: THREE.DoubleSide,
-    flatShading: true,
   });
 
-  const foamMat = new THREE.MeshStandardMaterial({
+  const foamMaterial = new THREE.MeshStandardMaterial({
+    map: foamFlowTex,
     color: 0xFFFFFF,
     roughness: 0.2,
     metalness: 0.05,
     transparent: true,
-    opacity: 0.96,
-    flatShading: true,
+    opacity: 0.86,
+    side: THREE.DoubleSide,
   });
 
-  // ── 1. Continuous Cascading Water Mesh (Smooth 3-tiered mountain stream) ──
-  // Profile points: [z, y, width, isFoam] along the waterfall trajectory
-  const streamProfile: [number, number, number, boolean][] = [
-    [-8.5, 12.0, 4.4, false], // Mountain alpine spring source
-    [-7.2, 11.6, 4.6, false],
-    [-6.2, 11.2, 4.8, true],  // Tier 1 Lip (High Plunge)
-    [-5.6, 9.5, 4.7, true],   // Tier 1 Plunge
-    [-4.8, 7.6, 4.8, true],   // Tier 1 Plunge base
-    [-4.0, 6.8, 5.0, true],   // Shelf 1 Impact & Pool
-    [-3.0, 6.4, 5.2, false],  // Mid Shelf Rapids
-    [-2.0, 6.0, 5.4, true],   // Tier 2 Lip (Grand Cascade)
-    [-1.2, 4.5, 5.5, true],   // Tier 2 Plunge
-    [-0.2, 3.0, 5.6, true],   // Tier 2 Mid drop
-    [0.8, 1.8, 5.8, true],    // Shelf 2 Impact & Pool
-    [1.8, 1.3, 6.0, false],   // Lower Shelf Rapids
-    [2.6, 0.9, 6.2, true],    // Tier 3 Lip (Final Rush into River)
-    [3.5, 0.2, 6.4, true],    // Tier 3 Plunge into River
-    [4.6, -0.05, 6.6, false], // Merged into River
+  const solidFoamMat = new THREE.MeshStandardMaterial({
+    color: 0xFFFFFF,
+    roughness: 0.2,
+    metalness: 0.05,
+    transparent: true,
+    opacity: 0.95,
+  });
+
+  // ── 1. Grand Wide Continuous Cascading Water Mesh (8.5m - 11.0m Wide) ──
+  // Profile points: [z, y, width] along the waterfall plunge
+  const streamProfile: [number, number, number][] = [
+    [-9.0, 13.5, 8.0],  // Alpine spring canyon gorge
+    [-7.8, 12.8, 8.4],  // Upper gorge acceleration
+    [-6.8, 12.0, 8.8],  // Tier 1 Lip (High Alpine Plunge)
+    [-6.0, 9.8, 8.6],   // Tier 1 Freefall
+    [-5.0, 7.8, 8.9],   // Tier 1 Plunge Base
+    [-4.0, 7.0, 9.2],   // Mid Shelf 1 Rapids & Pool
+    [-2.8, 6.4, 9.5],   // Mid Shelf Chute
+    [-1.8, 5.8, 9.8],   // Tier 2 Lip (Grand Cascades)
+    [-0.8, 4.0, 10.0],  // Tier 2 Freefall
+    [0.4, 2.2, 10.2],   // Tier 2 Plunge Base
+    [1.6, 1.4, 10.5],   // Lower Shelf 2 Rapids
+    [2.8, 0.8, 10.8],   // Tier 3 Lip (Final Rush into River)
+    [3.8, 0.15, 11.0],  // Final plunge into river
+    [5.0, -0.05, 11.2], // Seamlessly merged into river
   ];
 
   const streamSteps = streamProfile.length;
-  const crossSegments = 6;
+  const crossSegments = 10;
   const waterPositions: number[] = [];
+  const waterUVs: number[] = [];
   const waterIndices: number[] = [];
-  const waterColors: number[] = [];
-
-  const cWater = new THREE.Color(season === 'winter' ? 0xBAE6FD : 0x38BDF8);
-  const cFoam = new THREE.Color(0xFFFFFF);
 
   for (let s = 0; s < streamSteps; s++) {
-    const [pz, py, w, isFoam] = streamProfile[s];
+    const [pz, py, w] = streamProfile[s];
     const halfW = w / 2;
+    const v = s / (streamSteps - 1);
 
     for (let c = 0; c <= crossSegments; c++) {
       const u = c / crossSegments; // 0 to 1
       const px = -halfW + u * w;
-      // Slight dish/channel curvature across cross-section
-      const curvatureY = Math.sin(u * Math.PI) * 0.12;
+      // Organic parabolic cross-section dip in the center
+      const curvatureY = Math.sin(u * Math.PI) * 0.18;
 
-      waterPositions.push(px, py - (0.12 - curvatureY), pz);
-
-      const vertColor = isFoam ? cFoam : cWater;
-      waterColors.push(vertColor.r, vertColor.g, vertColor.b);
+      waterPositions.push(px, py - (0.18 - curvatureY), pz);
+      waterUVs.push(u, v * 5.0);
     }
   }
 
@@ -1274,77 +1345,90 @@ export function createMountainWaterfallGroup(season: SeasonType): THREE.Group {
 
   const waterGeo = new THREE.BufferGeometry();
   waterGeo.setAttribute('position', new THREE.Float32BufferAttribute(waterPositions, 3));
-  waterGeo.setAttribute('color', new THREE.Float32BufferAttribute(waterColors, 3));
+  waterGeo.setAttribute('uv', new THREE.Float32BufferAttribute(waterUVs, 2));
   waterGeo.setIndex(waterIndices);
   waterGeo.computeVertexNormals();
 
-  const waterfallMesh = new THREE.Mesh(
-    waterGeo,
-    new THREE.MeshStandardMaterial({
-      vertexColors: true,
-      roughness: 0.1,
-      metalness: 0.15,
-      transparent: true,
-      opacity: 0.90,
-      side: THREE.DoubleSide,
-      flatShading: true,
-    })
-  );
+  const waterfallMesh = new THREE.Mesh(waterGeo, waterMaterial);
   waterfallMesh.name = 'waterfall_continuous_mesh';
   waterfallMesh.castShadow = true;
   group.add(waterfallMesh);
 
-  // ── 2. Sculpted White Foam Crests at Cascade Lips & Rapids ───────────
-  const foamLipGeo = new THREE.DodecahedronGeometry(0.35, 0);
+  // Cascading Foam Curtain Layer (Offset slightly for liquid parallax depth)
+  const foamPositions = waterPositions.map((val, idx) => (idx % 3 === 1 ? val + 0.05 : val));
+  const foamGeo = new THREE.BufferGeometry();
+  foamGeo.setAttribute('position', new THREE.Float32BufferAttribute(foamPositions, 3));
+  foamGeo.setAttribute('uv', new THREE.Float32BufferAttribute(waterUVs, 2));
+  foamGeo.setIndex(waterIndices);
+  foamGeo.computeVertexNormals();
+
+  const foamMesh = new THREE.Mesh(foamGeo, foamMaterial);
+  foamMesh.name = 'waterfall_foam_mesh';
+  group.add(foamMesh);
+
+  // ── 2. Twin Mountain Side-Streams (Left & Right Tributary Waterfalls) ──
+  const makeSideStream = (startX: number, startY: number, startZ: number, endX: number, endY: number, endZ: number) => {
+    const sGeo = new THREE.PlaneGeometry(1.6, 6.2, 4, 8);
+    const sMesh = new THREE.Mesh(sGeo, foamMaterial);
+    sMesh.position.set((startX + endX) / 2, (startY + endY) / 2, (startZ + endZ) / 2);
+    sMesh.rotation.x = -Math.PI / 2 + 0.55;
+    sMesh.rotation.y = startX < 0 ? 0.35 : -0.35;
+    return sMesh;
+  };
+  group.add(makeSideStream(-4.8, 8.5, -4.0, -3.2, 2.0, 1.0));
+  group.add(makeSideStream(4.8, 8.0, -3.5, 3.2, 1.8, 1.2));
+
+  // ── 3. 3D Frothing Foam Lip Crests at Each Drop ──────────────────────
+  const foamLipGeo = new THREE.DodecahedronGeometry(0.45, 0);
   const foamLips = [
-    // Tier 1 Lip Foam
-    { x: -1.6, y: 11.2, z: -6.0 }, { x: 0, y: 11.3, z: -6.1 }, { x: 1.6, y: 11.2, z: -6.0 },
-    // Tier 1 Impact Foam
-    { x: -1.8, y: 6.9, z: -4.0 }, { x: 0, y: 7.0, z: -3.9 }, { x: 1.8, y: 6.9, z: -4.0 },
-    // Tier 2 Lip Foam
-    { x: -2.0, y: 6.1, z: -1.9 }, { x: 0, y: 6.2, z: -1.8 }, { x: 2.0, y: 6.1, z: -1.9 },
-    // Tier 2 Impact Foam
-    { x: -2.2, y: 1.9, z: 0.8 }, { x: 0, y: 2.0, z: 0.9 }, { x: 2.2, y: 1.9, z: 0.8 },
-    // Tier 3 River Entry Foam
-    { x: -2.4, y: 0.3, z: 3.5 }, { x: 0, y: 0.4, z: 3.6 }, { x: 2.4, y: 0.3, z: 3.5 },
+    // Tier 1 Lip Foam Crests (y = 12.0)
+    { x: -3.2, y: 12.1, z: -6.6 }, { x: -1.0, y: 12.2, z: -6.7 }, { x: 1.0, y: 12.2, z: -6.7 }, { x: 3.2, y: 12.1, z: -6.6 },
+    // Tier 1 Impact Basin Foam (y = 7.0)
+    { x: -3.5, y: 7.1, z: -4.0 }, { x: -1.2, y: 7.2, z: -3.9 }, { x: 1.2, y: 7.2, z: -3.9 }, { x: 3.5, y: 7.1, z: -4.0 },
+    // Tier 2 Lip Foam Crests (y = 5.8)
+    { x: -3.8, y: 5.9, z: -1.7 }, { x: -1.3, y: 6.0, z: -1.6 }, { x: 1.3, y: 6.0, z: -1.6 }, { x: 3.8, y: 5.9, z: -1.7 },
+    // Tier 2 Impact Basin Foam (y = 1.6)
+    { x: -4.0, y: 1.7, z: 1.5 }, { x: -1.4, y: 1.8, z: 1.6 }, { x: 1.4, y: 1.8, z: 1.6 }, { x: 4.0, y: 1.7, z: 1.5 },
+    // Tier 3 River Entry Whitewater (y = 0.15)
+    { x: -4.2, y: 0.25, z: 3.8 }, { x: -2.0, y: 0.28, z: 4.0 }, { x: 0, y: 0.30, z: 4.1 }, { x: 2.0, y: 0.28, z: 4.0 }, { x: 4.2, y: 0.25, z: 3.8 },
   ];
   foamLips.forEach((fl, idx) => {
-    const fMesh = new THREE.Mesh(foamLipGeo, foamMat);
+    const fMesh = new THREE.Mesh(foamLipGeo, solidFoamMat);
     fMesh.name = `waterfall_foam_crest_${idx}`;
     fMesh.position.set(fl.x, fl.y, fl.z);
-    fMesh.scale.set(1.6, 0.45, 0.9);
+    fMesh.scale.set(1.8, 0.45, 0.95);
     group.add(fMesh);
   });
 
-  // ── 3. Natural Faceted Rock Bed Gorge Under the Water ────────────────
-  const bedGeo = new THREE.BoxGeometry(6.6, 1.2, 3.2);
-  const bed1 = new THREE.Mesh(bedGeo, rockDarkMat);
-  bed1.position.set(0, 10.4, -6.0);
+  // ── 4. Natural Faceted Granite Rock Gorge & Terraces ─────────────────
+  // Stepped Granite Shelves Underneath Water
+  const bed1 = new THREE.Mesh(new THREE.BoxGeometry(10.2, 1.4, 3.6), rockDarkMat);
+  bed1.position.set(0, 11.2, -6.5);
   bed1.castShadow = true;
   bed1.receiveShadow = true;
 
-  const bed2 = new THREE.Mesh(new THREE.BoxGeometry(7.0, 1.2, 3.4), rockDarkMat);
-  bed2.position.set(0, 5.4, -2.5);
+  const bed2 = new THREE.Mesh(new THREE.BoxGeometry(10.8, 1.4, 3.8), rockDarkMat);
+  bed2.position.set(0, 5.8, -2.2);
   bed2.castShadow = true;
   bed2.receiveShadow = true;
 
-  const bed3 = new THREE.Mesh(new THREE.BoxGeometry(7.6, 1.2, 3.6), rockDarkMat);
-  bed3.position.set(0, 1.2, 1.2);
+  const bed3 = new THREE.Mesh(new THREE.BoxGeometry(11.5, 1.4, 4.0), rockDarkMat);
+  bed3.position.set(0, 1.0, 1.8);
   bed3.castShadow = true;
   bed3.receiveShadow = true;
   group.add(bed1, bed2, bed3);
 
-  // ── 4. Natural Low-Poly Rock Cliffs Flanking the Canyon Gorge ────────
-  const rockDodec = new THREE.DodecahedronGeometry(1.5, 0);
+  // Natural Low-Poly Flanking Boulders & Cliffs
+  const rockDodec = new THREE.DodecahedronGeometry(1.6, 0);
 
-  // Left Canyon Natural Boulder Formations
+  // Left Canyon Wall Boulders
   const leftRockData = [
-    { x: -5.0, y: 1.5, z: 3.2, s: [1.8, 1.8, 1.8], mat: rockMidMat },
-    { x: -5.5, y: 3.8, z: 0.5, s: [2.2, 2.4, 2.0], mat: rockDarkMat },
-    { x: -6.0, y: 6.8, z: -2.5, s: [2.5, 2.8, 2.3], mat: rockMidMat },
-    { x: -6.5, y: 10.8, z: -5.8, s: [2.8, 3.2, 2.6], mat: rockDarkMat },
-    { x: -4.2, y: 1.0, z: 4.8, s: [1.4, 1.2, 1.5], mat: rockMossMat },
-    { x: -4.8, y: 5.2, z: -1.0, s: [1.6, 1.8, 1.5], mat: rockMossMat },
+    { x: -6.5, y: 1.8, z: 4.2, s: [2.2, 2.2, 2.2], mat: rockMidMat },
+    { x: -7.2, y: 4.5, z: 1.2, s: [2.5, 2.8, 2.4], mat: rockDarkMat },
+    { x: -7.8, y: 7.8, z: -2.0, s: [2.8, 3.2, 2.6], mat: rockMidMat },
+    { x: -8.5, y: 11.8, z: -5.5, s: [3.2, 3.8, 3.0], mat: rockDarkMat },
+    { x: -5.5, y: 1.2, z: 5.5, s: [1.6, 1.4, 1.7], mat: rockMossMat },
+    { x: -6.0, y: 6.2, z: -0.5, s: [1.8, 2.0, 1.7], mat: rockMossMat },
   ];
   leftRockData.forEach(r => {
     const rock = new THREE.Mesh(rockDodec, r.mat);
@@ -1356,14 +1440,14 @@ export function createMountainWaterfallGroup(season: SeasonType): THREE.Group {
     group.add(rock);
   });
 
-  // Right Canyon Natural Boulder Formations
+  // Right Canyon Wall Boulders
   const rightRockData = [
-    { x: 5.0, y: 1.5, z: 3.2, s: [1.8, 1.8, 1.8], mat: rockMidMat },
-    { x: 5.5, y: 3.8, z: 0.5, s: [2.2, 2.4, 2.0], mat: rockDarkMat },
-    { x: 6.0, y: 6.8, z: -2.5, s: [2.5, 2.8, 2.3], mat: rockMidMat },
-    { x: 6.5, y: 10.8, z: -5.8, s: [2.8, 3.2, 2.6], mat: rockDarkMat },
-    { x: 4.2, y: 1.0, z: 4.8, s: [1.4, 1.2, 1.5], mat: rockMossMat },
-    { x: 4.8, y: 5.2, z: -1.0, s: [1.6, 1.8, 1.5], mat: rockMossMat },
+    { x: 6.5, y: 1.8, z: 4.2, s: [2.2, 2.2, 2.2], mat: rockMidMat },
+    { x: 7.2, y: 4.5, z: 1.2, s: [2.5, 2.8, 2.4], mat: rockDarkMat },
+    { x: 7.8, y: 7.8, z: -2.0, s: [2.8, 3.2, 2.6], mat: rockMidMat },
+    { x: 8.5, y: 11.8, z: -5.5, s: [3.2, 3.8, 3.0], mat: rockDarkMat },
+    { x: 5.5, y: 1.2, z: 5.5, s: [1.6, 1.4, 1.7], mat: rockMossMat },
+    { x: 6.0, y: 6.2, z: -0.5, s: [1.8, 2.0, 1.7], mat: rockMossMat },
   ];
   rightRockData.forEach(r => {
     const rock = new THREE.Mesh(rockDodec, r.mat);
@@ -1375,27 +1459,24 @@ export function createMountainWaterfallGroup(season: SeasonType): THREE.Group {
     group.add(rock);
   });
 
-  // ── 5. Base Plunge Pool, Expanding Foam Rings & River Stones ─────────
-  const splashPool = new THREE.Mesh(new THREE.CylinderGeometry(4.4, 5.0, 0.25, 16), waterDeepMat);
-  splashPool.position.set(0, -0.03, 4.8);
-  group.add(splashPool);
-
-  for (let r = 0; r < 3; r++) {
-    const ringGeo = new THREE.RingGeometry(1.2 + r * 0.9, 1.8 + r * 0.9, 16);
+  // ── 5. Expanding Concentric Foam Ripples on the River Surface ────────
+  for (let r = 0; r < 4; r++) {
+    const ringGeo = new THREE.RingGeometry(1.5 + r * 1.1, 2.2 + r * 1.1, 24);
     ringGeo.rotateX(-Math.PI / 2);
-    const ring = new THREE.Mesh(ringGeo, foamMat);
+    const ring = new THREE.Mesh(ringGeo, solidFoamMat);
     ring.name = `waterfall_foam_ring_${r}`;
-    ring.position.set(0, 0.025 + r * 0.01, 4.6);
+    ring.position.set(0, 0.02 + r * 0.008, 4.8);
     group.add(ring);
   }
 
-  // Submerged River Stones in Plunge Pool
-  const stoneGeo = new THREE.DodecahedronGeometry(0.55, 0);
+  // Submerged Granite River Stones in the Rapids
+  const stoneGeo = new THREE.DodecahedronGeometry(0.65, 0);
   [
-    { x: -3.4, z: 4.5, s: 1.0 },
-    { x: 3.4, z: 4.2, s: 0.9 },
-    { x: -2.2, z: 6.2, s: 0.7 },
-    { x: 2.4, z: 6.4, s: 0.8 },
+    { x: -4.5, z: 4.8, s: 1.2 },
+    { x: 4.5, z: 4.5, s: 1.1 },
+    { x: -2.8, z: 6.8, s: 0.8 },
+    { x: 2.9, z: 7.0, s: 0.9 },
+    { x: 0.2, z: 7.5, s: 0.7 },
   ].forEach(st => {
     const stone = new THREE.Mesh(stoneGeo, rockMidMat);
     stone.position.set(st.x, 0.2, st.z);
@@ -1404,21 +1485,21 @@ export function createMountainWaterfallGroup(season: SeasonType): THREE.Group {
     group.add(stone);
   });
 
-  // ── 6. Waterfall Rising Mist & Spray Particles ───────────────────────
-  const mistCount = 36;
+  // ── 6. Dynamic Water Mist Spray Particle Cloud ───────────────────────
+  const mistCount = 50;
   const mistGeo = new THREE.BufferGeometry();
   const mistPos = new Float32Array(mistCount * 3);
   for (let m = 0; m < mistCount; m++) {
-    mistPos[m * 3] = (Math.random() - 0.5) * 4.8;
-    mistPos[m * 3 + 1] = 0.2 + Math.random() * 3.2;
-    mistPos[m * 3 + 2] = 2.4 + Math.random() * 3.6;
+    mistPos[m * 3] = (Math.random() - 0.5) * 8.5;
+    mistPos[m * 3 + 1] = 0.2 + Math.random() * 4.5;
+    mistPos[m * 3 + 2] = 2.0 + Math.random() * 4.5;
   }
   mistGeo.setAttribute('position', new THREE.BufferAttribute(mistPos, 3));
   const mistMat = new THREE.PointsMaterial({
     color: 0xE0F2FE,
-    size: 0.55,
+    size: 0.65,
     transparent: true,
-    opacity: 0.75,
+    opacity: 0.70,
     blending: THREE.AdditiveBlending,
     depthWrite: false,
   });
@@ -1426,13 +1507,13 @@ export function createMountainWaterfallGroup(season: SeasonType): THREE.Group {
   mistPoints.name = 'waterfall_mist_particles';
   group.add(mistPoints);
 
-  // ── 7. Alpine Pine Trees along Canyon Cliffs ─────────────────────────
+  // ── 7. Alpine Pine Trees & Lush Mountain Foliage ──────────────────────
   const pineTrunkGeo = new THREE.CylinderGeometry(0.12, 0.16, 1.4, 5);
   [
-    { x: -5.8, y: 4.8, z: 1.2, s: 1.2 },
-    { x: -7.0, y: 9.5, z: -2.5, s: 1.4 },
-    { x: 5.8, y: 4.6, z: 1.0, s: 1.1 },
-    { x: 7.0, y: 9.2, z: -2.8, s: 1.3 },
+    { x: -7.5, y: 5.5, z: 1.5, s: 1.3 },
+    { x: -8.8, y: 10.5, z: -2.5, s: 1.5 },
+    { x: 7.5, y: 5.2, z: 1.2, s: 1.2 },
+    { x: 8.8, y: 10.2, z: -2.8, s: 1.4 },
   ].forEach(pt => {
     const pGroup = new THREE.Group();
     pGroup.position.set(pt.x, pt.y, pt.z);
@@ -1444,8 +1525,8 @@ export function createMountainWaterfallGroup(season: SeasonType): THREE.Group {
     pGroup.add(trunk);
 
     for (let l = 0; l < 3; l++) {
-      const cone = new THREE.Mesh(new THREE.ConeGeometry(1.1 * (1 - l * 0.22), 1.1, 5), pineMat);
-      cone.position.y = 1.1 + l * 0.65;
+      const cone = new THREE.Mesh(new THREE.ConeGeometry(1.2 * (1 - l * 0.22), 1.2, 5), pineMat);
+      cone.position.y = 1.1 + l * 0.7;
       cone.castShadow = true;
       pGroup.add(cone);
     }
