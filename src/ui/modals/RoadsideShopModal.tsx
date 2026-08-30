@@ -381,6 +381,10 @@ export const RoadsideShopModal: React.FC = () => {
       coins: state.coins + order.totalPrice,
       inventory: {
         ...state.inventory,
+        [order.itemId]: Math.max(0, (state.inventory[order.itemId] || 0) - order.count),
+      },
+    }));
+
     // Remove fulfilled order
     setBuyOrdersList(prev => prev.filter(o => o.id !== order.id));
 
