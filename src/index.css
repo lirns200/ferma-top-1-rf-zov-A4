@@ -210,5 +210,58 @@ body, html {
   text-shadow: 0 1.5px 3px #78350F, 0 0 2px #451A03;
 }
 
+/* ── Casual Game Bottom Dock Tray ── */
+.game-dock-tray {
+  background: linear-gradient(180deg, #3A200D 0%, #201006 100%);
+  border: 2px solid #A16207;
+  border-radius: 24px;
+  box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.8), inset 0 1.5px 1px rgba(254, 240, 138, 0.4), inset 0 -3px 0 rgba(0, 0, 0, 0.8);
+}
+
+.game-dock-btn {
+  background: linear-gradient(180deg, #4A2810 0%, #251205 100%);
+  border: 1.5px solid #854D0E;
+  border-radius: 16px;
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.6), inset 0 1px 1px rgba(254, 240, 138, 0.25), inset 0 -1.5px 0 rgba(0, 0, 0, 0.6);
+  transition: all 0.15s ease;
+}
+.game-dock-btn:hover {
+  filter: brightness(1.1);
+  border-color: #FACC15;
+}
+.game-dock-btn:active {
+  transform: translateY(1.5px) scale(0.96);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.6);
+}
+.game-dock-btn-active {
+  background: linear-gradient(180deg, #FACC15 0%, #CA8A04 100%);
+  border: 2px solid #FEF08A;
+  box-shadow: 0 0 12px rgba(250, 204, 21, 0.6), inset 0 2px 2px rgba(255, 255, 255, 0.8);
+}
+
+.game-center-build-btn {
+  background: radial-gradient(circle at 35% 30%, #FEF08A 0%, #FACC15 40%, #D97706 80%, #92400E 100%);
+  border: 2.5px solid #FEF08A;
+  border-radius: 20px;
+  box-shadow: 0 6px 20px rgba(234, 179, 8, 0.6), inset 0 2px 3px rgba(255, 255, 255, 0.8), 0 4px 10px rgba(0, 0, 0, 0.7);
+  transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.game-center-build-btn:hover {
+  transform: scale(1.06) translateY(-2px);
+  filter: brightness(1.08);
+}
+.game-center-build-btn:active {
+  transform: scale(0.95) translateY(1px);
+}
+
+.game-center-farm-btn {
+  background: radial-gradient(circle at 35% 30%, #86EFAC 0%, #22C55E 40%, #15803D 80%, #14532D 100%);
+  border: 2.5px solid #BBF7D0;
+  border-radius: 20px;
+  box-shadow: 0 6px 20px rgba(34, 197, 94, 0.6), inset 0 2px 3px rgba(255, 255, 255, 0.8), 0 4px 10px rgba(0, 0, 0, 0.7);
+  transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+
 
 
