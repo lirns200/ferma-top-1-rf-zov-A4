@@ -2265,3 +2265,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
     window.location.reload();
   },
 }));
+
+if (typeof window !== 'undefined') {
+  (window as any).__FARM_STORE__ = useGameStore;
+}
