@@ -437,24 +437,50 @@ function createForestDetails(season: SeasonType, random: () => number) {
   const group = new THREE.Group();
   group.name = 'forest_details';
 
-  // 1. Forest Shrubs & Bushes
+  // 1. Forest Shrubs & Bushes (48 dense bushes in unbuildable outskirts)
   const shrubGeometry = new THREE.IcosahedronGeometry(0.72, 1);
-  const shrubs = new THREE.InstancedMesh(shrubGeometry, makeMaterial(palette.foliage, 0.86), 36);
+  const shrubs = new THREE.InstancedMesh(shrubGeometry, makeMaterial(palette.foliage, 0.86), 48);
   shrubs.name = 'forest_shrubs';
   for (let i = 0; i < shrubs.count; i++) {
-    const edge = i % 2 === 0;
-    const x = edge ? -31 + random() * 10 : 25 + random() * 8;
-    let z = -27 + random() * 54;
+    const edge = i % 4;
+    let x = 0;
+    let z = 0;
+    if (edge === 0) {
+      // West wilderness
+      x = -32 + random() * 12;
+      z = -28 + random() * 56;
+    } else if (edge === 1) {
+      // East far shore & hills
+      x = 24.5 + random() * 10;
+      z = -28 + random() * 56;
+    } else if (edge === 2) {
+      // North mountains
+      x = -28 + random() * 56;
+      z = -28 + random() * 12;
+    } else {
+      // South wilderness
+      x = -28 + random() * 56;
+      z = 16 + random() * 14;
+    }
     if (z >= -12.2 && z <= -7.2) {
-      z = z > -9.7 ? -6.2 : -13.2;
+      z = z > -9.7 ? -6.0 : -13.5;
     }
     setInstance(shrubs, i, x, 0.48, z, new THREE.Vector3(0.75 + random() * 0.8, 0.65 + random() * 0.7, 0.75 + random() * 0.8), random() * Math.PI);
   }
 
-  // 2. Scenery Trees
+  // 2. Broadleaf & Oak Scenery Trees (42 trees across unbuildable zones)
   const treePoints: Point2[] = [
-    [-30, -25], [-27, -19], [-31, 14], [-25, 27], [-20, -27], [-12, 28],
-    [25, -29], [29, -25], [32, -18], [26, 10], [31, 15], [26, 28], [32, 25],
+    // North Forest & Mountain Foothills (z < -13)
+    [-30, -25], [-27, -19], [-22, -26], [-17, -22], [-11, -25], [-5, -21],
+    [3, -24], [8, -20], [24, -28], [28, -23], [32, -26], [-14, -28], [1, -28],
+    // South Wilderness & Grove (z > 13)
+    [-28, 22], [-25, 27], [-20, 18], [-16, 26], [-10, 20], [-4, 25],
+    [2, 19], [7, 26], [24, 18], [28, 26], [32, 22], [-22, 29], [0, 28],
+    // West Hillside Forest (x < -13)
+    [-31, -14], [-28, -6], [-32, 2], [-27, 9], [-31, 15], [-29, -1], [-33, 7], [-30, 20],
+    // East Shore & Riverbank Fringes (x > 24 or along river banks)
+    [26, -16], [30, -10], [26, 2], [31, 8], [26, 14], [30, 20], [32, 1],
+    [8.4, -20], [8.2, 17], [8.5, 23]
   ];
   const trunks = new THREE.InstancedMesh(new THREE.CylinderGeometry(0.18, 0.28, 1.7, 7), makeMaterial(0x77431f, 0.95), treePoints.length);
   trunks.name = 'scenery_tree_trunks';
@@ -468,11 +494,33 @@ function createForestDetails(season: SeasonType, random: () => number) {
   trunks.castShadow = true;
   crowns.castShadow = true;
 
-  // 3. Tree Stumps ("Пеньки") with Growth Rings & Moss
+  // 3. Coniferous Mountain Pines (20 Evergreen Pines in Northern & Highland Unbuildable Areas)
+  const pinePoints: Point2[] = [
+    [-32, -28], [-25, -29], [-19, -27], [-7, -29], [6, -29], [25, -24], [31, -29],
+    [-29, -21], [-13, -23], [27, -19], [33, -14], [-33, 11], [-30, 25],
+    [25, 24], [31, 28], [27, -5], [33, 16], [-21, 24], [5, 27], [-9, 28]
+  ];
+  const pineTrunkGeo = new THREE.CylinderGeometry(0.14, 0.22, 1.4, 6);
+  const pineTrunks = new THREE.InstancedMesh(pineTrunkGeo, makeMaterial(0x5a3416, 0.96), pinePoints.length);
+  pineTrunks.name = 'scenery_pine_trunks';
+  const pineConeGeo = new THREE.ConeGeometry(1.05, 2.6, 6);
+  const pineCones = new THREE.InstancedMesh(pineConeGeo, makeMaterial(palette.foliage, 0.92), pinePoints.length);
+  pineCones.name = 'scenery_pine_cones';
+  pinePoints.forEach(([x, z], i) => {
+    const sc = 0.80 + random() * 0.55;
+    setInstance(pineTrunks, i, x, 0.7 * sc, z, new THREE.Vector3(sc, sc, sc), random() * Math.PI);
+    setInstance(pineCones, i, x, 1.8 * sc, z, new THREE.Vector3(sc, sc, sc), random() * Math.PI);
+  });
+  pineTrunks.castShadow = true;
+  pineCones.castShadow = true;
+
+  // 4. Tree Stumps ("Пеньки") with Growth Rings & Moss (32 stumps in unbuildable zones)
   const stumpPoints: Point2[] = [
     [-24, -12], [-21, 20], [-16, 26], [4, 24], [27, -15], [30, 3], [25, 21], [-29, 4],
     [-26, -17], [-19, 13], [-14, -20], [-8, 22], [2, -23], [6, 21], [28, -22], [31, 19],
-    [-27, 23], [26, -5]
+    [-27, 23], [26, -5], [-31, -8], [-23, -25], [-17, 16], [-11, 27], [3, 28],
+    [25, -20], [29, 11], [33, -7], [-29, 17], [-15, -15], [7, -25], [26, 27],
+    [-32, -18], [28, 2]
   ];
   const stumps = new THREE.InstancedMesh(new THREE.CylinderGeometry(0.32, 0.42, 0.35, 8), makeMaterial(0x875027, 0.96), stumpPoints.length);
   stumps.name = 'forest_stumps';
@@ -483,7 +531,7 @@ function createForestDetails(season: SeasonType, random: () => number) {
   stumps.castShadow = true;
   stumps.receiveShadow = true;
 
-  // 4. Fallen Mossy Trees & Logs ("Деревья которые лежат")
+  // 5. Fallen Mossy Trees & Logs ("Деревья которые лежат") (18 horizontal logs)
   const fallenLogPoints: Array<{ pos: Point2; length: number; rotY: number }> = [
     { pos: [-25, -16], length: 2.8, rotY: 0.4 },
     { pos: [-22, 16], length: 3.2, rotY: -0.7 },
@@ -495,6 +543,14 @@ function createForestDetails(season: SeasonType, random: () => number) {
     { pos: [-28, 6], length: 2.9, rotY: 0.9 },
     { pos: [-18, -25], length: 2.7, rotY: -0.5 },
     { pos: [26, 27], length: 3.3, rotY: 1.4 },
+    { pos: [-30, -22], length: 3.0, rotY: -0.8 },
+    { pos: [-20, 22], length: 2.7, rotY: 0.6 },
+    { pos: [-8, 26], length: 3.2, rotY: -1.0 },
+    { pos: [24, -25], length: 2.8, rotY: 0.3 },
+    { pos: [30, -12], length: 3.1, rotY: -0.5 },
+    { pos: [28, 16], length: 2.9, rotY: 1.2 },
+    { pos: [-31, 12], length: 3.3, rotY: -0.4 },
+    { pos: [4, -26], length: 2.6, rotY: 0.7 },
   ];
   const logGeo = new THREE.CylinderGeometry(0.22, 0.28, 1, 8);
   logGeo.rotateZ(Math.PI / 2); // Lay horizontal
@@ -507,12 +563,16 @@ function createForestDetails(season: SeasonType, random: () => number) {
   fallenLogs.castShadow = true;
   fallenLogs.receiveShadow = true;
 
-  // 5. Natural Granite Boulders, Stones & Mossy Rocks ("Камни")
+  // 6. Natural Granite Boulders, Stones & Mossy Rocks ("Камни") (56 boulders in unbuildable areas)
   const rockPoints: Point2[] = [
     [-26, -19], [-23, -13], [-21, 5], [-27, 18], [-19, 21], [-14, -17], [-10, 20],
     [-5, 23], [3, 21], [7, -19], [25, -23], [28, -13], [30, 0], [27, 12],
     [31, 24], [26, 26], [-30, -5], [-22, 27], [5, -24], [29, -6], [-17, -22],
-    [-28, 12], [25, -17], [32, 14], [-12, 25], [7, 23], [-24, 2], [28, 18]
+    [-28, 12], [25, -17], [32, 14], [-12, 25], [7, 23], [-24, 2], [28, 18],
+    [-32, -26], [-30, -16], [-28, -23], [-20, -28], [-15, -24], [-6, -26], [0, -25],
+    [8, -26], [24, -29], [28, -27], [32, -22], [-32, 17], [-29, 24], [-24, 28],
+    [-18, 27], [-9, 27], [-1, 27], [6, 27], [25, 23], [29, 28], [33, 25],
+    [-33, -3], [-32, 7], [24, 6], [32, -2], [30, 6], [33, 9]
   ];
   const rockGeo = new THREE.DodecahedronGeometry(0.38, 0);
   const boulders = new THREE.InstancedMesh(rockGeo, makeMaterial(0x718096, 0.94), rockPoints.length);
@@ -526,7 +586,7 @@ function createForestDetails(season: SeasonType, random: () => number) {
   boulders.castShadow = true;
   boulders.receiveShadow = true;
 
-  group.add(shrubs, trunks, crowns, stumps, fallenLogs, boulders);
+  group.add(shrubs, trunks, crowns, pineTrunks, pineCones, stumps, fallenLogs, boulders);
   return group;
 }
 
