@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useGameStore } from '../game/gameState';
 import { CROPS, TREES_BUSHES } from '../config/crops';
 import { BUILDINGS } from '../config/buildings';
@@ -7,8 +7,9 @@ import { RECIPES } from '../config/recipes';
 import { PRODUCTS } from '../config/products';
 import { sounds } from '../audio/SoundManager';
 import { triggerTelegramHaptic } from '../utils/telegram';
-import { RotateCw, Check, X, Trash2, Info } from 'lucide-react';
+import { RotateCw, Check, X, Trash2, Info, Zap, Clock, Lock, Sparkles, CheckCircle2 } from 'lucide-react';
 import { Building3DThumbnail } from './Building3DThumbnail';
+import { Item3DThumbnail } from './Item3DThumbnail';
 
 const CoinSvg = () => (
   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" className="shrink-0 inline-block">
@@ -49,10 +50,18 @@ export const FloatingToolsOverlay: React.FC = () => {
     startMovingEntity, rotateMovingEntity, confirmMoveEntity, cancelMoveEntity, deleteEntity,
     plantCrop, harvestCrop, speedUpCrop, waterField, harvestTreeBush,
     feedAllAnimalsInPen, collectAllAnimalProductsInPen, collectProduct,
-    startProduction, openProductionModal,
+    startProduction, speedUpProductionWithGems, openProductionModal,
     openModal, activeEvent,
     isDesign2026,
   } = useGameStore();
+
+  // Local ticker for live countdowns & progress bars
+  const [, setTick] = useState(0);
+  useEffect(() => {
+    if (!selectedEntityId) return;
+    const interval = window.setInterval(() => setTick(t => t + 1), 300);
+    return () => clearInterval(interval);
+  }, [selectedEntityId]);
 
   const selectedEntity = entities.find(e => e.id === selectedEntityId);
   const movingEntity = entities.find(e => e.id === movingEntityId);
@@ -187,47 +196,54 @@ export const FloatingToolsOverlay: React.FC = () => {
   }
 
   // ── Calculate State & Context for Selected Entity ──
-  let cropName = 'Объект';
-  let cropIcon = '🌱';
-  let statusText = '';
-  let growthPercent = 0;
-  let waterPercent = 100;
-  let isCropReady = false;
-  let isCropGrowing = false;
-  let isEmptyField = false;
-  let isAnimalPen = false;
-  let hasAnimalProducts = false;
-  let hasHungryAnimals = false;
   let isProductionBuilding = false;
-  let hasCompletedProducts = false;
+  let isAnimalPen = false;
   let isFruitTree = false;
-  let isFruitTreeReady = false;
   let isSpecialBuilding = false;
   let isCoreBuilding = false;
-  let entityBuildingConfig = selectedEntity ? (BUILDINGS[selectedEntity.configId] || DECORATIONS[selectedEntity.configId] || TREES_BUSHES[selectedEntity.configId]) : null;
+  let isEmptyField = false;
+  let isCropGrowing = false;
+  let isCropReady = false;
+  let isFruitTreeReady = false;
+  let hasAnimalProducts = false;
+  let hasHungryAnimals = false;
+  let hasCompletedProducts = false;
+
+  let cropName = '';
+  let cropIcon: React.ReactNode = '🌱';
+  let growthPercent = 0;
+  let waterPercent = 100;
+  let statusText = '';
+
+  let buildingRecipes: typeof RECIPES[keyof typeof RECIPES][] = [];
+  let activeQueueItem: { recipeId: string; startedAt: number; durationSeconds?: number } | null = null;
+  let activeRecipe: typeof RECIPES[keyof typeof RECIPES] | null = null;
+  let activeProduct: typeof PRODUCTS[keyof typeof PRODUCTS] | null = null;
+  let activeProgressPercent = 0;
+  let remainingSeconds = 0;
+  let maxQueueSlots = 5;
+  let isQueueFull = false;
 
   if (selectedEntity) {
+    const entityBuildingConfig = BUILDINGS[selectedEntity.configId] || DECORATIONS[selectedEntity.configId];
+
     if (selectedEntity.type === 'field') {
-      if (selectedEntity.cropId && selectedEntity.plantedAt) {
-        const crop = CROPS[selectedEntity.cropId];
-        if (crop) {
-          cropName = crop.name;
-          cropIcon = crop.icon;
-          const weatherMult = activeEvent?.growthSpeedMultiplier || 1.0;
-          const growMs = (crop.growTimeSeconds * 1000) / weatherMult;
-          const elapsed = Date.now() - selectedEntity.plantedAt;
-          growthPercent = Math.min(100, Math.round((elapsed / growMs) * 100));
-          waterPercent = Math.max(20, Math.round(100 - (growthPercent * 0.4)));
-          isCropReady = growthPercent >= 100;
-          isCropGrowing = !isCropReady;
-          const remainSec = Math.max(0, Math.ceil((growMs - elapsed) / 1000));
-          statusText = isCropReady ? 'Урожай созрел! ✨' : `Созреет через ${remainSec}с`;
-        }
-      } else {
-        cropName = 'Свободная грядка';
-        cropIcon = '🟫';
+      if (!selectedEntity.cropId) {
         isEmptyField = true;
+        cropName = 'Свободная грядка';
+        cropIcon = '🌱';
         statusText = 'Выберите семена для посадки';
+      } else {
+        const crop = CROPS[selectedEntity.cropId];
+        cropName = crop?.name || 'Растение';
+        cropIcon = crop?.icon || '🌾';
+        const weatherMult = activeEvent?.growthSpeedMultiplier || 1.0;
+        const growMs = crop ? (crop.growTimeSeconds * 1000) / weatherMult : 10000;
+        const elapsed = selectedEntity.plantedAt ? Date.now() - selectedEntity.plantedAt : 0;
+        growthPercent = Math.min(100, Math.round((elapsed / growMs) * 100));
+        isCropReady = growthPercent >= 100;
+        isCropGrowing = !isCropReady;
+        statusText = isCropReady ? 'Урожай созрел! 🌾' : `Созревание: ${growthPercent}% (${Math.max(0, Math.ceil((growMs - elapsed) / 1000))}с)`;
       }
     } else if (selectedEntity.type === 'animal_pen') {
       isAnimalPen = true;
@@ -249,11 +265,29 @@ export const FloatingToolsOverlay: React.FC = () => {
       const completedCount = selectedEntity.completedProducts?.length || 0;
       const queueCount = selectedEntity.productionQueue?.length || 0;
       hasCompletedProducts = completedCount > 0;
+      maxQueueSlots = b?.maxQueueSlots || 5;
+      isQueueFull = queueCount >= maxQueueSlots;
+
+      buildingRecipes = Object.values(RECIPES)
+        .filter(r => r.buildingId === selectedEntity.configId)
+        .sort((a, b) => a.unlockLevel - b.unlockLevel);
+
+      activeQueueItem = selectedEntity.productionQueue?.[0] || null;
+      activeRecipe = activeQueueItem ? RECIPES[activeQueueItem.recipeId] : null;
+      activeProduct = activeRecipe ? PRODUCTS[activeRecipe.outputItemId] : null;
+
+      if (activeQueueItem && activeRecipe) {
+        const totalMs = activeRecipe.craftTimeSeconds * 1000;
+        const elapsedMs = Math.max(0, Date.now() - activeQueueItem.startedAt);
+        activeProgressPercent = Math.min(100, Math.max(0, Math.round((elapsedMs / totalMs) * 100)));
+        remainingSeconds = Math.max(0, Math.ceil((totalMs - elapsedMs) / 1000));
+      }
+
       statusText = hasCompletedProducts
         ? `Готово к сбору: ${completedCount} шт. 🧺`
-        : queueCount > 0
-        ? `В процессе: ${queueCount} в очереди ⏳`
-        : 'Производство ожидает заказов';
+        : activeQueueItem
+        ? `В процессе: ${activeRecipe?.name || 'крафт'} (${remainingSeconds}с) · очередь ${queueCount}/${maxQueueSlots}`
+        : `Производство ожидает заказов (очередь 0/${maxQueueSlots})`;
     } else if (selectedEntity.type === 'fruit_tree') {
       isFruitTree = true;
       const cfg = TREES_BUSHES[selectedEntity.configId];
@@ -279,17 +313,21 @@ export const FloatingToolsOverlay: React.FC = () => {
   const availableCropsList = Object.values(CROPS);
 
   return (
-    <div className="fixed bottom-20 sm:bottom-24 left-0 right-0 z-30 pointer-events-none select-none flex flex-col items-center gap-2 p-2 max-w-lg mx-auto">
+    <div className="fixed bottom-20 sm:bottom-24 left-0 right-0 z-30 pointer-events-none select-none flex flex-col items-center gap-2 p-2 max-w-xl mx-auto">
       
       {/* ── 1. SELECTED ENTITY INTERACTIVE HUB ── */}
       {selectedEntity && (
         <div className="pointer-events-auto w-full p-3 sm:p-3.5 rounded-3xl game-dock-tray border-2 border-amber-500/80 shadow-2xl shadow-black/95 text-amber-100 flex flex-col gap-2.5 animate-pop-in">
           
-          {/* Header Row: Icon, Title, Status & Close */}
+          {/* Header Row: Icon, Title, Status & Action Icons */}
           <div className="flex items-center justify-between gap-2.5 border-b border-amber-900/60 pb-2 px-0.5">
             <div className="flex items-center gap-2.5 min-w-0">
-              <div className="w-10 h-10 rounded-xl bg-black/40 border border-amber-700/60 flex items-center justify-center text-2xl shadow-inner shrink-0">
-                {cropIcon}
+              <div className="w-10 h-10 rounded-xl bg-black/40 border border-amber-700/60 flex items-center justify-center text-2xl shadow-inner shrink-0 overflow-hidden">
+                {selectedEntity.type === 'production' ? (
+                  <Building3DThumbnail configId={selectedEntity.configId} size={40} fallbackIcon={cropIcon as string} />
+                ) : (
+                  cropIcon
+                )}
               </div>
               <div className="flex flex-col min-w-0">
                 <div className="font-black text-xs sm:text-sm text-yellow-300 game-text-gold truncate">
@@ -301,18 +339,49 @@ export const FloatingToolsOverlay: React.FC = () => {
               </div>
             </div>
 
-            {/* Deselect / Close Button */}
-            <button
-              onClick={() => {
-                sounds.playClick();
-                triggerTelegramHaptic('light');
-                setSelectedEntity(null);
-              }}
-              className="w-7 h-7 rounded-xl game-dock-btn text-amber-200 hover:text-white flex items-center justify-center text-xs font-bold cursor-pointer active:scale-90 transition-all shadow shrink-0"
-              title="Снять выделение"
-            >
-              <X size={15} strokeWidth={2.5} />
-            </button>
+            {/* Header Right Action Buttons (Move, Delete, Close) */}
+            <div className="flex items-center gap-1.5 shrink-0">
+              {/* Move Button */}
+              <button
+                onClick={() => {
+                  sounds.playClick();
+                  triggerTelegramHaptic('light');
+                  startMovingEntity(selectedEntity.id);
+                }}
+                className="w-7 h-7 rounded-xl game-dock-btn text-amber-200 hover:text-white flex items-center justify-center text-xs font-bold cursor-pointer active:scale-90 transition-all shadow"
+                title="Переместить объект"
+              >
+                <RotateCw size={13} />
+              </button>
+
+              {/* Delete Button */}
+              {!isCoreBuilding && (
+                <button
+                  onClick={() => {
+                    sounds.playClick();
+                    triggerTelegramHaptic('warning');
+                    deleteEntity(selectedEntity.id);
+                  }}
+                  className="w-7 h-7 rounded-xl game-dock-btn text-rose-300 hover:text-white hover:border-rose-500 flex items-center justify-center text-xs font-bold active:scale-90 transition-all shadow"
+                  title="Удалить / снести"
+                >
+                  <Trash2 size={13} />
+                </button>
+              )}
+
+              {/* Close Button */}
+              <button
+                onClick={() => {
+                  sounds.playClick();
+                  triggerTelegramHaptic('light');
+                  setSelectedEntity(null);
+                }}
+                className="w-7 h-7 rounded-xl game-dock-btn text-amber-200 hover:text-white flex items-center justify-center text-xs font-bold cursor-pointer active:scale-90 transition-all shadow"
+                title="Снять выделение"
+              >
+                <X size={15} strokeWidth={2.5} />
+              </button>
+            </div>
           </div>
 
           {/* Progress Bars (For Growing Field Crop) */}
@@ -346,8 +415,51 @@ export const FloatingToolsOverlay: React.FC = () => {
             </div>
           )}
 
+          {/* Live Progress Bar for Production Workshop if Crafting */}
+          {isProductionBuilding && activeQueueItem && (
+            <div className="flex items-center gap-2 px-0.5">
+              <div className="flex-1 flex flex-col gap-0.5">
+                <div className="flex items-center justify-between text-[10px] font-black">
+                  <span className="text-yellow-300 flex items-center gap-1 game-text-gold truncate">
+                    <span>{activeProduct?.icon || '🍞'}</span>
+                    <span>{activeRecipe?.name}</span>
+                  </span>
+                  <span className="text-amber-200 font-mono flex items-center gap-1 bg-black/40 px-1.5 py-0.2 rounded border border-amber-700/60">
+                    <Clock size={10} className="text-amber-400 animate-spin" style={{ animationDuration: '4s' }} />
+                    <span>{remainingSeconds}с</span>
+                  </span>
+                </div>
+                <div className="w-full h-2.5 game-badge-slot p-[1px] overflow-hidden rounded-full">
+                  <div 
+                    className="h-full bg-gradient-to-r from-amber-500 via-yellow-400 to-amber-300 rounded-full transition-all duration-300 shadow-[0_0_6px_rgba(250,204,21,0.7)]"
+                    style={{ width: `${activeProgressPercent}%` }}
+                  />
+                </div>
+              </div>
+
+              {/* Instant Speed Up Button */}
+              <button
+                onClick={() => {
+                  if (gems >= 1) {
+                    sounds.playLevelUp();
+                    triggerTelegramHaptic('medium');
+                    speedUpProductionWithGems(selectedEntity.id);
+                  } else {
+                    sounds.playClick();
+                    triggerTelegramHaptic('warning');
+                  }
+                }}
+                className="px-2.5 py-1.5 rounded-xl game-btn-gold text-[10.5px] font-black text-amber-950 flex items-center gap-1 shadow active:scale-95 cursor-pointer shrink-0"
+                title="Ускорить за 1 алмаз"
+              >
+                <Zap size={12} className="text-cyan-400 fill-cyan-400" />
+                <span>⚡ 1 💎</span>
+              </button>
+            </div>
+          )}
+
           {/* Contextual Action Buttons Row */}
-          <div className="flex items-center gap-2 pt-0.5 overflow-x-auto scrollbar-none snap-x">
+          <div className="flex flex-col gap-2 pt-0.5">
             
             {/* ── 1. Empty Field -> Quick Seeds Plant Row ── */}
             {isEmptyField && (
@@ -404,7 +516,7 @@ export const FloatingToolsOverlay: React.FC = () => {
                   setActiveTool({ type: 'harvest' });
                   setSelectedEntity(null);
                 }}
-                className="flex-1 py-2.5 px-4 rounded-xl game-btn-plus text-white font-black text-xs sm:text-sm flex items-center justify-center gap-2 shadow-lg animate-pulse cursor-pointer shrink-0"
+                className="w-full py-2.5 px-4 rounded-xl game-btn-plus text-white font-black text-xs sm:text-sm flex items-center justify-center gap-2 shadow-lg animate-pulse cursor-pointer shrink-0"
               >
                 <span>🌾 Собрать урожай</span>
               </button>
@@ -412,7 +524,7 @@ export const FloatingToolsOverlay: React.FC = () => {
 
             {/* ── 3. Growing Field -> Speed Up & Water Buttons ── */}
             {isCropGrowing && (
-              <>
+              <div className="flex items-center gap-2">
                 <button
                   onClick={() => {
                     sounds.playClick();
@@ -434,12 +546,12 @@ export const FloatingToolsOverlay: React.FC = () => {
                 >
                   <span>💧 Полить (+35%)</span>
                 </button>
-              </>
+              </div>
             )}
 
             {/* ── 4. Animal Pen -> Feed & Collect Buttons ── */}
             {isAnimalPen && (
-              <>
+              <div className="flex items-center gap-2">
                 {hasAnimalProducts && (
                   <button
                     onClick={() => {
@@ -465,12 +577,14 @@ export const FloatingToolsOverlay: React.FC = () => {
                     <span>🥣 Покормить животных</span>
                   </button>
                 )}
-              </>
+              </div>
             )}
 
-            {/* ── 5. Production Building -> Collect, Quick Craft & Open Crafting Modal ── */}
+            {/* ── 5. Production Workshop -> FULL IN-DOCK CRAFTING SYSTEM ── */}
             {isProductionBuilding && (
-              <div className="flex items-center gap-1.5 w-full overflow-x-auto pb-0.5 scrollbar-none">
+              <div className="flex flex-col gap-2 w-full">
+                
+                {/* Ready Completed Products Pickup Banner */}
                 {hasCompletedProducts && (
                   <button
                     onClick={() => {
@@ -480,54 +594,125 @@ export const FloatingToolsOverlay: React.FC = () => {
                         selectedEntity.completedProducts.forEach((_, idx) => collectProduct(selectedEntity.id, 0));
                       }
                     }}
-                    className="py-2 px-3 rounded-xl game-btn-plus text-white font-black text-xs flex items-center justify-center gap-1.5 shadow-lg animate-pulse cursor-pointer shrink-0"
+                    className="w-full py-2.5 px-3 rounded-xl game-btn-plus text-white font-black text-xs sm:text-sm flex items-center justify-center gap-2 shadow-lg animate-pulse cursor-pointer"
                   >
-                    <span>🧺 Забрать ({selectedEntity.completedProducts?.length})</span>
+                    <CheckCircle2 size={16} />
+                    <span>🧺 Забрать готовую продукцию ({selectedEntity.completedProducts?.length} шт.)</span>
                   </button>
                 )}
 
-                {/* Quick Recipes for this building */}
-                {Object.values(RECIPES)
-                  .filter(r => r.buildingId === selectedEntity.configId)
-                  .slice(0, 3)
-                  .map(r => {
+                {/* Complete Recipes Carousel Right Here */}
+                <div className="flex items-stretch gap-2 w-full overflow-x-auto pb-1 scrollbar-none snap-x">
+                  {buildingRecipes.map(r => {
                     const qProd = PRODUCTS[r.outputItemId];
-                    const canCraft = level >= r.unlockLevel && r.ingredients.every(ing => (inventory[ing.itemId] || 0) >= ing.count);
+                    const isUnlocked = level >= r.unlockLevel;
+                    
+                    // Ingredients check
+                    const ingredientsStatus = r.ingredients.map(ing => {
+                      const have = inventory[ing.itemId] || 0;
+                      const prod = PRODUCTS[ing.itemId];
+                      return {
+                        ...ing,
+                        have,
+                        icon: prod?.icon || '📦',
+                        isEnough: have >= ing.count,
+                      };
+                    });
+
+                    const hasAllIngredients = ingredientsStatus.every(ing => ing.isEnough);
+                    const canCraft = isUnlocked && !isQueueFull && hasAllIngredients;
 
                     return (
-                      <button
+                      <div
                         key={r.id}
                         onClick={() => {
                           if (canCraft) {
                             sounds.playCraftStart();
                             triggerTelegramHaptic('medium');
                             startProduction(selectedEntity.id, r.id);
+                          } else if (!isUnlocked) {
+                            sounds.playClick();
+                            triggerTelegramHaptic('warning');
+                          } else if (isQueueFull) {
+                            sounds.playClick();
+                            triggerTelegramHaptic('warning');
                           } else {
-                            openProductionModal(selectedEntity.id);
+                            sounds.playClick();
+                            triggerTelegramHaptic('warning');
                           }
                         }}
-                        className={`flex items-center gap-1 px-2.5 py-1.5 rounded-xl game-dock-btn text-xs font-black shrink-0 transition-all cursor-pointer ${
-                          canCraft ? 'hover:border-yellow-400 text-amber-100' : 'opacity-65'
+                        className={`min-w-[130px] sm:min-w-[145px] p-2.5 rounded-2xl border flex flex-col justify-between gap-1.5 shrink-0 transition-all cursor-pointer select-none ${
+                          !isUnlocked
+                            ? 'bg-black/40 border-stone-800 opacity-60'
+                            : canCraft
+                            ? 'game-card border-amber-600/80 hover:border-yellow-400 hover:scale-[1.02] active:scale-95 shadow-md'
+                            : 'bg-black/50 border-amber-900/60 opacity-85 active:scale-95'
                         }`}
-                        title={canCraft ? `Скрафтить ${r.name}` : `Открыть меню ${r.name}`}
+                        title={
+                          !isUnlocked
+                            ? `Откроется на уровне ${r.unlockLevel}`
+                            : isQueueFull
+                            ? 'Очередь заполнена'
+                            : !hasAllIngredients
+                            ? 'Не хватает ингредиентов'
+                            : `Скрафтить ${r.name}`
+                        }
                       >
-                        <span className="text-sm">{qProd?.icon || '🍞'}</span>
-                        <span className="text-yellow-300 game-text-gold">{r.name}</span>
-                      </button>
+                        {/* Top Product Header */}
+                        <div className="flex items-center gap-1.5">
+                          <div className="w-8 h-8 rounded-xl bg-black/40 border border-amber-700/60 flex items-center justify-center text-lg shrink-0">
+                            {qProd?.icon || '🍞'}
+                          </div>
+                          <div className="flex flex-col min-w-0">
+                            <span className="font-black text-xs text-yellow-300 game-text-gold truncate">
+                              {r.name}
+                            </span>
+                            <span className="text-[10px] text-amber-200/70 font-mono">
+                              ⏱️ {r.craftTimeSeconds}с
+                            </span>
+                          </div>
+                        </div>
+
+                        {/* Ingredients Requirements Pills */}
+                        <div className="flex items-center gap-1 flex-wrap my-0.5">
+                          {ingredientsStatus.map(ing => (
+                            <span
+                              key={ing.itemId}
+                              className={`text-[9.5px] px-1.5 py-0.5 rounded font-black flex items-center gap-0.5 border ${
+                                ing.isEnough
+                                  ? 'bg-emerald-950/90 text-emerald-300 border-emerald-700/70'
+                                  : 'bg-rose-950/90 text-rose-300 border-rose-700/70'
+                              }`}
+                            >
+                              <span>{ing.icon}</span>
+                              <span>{ing.have}/{ing.count}</span>
+                            </span>
+                          ))}
+                        </div>
+
+                        {/* Action Badge */}
+                        <div className="pt-1 border-t border-amber-900/40 flex items-center justify-between text-[10px]">
+                          {!isUnlocked ? (
+                            <span className="text-stone-400 font-bold flex items-center gap-1">
+                              <Lock size={10} />
+                              <span>Ур. {r.unlockLevel}</span>
+                            </span>
+                          ) : canCraft ? (
+                            <span className="text-emerald-300 font-black flex items-center gap-1 animate-pulse">
+                              <span>👨‍🍳 Скрафтить</span>
+                            </span>
+                          ) : (
+                            <span className="text-amber-400/80 font-bold">
+                              {isQueueFull ? 'Очередь полна' : 'Не хватает'}
+                            </span>
+                          )}
+                          <span className="text-amber-400/80 font-bold">+{r.xpGain} XP</span>
+                        </div>
+                      </div>
                     );
                   })}
+                </div>
 
-                {/* Full Recipes & Production Modal Button */}
-                <button
-                  onClick={() => {
-                    sounds.playClick();
-                    triggerTelegramHaptic('medium');
-                    openProductionModal(selectedEntity.id);
-                  }}
-                  className="flex-1 py-2 px-3 rounded-xl game-btn-gold text-xs font-black flex items-center justify-center gap-1.5 shadow active:scale-95 cursor-pointer shrink-0 min-w-[110px]"
-                >
-                  <span>👨‍🍳 Все рецепты</span>
-                </button>
               </div>
             )}
 
@@ -539,7 +724,7 @@ export const FloatingToolsOverlay: React.FC = () => {
                   triggerTelegramHaptic('success');
                   harvestTreeBush(selectedEntity.id);
                 }}
-                className="flex-1 py-2.5 px-3 rounded-xl game-btn-plus text-white font-black text-xs flex items-center justify-center gap-1.5 shadow-lg animate-pulse cursor-pointer shrink-0"
+                className="w-full py-2.5 px-3 rounded-xl game-btn-plus text-white font-black text-xs flex items-center justify-center gap-1.5 shadow-lg animate-pulse cursor-pointer shrink-0"
               >
                 <span>🍎 Собрать плоды ({selectedEntity.harvestsLeft || 4} сборов)</span>
               </button>
@@ -558,38 +743,9 @@ export const FloatingToolsOverlay: React.FC = () => {
                   else if (selectedEntity.configId === 'fishing_dock') openModal('fishing');
                   else openModal('settings');
                 }}
-                className="flex-1 py-2.5 px-4 rounded-xl game-btn-gold text-xs font-black flex items-center justify-center gap-1.5 shadow active:scale-95 cursor-pointer shrink-0"
+                className="w-full py-2.5 px-4 rounded-xl game-btn-gold text-xs font-black flex items-center justify-center gap-1.5 shadow active:scale-95 cursor-pointer shrink-0"
               >
                 <span>🚪 Открыть меню</span>
-              </button>
-            )}
-
-            {/* Move Button (Available for all placable entities) */}
-            <button
-              onClick={() => {
-                sounds.playClick();
-                triggerTelegramHaptic('light');
-                startMovingEntity(selectedEntity.id);
-              }}
-              className="py-2 px-2.5 rounded-xl game-dock-btn text-amber-200 hover:text-white text-xs font-black flex items-center justify-center gap-1 shadow active:scale-95 cursor-pointer shrink-0"
-              title="Переместить объект"
-            >
-              <RotateCw size={13} />
-              <span className="hidden sm:inline">Переместить</span>
-            </button>
-
-            {/* Delete / Clear Button (for non-essential structures) */}
-            {!isCoreBuilding && (
-              <button
-                onClick={() => {
-                  sounds.playClick();
-                  triggerTelegramHaptic('warning');
-                  deleteEntity(selectedEntity.id);
-                }}
-                className="w-8 h-8 rounded-xl game-dock-btn text-rose-300 hover:text-white hover:border-rose-500 flex items-center justify-center text-xs font-bold active:scale-90 transition-all shadow shrink-0"
-                title="Удалить / снести"
-              >
-                <Trash2 size={14} />
               </button>
             )}
 

@@ -2797,8 +2797,6 @@ export const GameScene: React.FC = () => {
         } else if (clickedEntity.type === 'production') {
           if (clickedEntity.completedProducts && clickedEntity.completedProducts.length > 0) {
             collectProduct(clickedEntity.id, 0);
-          } else {
-            openProductionModal(clickedEntity.id);
           }
         }
       } else if (tile && Math.abs(tile.x - (-7.0)) <= 2.5 && Math.abs(tile.z - (-3.2)) <= 2.5) {
