@@ -341,7 +341,11 @@ export interface GameStore {
   tutorialCompleted: boolean;
   
   // UI & Notifications
-  activeModal: 'shop' | 'silo' | 'barn' | 'orders' | 'roadside' | 'market' | 'fishing' | 'events' | 'settings' | 'levelup' | 'expansion' | 'friends' | 'daily_bonus' | 'weather_forecast' | null;
+  activeModal: 'shop' | 'silo' | 'barn' | 'orders' | 'roadside' | 'market' | 'fishing' | 'events' | 'settings' | 'levelup' | 'expansion' | 'friends' | 'daily_bonus' | 'weather_forecast' | 'production' | null;
+  selectedProductionEntityId: string | null;
+  openProductionModal: (buildingEntityId: string) => void;
+  openModal: (modal: 'shop' | 'silo' | 'barn' | 'orders' | 'roadside' | 'market' | 'fishing' | 'events' | 'settings' | 'levelup' | 'expansion' | 'friends' | 'daily_bonus' | 'weather_forecast' | 'production') => void;
+  closeModal: () => void;
   unlockedLevelInfo: LevelConfig | null;
   floatingTexts: FloatingText[];
   soundMuted: boolean;
@@ -537,6 +541,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
   marketNotifications: [],
 
   activeModal: null,
+  selectedProductionEntityId: null,
   unlockedLevelInfo: null,
   floatingTexts: [],
   soundMuted: false,
@@ -849,6 +854,15 @@ export const useGameStore = create<GameStore>((set, get) => ({
     set({ soundMuted: muted });
   },
 
+  openProductionModal: (buildingEntityId) => {
+    sounds.playClick();
+    set({
+      selectedProductionEntityId: buildingEntityId,
+      selectedEntityId: buildingEntityId,
+      activeModal: 'production',
+    });
+  },
+
   openModal: (modal) => {
     sounds.playClick();
     set({ activeModal: modal });
@@ -856,7 +870,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
 
   closeModal: () => {
     sounds.playClick();
-    set({ activeModal: null });
+    set({ activeModal: null, selectedProductionEntityId: null });
   },
 
   addFloatingText: (text, x, y, color = '#FACC15') => {

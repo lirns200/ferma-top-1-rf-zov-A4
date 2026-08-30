@@ -3,6 +3,8 @@ import { useGameStore } from '../game/gameState';
 import { CROPS, TREES_BUSHES } from '../config/crops';
 import { BUILDINGS } from '../config/buildings';
 import { DECORATIONS } from '../config/decorations';
+import { RECIPES } from '../config/recipes';
+import { PRODUCTS } from '../config/products';
 import { sounds } from '../audio/SoundManager';
 import { triggerTelegramHaptic } from '../utils/telegram';
 import { RotateCw, Check, X, Trash2, Info } from 'lucide-react';
@@ -47,6 +49,7 @@ export const FloatingToolsOverlay: React.FC = () => {
     startMovingEntity, rotateMovingEntity, confirmMoveEntity, cancelMoveEntity, deleteEntity,
     plantCrop, harvestCrop, speedUpCrop, waterField, harvestTreeBush,
     feedAllAnimalsInPen, collectAllAnimalProductsInPen, collectProduct,
+    startProduction, openProductionModal,
     openModal, activeEvent,
     isDesign2026,
   } = useGameStore();
@@ -465,35 +468,67 @@ export const FloatingToolsOverlay: React.FC = () => {
               </>
             )}
 
-            {/* ── 5. Production Building -> Collect & Open Recipes ── */}
+            {/* ── 5. Production Building -> Collect, Quick Craft & Open Crafting Modal ── */}
             {isProductionBuilding && (
-              <>
+              <div className="flex items-center gap-1.5 w-full overflow-x-auto pb-0.5 scrollbar-none">
                 {hasCompletedProducts && (
                   <button
                     onClick={() => {
-                      sounds.playClick();
+                      sounds.playHarvest();
                       triggerTelegramHaptic('success');
                       if (selectedEntity.completedProducts) {
                         selectedEntity.completedProducts.forEach((_, idx) => collectProduct(selectedEntity.id, 0));
                       }
                     }}
-                    className="flex-1 py-2 px-3 rounded-xl game-btn-plus text-white font-black text-xs flex items-center justify-center gap-1.5 shadow-lg animate-pulse cursor-pointer shrink-0"
+                    className="py-2 px-3 rounded-xl game-btn-plus text-white font-black text-xs flex items-center justify-center gap-1.5 shadow-lg animate-pulse cursor-pointer shrink-0"
                   >
-                    <span>🧺 Забрать готовое ({selectedEntity.completedProducts?.length})</span>
+                    <span>🧺 Забрать ({selectedEntity.completedProducts?.length})</span>
                   </button>
                 )}
 
+                {/* Quick Recipes for this building */}
+                {Object.values(RECIPES)
+                  .filter(r => r.buildingId === selectedEntity.configId)
+                  .slice(0, 3)
+                  .map(r => {
+                    const qProd = PRODUCTS[r.outputItemId];
+                    const canCraft = level >= r.unlockLevel && r.ingredients.every(ing => (inventory[ing.itemId] || 0) >= ing.count);
+
+                    return (
+                      <button
+                        key={r.id}
+                        onClick={() => {
+                          if (canCraft) {
+                            sounds.playCraftStart();
+                            triggerTelegramHaptic('medium');
+                            startProduction(selectedEntity.id, r.id);
+                          } else {
+                            openProductionModal(selectedEntity.id);
+                          }
+                        }}
+                        className={`flex items-center gap-1 px-2.5 py-1.5 rounded-xl game-dock-btn text-xs font-black shrink-0 transition-all cursor-pointer ${
+                          canCraft ? 'hover:border-yellow-400 text-amber-100' : 'opacity-65'
+                        }`}
+                        title={canCraft ? `Скрафтить ${r.name}` : `Открыть меню ${r.name}`}
+                      >
+                        <span className="text-sm">{qProd?.icon || '🍞'}</span>
+                        <span className="text-yellow-300 game-text-gold">{r.name}</span>
+                      </button>
+                    );
+                  })}
+
+                {/* Full Recipes & Production Modal Button */}
                 <button
                   onClick={() => {
                     sounds.playClick();
                     triggerTelegramHaptic('medium');
-                    openModal('shop');
+                    openProductionModal(selectedEntity.id);
                   }}
-                  className="flex-1 py-2 px-3 rounded-xl game-btn-gold text-xs font-black flex items-center justify-center gap-1.5 shadow active:scale-95 cursor-pointer shrink-0"
+                  className="flex-1 py-2 px-3 rounded-xl game-btn-gold text-xs font-black flex items-center justify-center gap-1.5 shadow active:scale-95 cursor-pointer shrink-0 min-w-[110px]"
                 >
-                  <span>👨‍🍳 Рецепты</span>
+                  <span>👨‍🍳 Все рецепты</span>
                 </button>
-              </>
+              </div>
             )}
 
             {/* ── 6. Fruit Tree -> Harvest ── */}

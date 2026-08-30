@@ -23,6 +23,7 @@ import { SettingsModal } from './ui/modals/SettingsModal';
 import { FriendsModal } from './ui/modals/FriendsModal';
 import { DailyBonusModal } from './ui/modals/DailyBonusModal';
 import { WeatherForecastModal } from './ui/modals/WeatherForecastModal';
+import { ProductionModal } from './ui/modals/ProductionModal';
 
 export function App() {
   const { initGame, tickGameLoop, saveCurrentState } = useGameStore();
@@ -75,6 +76,7 @@ export function App() {
       <FriendsModal />
       <DailyBonusModal />
       <WeatherForecastModal />
+      <ProductionModal />
     </main>
   );
 }

@@ -81,7 +81,110 @@ export const INITIAL_MAP_EXPANSIONS: MapChunkExpansion[] = [
   },
 ];
 
-export const INITIAL_ENTITIES: WorldEntity[] = [];
+export const INITIAL_ENTITIES: WorldEntity[] = [
+  // 1. Core Buildings
+  {
+    id: 'ent_farmhouse_default',
+    type: 'special',
+    configId: 'farmhouse',
+    x: 0,
+    z: 0,
+    width: 3,
+    depth: 3,
+    rotation: 0,
+  },
+  {
+    id: 'ent_silo_default',
+    type: 'storage',
+    configId: 'silo',
+    x: -4,
+    z: 0,
+    width: 2,
+    depth: 2,
+    rotation: 0,
+  },
+  {
+    id: 'ent_barn_default',
+    type: 'storage',
+    configId: 'barn',
+    x: 4,
+    z: 0,
+    width: 3,
+    depth: 3,
+    rotation: 0,
+  },
+  {
+    id: 'ent_order_board_default',
+    type: 'special',
+    configId: 'order_board',
+    x: 0,
+    z: -5,
+    width: 2,
+    depth: 1,
+    rotation: 0,
+  },
+  {
+    id: 'ent_roadside_shop_default',
+    type: 'special',
+    configId: 'roadside_shop',
+    x: -5,
+    z: -5,
+    width: 2,
+    depth: 2,
+    rotation: 0,
+  },
+
+  // 2. Starter Production Workshops (Bakery & Feed Mill)
+  {
+    id: 'ent_bakery_default',
+    type: 'production',
+    configId: 'bakery',
+    x: -4,
+    z: 4,
+    width: 2,
+    depth: 2,
+    rotation: 0,
+    productionQueue: [],
+    completedProducts: [],
+  },
+  {
+    id: 'ent_feed_mill_default',
+    type: 'production',
+    configId: 'feed_mill',
+    x: 4,
+    z: 4,
+    width: 2,
+    depth: 2,
+    rotation: 0,
+    productionQueue: [],
+    completedProducts: [],
+  },
+
+  // 3. Starter Chicken Coop with 3 chickens
+  {
+    id: 'ent_chicken_coop_default',
+    type: 'animal_pen',
+    configId: 'chicken_coop',
+    x: 0,
+    z: 5,
+    width: 3,
+    depth: 3,
+    rotation: 0,
+    animals: [
+      { id: 'ch_1', animalConfigId: 'chicken', isHungry: true, hasProduct: false, animState: 'idle' },
+      { id: 'ch_2', animalConfigId: 'chicken', isHungry: true, hasProduct: false, animState: 'idle' },
+      { id: 'ch_3', animalConfigId: 'chicken', isHungry: true, hasProduct: false, animState: 'idle' },
+    ],
+  },
+
+  // 4. Starter Field Plots (6 fertile beds)
+  { id: 'field_1', type: 'field', configId: 'field_plot', x: -3, z: 9, width: 1, depth: 1, rotation: 0, cropId: 'wheat', plantedAt: Date.now() - 30000 },
+  { id: 'field_2', type: 'field', configId: 'field_plot', x: -1, z: 9, width: 1, depth: 1, rotation: 0, cropId: 'wheat', plantedAt: Date.now() - 30000 },
+  { id: 'field_3', type: 'field', configId: 'field_plot', x: 1, z: 9, width: 1, depth: 1, rotation: 0, cropId: 'corn', plantedAt: Date.now() - 60000 },
+  { id: 'field_4', type: 'field', configId: 'field_plot', x: 3, z: 9, width: 1, depth: 1, rotation: 0, cropId: 'corn', plantedAt: Date.now() - 60000 },
+  { id: 'field_5', type: 'field', configId: 'field_plot', x: -2, z: 11, width: 1, depth: 1, rotation: 0, cropId: 'carrot', plantedAt: Date.now() - 120000 },
+  { id: 'field_6', type: 'field', configId: 'field_plot', x: 2, z: 11, width: 1, depth: 1, rotation: 0, cropId: 'carrot', plantedAt: Date.now() - 120000 },
+];
 
 export const INITIAL_INVENTORY: Record<string, number> = {
   // Silo
