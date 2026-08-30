@@ -610,33 +610,29 @@ export const RoadsideShopModal: React.FC = () => {
                         triggerTelegramHaptic('light');
                         setSelectedItemId(item.id);
                       }}
-                      className={`p-3.5 rounded-2xl border shadow flex flex-col justify-between items-center text-center gap-2 group cursor-pointer transition-all hover:scale-[1.02] hover:border-sky-500/60 ${
-                        isDesign2026
-                          ? 'bg-[#181C24] border-[#242A35] text-white'
-                          : 'hud-parchment border-[#5C3718] text-[#3B1F0D]'
-                      }`}
+                      className="p-3.5 rounded-2xl game-card border border-amber-700/60 shadow-xl flex flex-col justify-between items-center text-center gap-2 group cursor-pointer transition-all hover:scale-[1.03] hover:border-amber-400"
                     >
-                      <div className="w-14 h-14 rounded-2xl flex items-center justify-center text-3xl shadow-inner bg-black/20 my-1 group-hover:scale-110 transition-transform">
+                      <div className="w-14 h-14 rounded-2xl flex items-center justify-center text-3xl shadow-inner bg-black/40 border border-amber-900/40 my-1 group-hover:scale-110 transition-transform">
                         {item.icon}
                       </div>
 
                       <div className="flex flex-col">
-                        <span className="font-extrabold text-xs sm:text-sm tracking-tight">{item.name}</span>
-                        <span className="text-[11px] text-[#8E939D]">
+                        <span className="font-black text-xs sm:text-sm tracking-tight text-yellow-300 game-text-gold">{item.name}</span>
+                        <span className="text-[11px] font-bold text-amber-200/70">
                           В продаже: {totalLots} шт.
                         </span>
                       </div>
 
-                      <div className="w-full pt-2.5 border-t border-white/10 flex items-center justify-between gap-2">
+                      <div className="w-full pt-2.5 border-t border-amber-900/60 flex items-center justify-between gap-2">
                         <div className="flex flex-col text-left">
-                          <span className="text-[9px] text-[#8E939D] uppercase font-bold">Начиная с</span>
-                          <span className="text-xs font-black text-amber-400 flex items-center gap-0.5">
+                          <span className="text-[9px] text-amber-400/80 uppercase font-extrabold">Начиная с</span>
+                          <span className="text-xs font-black text-yellow-300 game-text-gold flex items-center gap-0.5">
                             <CoinSvg /> {minPrice}
                           </span>
                         </div>
 
-                        {/* Кнопка "Открыть" за место стрелочки */}
-                        <div className="px-3 py-1.5 rounded-xl bg-sky-600 group-hover:bg-sky-500 text-white text-xs font-black shadow transition-all active:scale-95 flex items-center gap-1 border border-sky-400">
+                        {/* Кнопка "Открыть" */}
+                        <div className="px-3 py-1.5 rounded-xl game-btn-gold text-xs font-black shadow transition-all active:scale-95 flex items-center gap-1">
                           <span>Открыть</span>
                         </div>
                       </div>

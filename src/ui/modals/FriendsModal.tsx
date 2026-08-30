@@ -132,24 +132,20 @@ export const FriendsModal: React.FC = () => {
           {/* ── TAB 1: FRIENDS & NEIGHBORS ── */}
           {activeTab === 'friends' && (
             <>
-              {/* Telegram Referral Banner */}
-              <div className={`p-4 sm:p-5 rounded-2xl border shadow-xl flex flex-col sm:flex-row items-center justify-between gap-4 ${
-                isDesign2026
-                  ? 'bg-gradient-to-r from-purple-950/50 via-[#181C24] to-indigo-950/50 border-purple-500/30 text-white'
-                  : 'hud-parchment border-amber-500 text-[#3B1F0D]'
-              }`}>
+              {/* Invite Friend Banner */}
+              <div className="p-4 sm:p-5 rounded-2xl game-card border-2 border-amber-500/80 shadow-2xl flex flex-col sm:flex-row items-center justify-between gap-4">
                 <div className="flex items-center gap-3.5">
-                  <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-purple-600 to-indigo-600 flex items-center justify-center text-2xl shadow-lg shrink-0">
+                  <div className="w-12 h-12 rounded-2xl game-side-medal flex items-center justify-center text-2xl shadow-inner shrink-0">
                     🎁
                   </div>
                   <div className="flex flex-col">
-                    <h3 className="font-extrabold text-sm sm:text-base flex items-center gap-2">
+                    <h3 className="font-black text-sm sm:text-base flex items-center gap-2 text-yellow-300 game-text-gold">
                       <span>Приглашайте друзей в Telegram</span>
-                      <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500 text-black font-black uppercase inline-flex items-center gap-1">
-                        +250 <CoinSvg />
+                      <span className="text-[10px] px-2 py-0.5 rounded-full game-ribbon-tag text-white font-black">
+                        +250 🪙
                       </span>
                     </h3>
-                    <p className={`text-xs ${isDesign2026 ? 'text-[#8E939D]' : 'text-[#5C3718]'}`}>
+                    <p className="text-xs text-amber-200/80 font-medium">
                       Получайте 250 монет и 5 энергии за каждого приглашенного фермера!
                     </p>
                   </div>
@@ -157,7 +153,7 @@ export const FriendsModal: React.FC = () => {
 
                 <button
                   onClick={handleInviteFriend}
-                  className="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white text-xs font-black shadow-lg flex items-center justify-center gap-2 transition-transform active:scale-95 cursor-pointer border border-purple-300 shrink-0"
+                  className="w-full sm:w-auto px-5 py-2.5 game-btn-gold text-xs flex items-center justify-center gap-2 transition-transform active:scale-95 cursor-pointer shrink-0 shadow-lg"
                 >
                   <Share2 size={15} />
                   <span>{copiedLink ? 'Ссылка скопирована!' : 'Поделиться в TG'}</span>
@@ -166,7 +162,7 @@ export const FriendsModal: React.FC = () => {
 
               {/* Neighbors List */}
               <div className="flex flex-col gap-2.5">
-                <span className="text-xs font-extrabold text-[#8E939D] uppercase tracking-wider px-1">
+                <span className="text-xs font-black text-yellow-300 uppercase tracking-wider px-1 game-text-gold">
                   Активные соседи ({neighbors.length})
                 </span>
 
@@ -174,17 +170,11 @@ export const FriendsModal: React.FC = () => {
                   {neighbors.map(neighbor => (
                     <div
                       key={neighbor.id}
-                      className={`p-3.5 rounded-2xl border shadow flex items-center justify-between gap-3 ${
-                        isDesign2026
-                          ? 'bg-[#181C24] border-[#242A35] text-white'
-                          : 'hud-parchment border-amber-700/60 text-[#3B1F0D]'
-                      }`}
+                      className="p-3.5 rounded-2xl game-card border border-amber-700/60 shadow flex items-center justify-between gap-3"
                     >
                       <div className="flex items-center gap-3">
                         <div className="relative">
-                          <div className={`w-11 h-11 rounded-xl flex items-center justify-center text-2xl shadow-inner ${
-                            isDesign2026 ? 'bg-[#242A35]' : 'bg-amber-100'
-                          }`}>
+                          <div className="w-11 h-11 rounded-xl bg-black/40 border border-amber-700/50 flex items-center justify-center text-2xl shadow-inner">
                             {neighbor.avatar}
                           </div>
                           {neighbor.isOnline && (
@@ -193,9 +183,9 @@ export const FriendsModal: React.FC = () => {
                         </div>
 
                         <div className="flex flex-col">
-                          <span className="font-bold text-xs sm:text-sm">{neighbor.name}</span>
-                          <span className="text-[11px] text-[#8E939D] flex items-center gap-1.5">
-                            <span className="text-yellow-400 font-bold">⭐ Ур. {neighbor.level}</span>
+                          <span className="font-black text-xs sm:text-sm text-amber-100 game-text-shadow">{neighbor.name}</span>
+                          <span className="text-[11px] text-amber-200/70 flex items-center gap-1.5 font-bold">
+                            <span className="text-yellow-300 font-extrabold">⭐ Ур. {neighbor.level}</span>
                             <span>•</span>
                             <span>{neighbor.isOnline ? '🟢 Онлайн' : 'Вне сети'}</span>
                           </span>
@@ -206,10 +196,10 @@ export const FriendsModal: React.FC = () => {
                       <button
                         onClick={() => handleSendGift(neighbor.id)}
                         disabled={neighbor.helpedToday}
-                        className={`px-3 py-1.5 rounded-xl text-xs font-extrabold flex items-center gap-1.5 shadow transition-all active:scale-95 cursor-pointer ${
+                        className={`px-3 py-1.5 rounded-xl text-xs font-black flex items-center gap-1.5 shadow transition-all active:scale-95 cursor-pointer ${
                           neighbor.helpedToday
-                            ? 'bg-[#242A35] text-[#8E939D] border border-transparent cursor-default'
-                            : 'bg-gradient-to-r from-emerald-500 to-green-600 hover:from-emerald-400 hover:to-green-500 text-white border border-emerald-300 shadow-md'
+                            ? 'bg-black/50 text-amber-500/40 border border-amber-900/40 cursor-default'
+                            : 'game-btn-plus text-white shadow-md'
                         }`}
                       >
                         {neighbor.helpedToday ? (
