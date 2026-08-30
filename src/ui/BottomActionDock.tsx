@@ -212,5 +212,4 @@ export const BottomActionDock: React.FC = () => {
       </div>
     </footer>
   );
-  );
 };
