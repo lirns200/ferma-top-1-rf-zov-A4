@@ -969,6 +969,17 @@ export const GameScene: React.FC = () => {
         }
       });
 
+      // ── Animate Overhead Completed Crafting Checkmarks (Bouncing & Glow Pulse) ──
+      scene.traverse(obj => {
+        if (obj.name === 'overhead_checkmark_badge' && obj.children.length > 0) {
+          const sprite = obj.children[0] as THREE.Sprite;
+          const phase = sprite.userData?.phase || 0;
+          sprite.position.y = Math.sin(elapsed * 3.6 + phase) * 0.14;
+          const sc = 1.35 + Math.sin(elapsed * 4.2 + phase) * 0.08;
+          sprite.scale.set(sc, sc, sc);
+        }
+      });
+
       // ── Realistic 3D Grass Cluster Wind Physics ────────────────────────
       const grassMesh = scene.getObjectByName('meadow_grass_tufts') as THREE.InstancedMesh;
       if (grassMesh && grassMesh.userData?.instances) {
@@ -2328,6 +2339,111 @@ export const GameScene: React.FC = () => {
     });
   }, [activeSeason, expansions]);
 
+// Reusable Texture cache for overhead ready checkmark badges
+const checkmarkTextureCache = new Map<number, THREE.CanvasTexture>();
+
+function getOverheadCheckmarkTexture(count: number): THREE.CanvasTexture {
+  if (checkmarkTextureCache.has(count)) {
+    return checkmarkTextureCache.get(count)!;
+  }
+
+  const canvas = document.createElement('canvas');
+  canvas.width = 256;
+  canvas.height = 256;
+  const ctx = canvas.getContext('2d')!;
+
+  // 1. Soft glowing outer aura
+  const glowGrad = ctx.createRadialGradient(128, 128, 55, 128, 128, 122);
+  glowGrad.addColorStop(0, 'rgba(74, 222, 128, 0.95)');
+  glowGrad.addColorStop(0.65, 'rgba(34, 197, 94, 0.7)');
+  glowGrad.addColorStop(1, 'rgba(34, 197, 94, 0)');
+  ctx.fillStyle = glowGrad;
+  ctx.beginPath();
+  ctx.arc(128, 128, 122, 0, Math.PI * 2);
+  ctx.fill();
+
+  // 2. Vibrant Emerald Green Circle
+  const circleGrad = ctx.createLinearGradient(128, 32, 128, 224);
+  circleGrad.addColorStop(0, '#4ADE80'); // bright emerald
+  circleGrad.addColorStop(0.5, '#22C55E'); // core green
+  circleGrad.addColorStop(1, '#15803D'); // rich dark green
+  ctx.fillStyle = circleGrad;
+  ctx.beginPath();
+  ctx.arc(128, 128, 86, 0, Math.PI * 2);
+  ctx.fill();
+
+  // 3. Golden Rim & Crisp White Inner Ring
+  ctx.lineWidth = 9;
+  ctx.strokeStyle = '#FEF08A';
+  ctx.stroke();
+
+  ctx.lineWidth = 3.5;
+  ctx.strokeStyle = '#FFFFFF';
+  ctx.beginPath();
+  ctx.arc(128, 128, 77, 0, Math.PI * 2);
+  ctx.stroke();
+
+  // 4. White Bold Checkmark (✓) with Drop Shadow
+  ctx.lineCap = 'round';
+  ctx.lineJoin = 'round';
+  ctx.lineWidth = 26;
+  ctx.strokeStyle = '#FFFFFF';
+  ctx.shadowColor = 'rgba(0, 0, 0, 0.45)';
+  ctx.shadowBlur = 8;
+  ctx.shadowOffsetX = 2;
+  ctx.shadowOffsetY = 4;
+
+  ctx.beginPath();
+  ctx.moveTo(82, 130);
+  ctx.lineTo(114, 164);
+  ctx.lineTo(178, 92);
+  ctx.stroke();
+
+  // 5. Quantity Badge if count > 1
+  if (count > 1) {
+    ctx.shadowBlur = 0;
+    ctx.shadowOffsetX = 0;
+    ctx.shadowOffsetY = 0;
+    ctx.fillStyle = '#FACC15';
+    ctx.beginPath();
+    ctx.arc(188, 68, 34, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = '#78350F';
+    ctx.lineWidth = 5;
+    ctx.stroke();
+
+    ctx.fillStyle = '#78350F';
+    ctx.font = 'bold 36px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(`${count}`, 188, 70);
+  }
+
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.colorSpace = THREE.SRGBColorSpace;
+  checkmarkTextureCache.set(count, texture);
+  return texture;
+}
+
+function createOverheadCheckmarkBadge(count = 1): THREE.Group {
+  const badgeGroup = new THREE.Group();
+  badgeGroup.name = 'overhead_checkmark_badge';
+
+  const texture = getOverheadCheckmarkTexture(count);
+  const spriteMat = new THREE.SpriteMaterial({
+    map: texture,
+    transparent: true,
+    depthTest: false,
+  });
+
+  const sprite = new THREE.Sprite(spriteMat);
+  sprite.scale.set(1.5, 1.5, 1.5);
+  sprite.userData = { baseY: 0, phase: Math.random() * Math.PI * 2 };
+  badgeGroup.add(sprite);
+
+  return badgeGroup;
+}
+
   // -------------------------------------------------------------------
   // 3. REBUILD ENTITIES WHEN ENTITIES / SELECTION / EVENT CHANGE
   // -------------------------------------------------------------------
@@ -2371,8 +2487,23 @@ export const GameScene: React.FC = () => {
         }
       } else if (ent.type === 'production') {
         entGroup.add(createProductionBuildingGroup(ent.configId));
+        
+        // Render glowing overhead green checkmark when craft is complete!
+        if (ent.completedProducts && ent.completedProducts.length > 0) {
+          const totalCount = ent.completedProducts.reduce((acc, p) => acc + p.count, 0);
+          const checkmarkBadge = createOverheadCheckmarkBadge(totalCount);
+          const bHeight = ent.configId === 'feed_mill' ? 3.6 : ent.configId === 'bakery' ? 3.0 : 3.2;
+          checkmarkBadge.position.set(0, bHeight, 0);
+          entGroup.add(checkmarkBadge);
+        }
       } else if (ent.type === 'animal_pen') {
         entGroup.add(createAnimalPenGroup(ent.configId));
+        const readyAnimals = (ent.animals || []).filter(a => a.hasProduct);
+        if (readyAnimals.length > 0) {
+          const checkmarkBadge = createOverheadCheckmarkBadge(readyAnimals.length);
+          checkmarkBadge.position.set(0, 2.4, 0);
+          entGroup.add(checkmarkBadge);
+        }
         if (ent.animals) {
           ent.animals.forEach(anim => {
             const aMesh = createAnimalMesh(anim.animalConfigId);
