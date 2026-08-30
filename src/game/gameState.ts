@@ -646,10 +646,10 @@ export const useGameStore = create<GameStore>((set, get) => ({
           if (chunk.id === 'chunk_center') {
             return {
               ...chunk,
-              x: -24,
-              z: -12,
-              width: 34,
-              depth: 26,
+              x: -21,
+              z: -11,
+              width: 29,
+              depth: 23,
               isUnlocked: true,
             };
           }
@@ -1172,7 +1172,53 @@ export const useGameStore = create<GameStore>((set, get) => ({
       return false;
     }
 
-    // 6. Prohibit placing inside the river water channel (x in [10.2, 21.8])
+    // 6. Prohibit placing on the boundary wooden fences
+    // North fence: z around -11.7 (x from -24 to -10)
+    if (z < -10.8 && (x < -9.5)) return false;
+    // West fence: x around -22.0 (z from -12 to 12)
+    if (x < -20.6) return false;
+    // South fence: z around 12.5 (x from -24 to 9)
+    if (z + depth > 11.8) return false;
+    // East river bank: x around 8.5
+    if (x + width > 8.2) return false;
+
+    // 7. Prohibit placing directly on Expansion For-Sale Signs
+    const signs = [
+      { minX: -16.0, maxX: -13.0, minZ: -16.5, maxZ: -13.5 },
+      { minX: -14.0, maxX: -10.0, minZ: 13.0, maxZ: 16.5 },
+      { minX: -27.5, maxX: -24.0, minZ: -1.5, maxZ: 1.5 },
+      { minX: 13.5, maxX: 17.0, minZ: -1.5, maxZ: 1.5 },
+    ];
+    for (const sign of signs) {
+      if (x < sign.maxX && x + width > sign.minX && z < sign.maxZ && z + depth > sign.minZ) {
+        return false;
+      }
+    }
+
+    // 8. Prohibit placing directly on Scenery Trees & Pinetrees
+    const sceneryTrees = [
+      [-30, -25], [-27, -19], [-22, -26], [-17, -22], [-11, -25], [-5, -21],
+      [3, -24], [8, -20], [24, -28], [28, -23], [32, -26], [-14, -28], [1, -28],
+      [-28, 22], [-25, 27], [-20, 18], [-16, 26], [-10, 20], [-4, 25],
+      [2, 19], [7, 26], [24, 18], [28, 26], [32, 22], [-22, 29], [0, 28],
+      [-31, -14], [-28, -6], [-32, 2], [-27, 9], [-31, 15], [-29, -1], [-33, 7], [-30, 20],
+      [26, -16], [30, -10], [26, 2], [31, 8], [26, 14], [30, 20], [32, 1],
+      [8.4, -20], [8.2, 17], [8.5, 23],
+      [-32, -28], [-25, -29], [-19, -27], [-7, -29], [6, -29], [25, -24], [31, -29],
+      [-29, -21], [-13, -23], [27, -19], [33, -14], [-33, 11], [-30, 25],
+      [25, 24], [31, 28], [27, -5], [33, 16], [-21, 24], [5, 27], [-9, 28]
+    ];
+    for (const [tx, tz] of sceneryTrees) {
+      const closestX = Math.max(x, Math.min(tx, x + width));
+      const closestZ = Math.max(z, Math.min(tz, z + depth));
+      const dX = tx - closestX;
+      const dZ = tz - closestZ;
+      if (dX * dX + dZ * dZ < 1.44) {
+        return false;
+      }
+    }
+
+    // 9. Prohibit placing inside the river water channel (x in [10.2, 21.8])
     const overlapRiver = x < 21.8 && x + width > 10.2;
     if (overlapRiver) {
       return false;

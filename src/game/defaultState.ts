@@ -9,13 +9,13 @@ import { CROPS } from '../config/crops';
 import { PRODUCTS } from '../config/products';
 
 export const INITIAL_MAP_EXPANSIONS: MapChunkExpansion[] = [
-  // Center main farm territory (Unlocked by default) - spans entire enclosed farm yard from west fence (x: -24) to river (x: 10), and from road (z: -12) to south fence (z: 14)
+  // Center main farm territory (Unlocked by default) - precisely enclosed by the wooden fences (x: -21 to 8, z: -11 to 12)
   {
     id: 'chunk_center',
-    x: -24,
-    z: -12,
-    width: 34,
-    depth: 26,
+    x: -21,
+    z: -11,
+    width: 29,
+    depth: 23,
     isUnlocked: true,
     costCoins: 0,
     costDeeds: 0,
@@ -26,10 +26,10 @@ export const INITIAL_MAP_EXPANSIONS: MapChunkExpansion[] = [
   // Expansion North (Mountain Base)
   {
     id: 'chunk_north',
-    x: -24,
-    z: -28,
-    width: 34,
-    depth: 16,
+    x: -21,
+    z: -26,
+    width: 29,
+    depth: 15,
     isUnlocked: false,
     costCoins: 350,
     costDeeds: 1,
@@ -40,10 +40,10 @@ export const INITIAL_MAP_EXPANSIONS: MapChunkExpansion[] = [
   // Expansion South (Southern Wilderness)
   {
     id: 'chunk_south',
-    x: -24,
-    z: 14,
-    width: 34,
-    depth: 16,
+    x: -21,
+    z: 12,
+    width: 29,
+    depth: 15,
     isUnlocked: false,
     costCoins: 500,
     costDeeds: 2,
@@ -54,10 +54,10 @@ export const INITIAL_MAP_EXPANSIONS: MapChunkExpansion[] = [
   // Expansion East (Beyond River)
   {
     id: 'chunk_east',
-    x: 10,
-    z: -12,
-    width: 24,
-    depth: 26,
+    x: 8,
+    z: -11,
+    width: 20,
+    depth: 23,
     isUnlocked: false,
     costCoins: 750,
     costDeeds: 3,
@@ -68,10 +68,10 @@ export const INITIAL_MAP_EXPANSIONS: MapChunkExpansion[] = [
   // Expansion West (Western Forest Hill)
   {
     id: 'chunk_west',
-    x: -34,
-    z: -12,
+    x: -31,
+    z: -11,
     width: 10,
-    depth: 26,
+    depth: 23,
     isUnlocked: false,
     costCoins: 1000,
     costDeeds: 4,
