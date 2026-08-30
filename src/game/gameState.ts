@@ -298,6 +298,7 @@ export interface GameStore {
   entities: WorldEntity[];
   selectedEntityId: string | null;
   activeTool: ActiveTool | null;
+  lastPlantedCropId: string;
   placingBuildingConfigId: string | null;
   placingRotation: 0 | 1 | 2 | 3;
   movingEntityId: string | null;
@@ -489,6 +490,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
   entities: [...INITIAL_ENTITIES],
   selectedEntityId: null,
   activeTool: null,
+  lastPlantedCropId: 'wheat',
   placingBuildingConfigId: null,
   placingRotation: 0,
   movingEntityId: null,
@@ -1454,6 +1456,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
     sounds.playPlant();
 
     set(s => ({
+      lastPlantedCropId: cropId,
       entities: s.entities.map(e => 
         e.id === fieldEntityId 
           ? { ...e, cropId, plantedAt: Date.now() }

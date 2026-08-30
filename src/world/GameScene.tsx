@@ -2237,23 +2237,35 @@ export const GameScene: React.FC = () => {
     updatePlacementPreview(hoveredTileRef.current);
   }, [placingBuildingConfigId, placingRotation, movingEntityId, movingPos, movingRotation, updatePlacementPreview]);
 
-  // Continuous Swipe Action for rapid farming
-  const executeSwipeActionOnTile = useCallback((tileX: number, tileZ: number) => {
-    const hitEntity = entities.find(e => 
-      tileX >= e.x && tileX < e.x + e.width &&
-      tileZ >= e.z && tileZ < e.z + e.depth
-    );
+  // Continuous Swipe & Smart Tool Interaction State
+  const isSwipingGestureRef = useRef(false);
+  const lastSwipeGroundPosRef = useRef<{ x: number; z: number } | null>(null);
 
+  const findEntityAtGroundPos = useCallback((gx: number, gz: number, radius = 0.45) => {
+    const currentEntities = useGameStore.getState().entities;
+    return currentEntities.find(ent => {
+      const minX = ent.x - radius;
+      const maxX = ent.x + ent.width + radius;
+      const minZ = ent.z - radius;
+      const maxZ = ent.z + ent.depth + radius;
+      return gx >= minX && gx <= maxX && gz >= minZ && gz <= maxZ;
+    });
+  }, []);
+
+  // Continuous Swipe Action for rapid farming (Planting, Harvesting, Feeding, Collecting)
+  const executeSwipeAtGroundPos = useCallback((gx: number, gz: number) => {
+    const curTool = activeToolRef.current;
+    if (!curTool) return;
+
+    const hitEntity = findEntityAtGroundPos(gx, gz, 0.45);
     if (!hitEntity) return;
     if (swipedEntitiesRef.current.has(hitEntity.id)) return;
 
-    const curTool = activeToolRef.current;
-    if (!curTool) return;
+    const state = useGameStore.getState();
 
     if (curTool.type === 'plant' && hitEntity.type === 'field' && curTool.configId) {
       if (!hitEntity.cropId) {
         const crop = CROPS[curTool.configId];
-        const state = useGameStore.getState();
         const invCount = state.inventory[curTool.configId] || 0;
         if (invCount > 0 && crop) {
           plantCrop(hitEntity.id, curTool.configId);
@@ -2299,7 +2311,7 @@ export const GameScene: React.FC = () => {
         triggerTelegramHaptic('light');
       }
     }
-  }, [entities, plantCrop, harvestCrop, harvestTreeBush, feedAnimal, collectAnimalProduct]);
+  }, [findEntityAtGroundPos, plantCrop, harvestCrop, harvestTreeBush, feedAnimal, collectAnimalProduct]);
 
   // -------------------------------------------------------------------
   // 4. ULTRA-FAST ZERO-ALLOCATION POINTER EVENTS
@@ -2307,49 +2319,69 @@ export const GameScene: React.FC = () => {
   const onPointerDown = (e: React.PointerEvent) => {
     isDraggingRef.current = true;
     hasMovedRef.current = false;
+    isSwipingGestureRef.current = false;
     dragStartScreenRef.current = { x: e.clientX, y: e.clientY };
     dragStartCamRef.current = { x: targetCamPosRef.current.x, z: targetCamPosRef.current.z };
     swipedEntitiesRef.current.clear();
 
-    const tile = getTileIntersection(e.clientX, e.clientY);
-    if (tile) {
-      const hitEntity = entities.find(ent => 
-        tile.x >= ent.x && tile.x < ent.x + ent.width &&
-        tile.z >= ent.z && tile.z < ent.z + ent.depth
-      );
+    const groundPos = getGroundIntersectionFromScreen(e.clientX, e.clientY);
+    if (!groundPos) return;
+    lastSwipeGroundPosRef.current = groundPos;
 
-      // If active tool exists, execute on initial touch
-      if (activeToolRef.current) {
-        executeSwipeActionOnTile(tile.x, tile.z);
-      } else if (hitEntity && !placingBuildingConfigId && !movingEntityId) {
-        // Smart direct harvest auto-detect: if touching ready field, start harvest swipe immediately!
-        if (hitEntity.type === 'field' && hitEntity.cropId && hitEntity.plantedAt) {
-          const crop = CROPS[hitEntity.cropId];
-          const weatherMult = activeEventRef.current?.growthSpeedMultiplier || 1.0;
-          const growMs = crop ? (crop.growTimeSeconds * 1000) / weatherMult : 10000;
-          const isReady = Date.now() >= hitEntity.plantedAt + growMs;
-          if (isReady) {
-            setActiveTool({ type: 'harvest' });
-            activeToolRef.current = { type: 'harvest' };
-            harvestCrop(hitEntity.id);
-            swipedEntitiesRef.current.add(hitEntity.id);
-            triggerTelegramHaptic('medium');
-            return;
-          }
+    const hitEntity = findEntityAtGroundPos(groundPos.x, groundPos.z, 0.45);
+
+    // 1. If active continuous tool exists (e.g. planting wheat or scythe harvest)
+    if (activeToolRef.current) {
+      isSwipingGestureRef.current = true;
+      executeSwipeAtGroundPos(groundPos.x, groundPos.z);
+      return;
+    }
+
+    // 2. Direct Smart Touch on Farm Entities (Auto-detect swipe mode)
+    if (hitEntity && !placingBuildingConfigId && !movingEntityId) {
+      // Smart harvest auto-detect: if touching ready field, start harvest swipe immediately!
+      if (hitEntity.type === 'field' && hitEntity.cropId && hitEntity.plantedAt) {
+        const crop = CROPS[hitEntity.cropId];
+        const weatherMult = activeEventRef.current?.growthSpeedMultiplier || 1.0;
+        const growMs = crop ? (crop.growTimeSeconds * 1000) / weatherMult : 10000;
+        const isReady = Date.now() >= hitEntity.plantedAt + growMs;
+        if (isReady) {
+          isSwipingGestureRef.current = true;
+          setActiveTool({ type: 'harvest' });
+          activeToolRef.current = { type: 'harvest' };
+          harvestCrop(hitEntity.id);
+          swipedEntitiesRef.current.add(hitEntity.id);
+          triggerTelegramHaptic('medium');
+          return;
         }
-
-        // Long-press detection to trigger building move/relocate mode
-        if (longPressTimerRef.current) clearTimeout(longPressTimerRef.current);
-        longPressTimerRef.current = window.setTimeout(() => {
-          startMovingEntity(hitEntity.id);
-          longPressTimerRef.current = null;
-        }, 340);
+      } else if (hitEntity.type === 'fruit_tree' && !hitEntity.isDead) {
+        const cfg = TREES_BUSHES[hitEntity.configId];
+        const growMs = (cfg ? cfg.growTimeSeconds : 60) * 1000;
+        const isReady = hitEntity.treePlantedAt ? Date.now() >= hitEntity.treePlantedAt + growMs : true;
+        if (isReady) {
+          isSwipingGestureRef.current = true;
+          setActiveTool({ type: 'harvest' });
+          activeToolRef.current = { type: 'harvest' };
+          harvestTreeBush(hitEntity.id);
+          swipedEntitiesRef.current.add(hitEntity.id);
+          triggerTelegramHaptic('medium');
+          return;
+        }
       }
+
+      // Long-press detection to trigger building move/relocate mode
+      if (longPressTimerRef.current) clearTimeout(longPressTimerRef.current);
+      longPressTimerRef.current = window.setTimeout(() => {
+        startMovingEntity(hitEntity.id);
+        longPressTimerRef.current = null;
+      }, 340);
     }
   };
 
   const onPointerMove = (e: React.PointerEvent) => {
-    const tile = getTileIntersection(e.clientX, e.clientY);
+    const groundPos = getGroundIntersectionFromScreen(e.clientX, e.clientY);
+    const tile = groundPos ? { x: Math.floor(groundPos.x), z: Math.floor(groundPos.z) } : null;
+
     if (tile) {
       hoveredTileRef.current = tile;
       if (placingRef.current.configId || movingRef.current.id) {
@@ -2370,19 +2402,35 @@ export const GameScene: React.FC = () => {
       }
     }
 
-    // Direct Drag Relocation of Moving Entity
+    // 1. Direct Drag Relocation of Moving Entity
     if (movingRef.current.id && tile) {
       setMovingPos(tile.x, tile.z);
       updatePlacementPreview(tile);
       return;
     }
 
-    // Continuous swipe tool farming without camera jitter
-    if (activeToolRef.current && tile) {
-      executeSwipeActionOnTile(tile.x, tile.z);
+    // 2. Continuous Swipe Farming (Planting / Harvesting / Feeding / Collecting)
+    // CRITICAL: NEVER PAN CAMERA WHILE IN SWIPE OR TOOL MODE!
+    if (isSwipingGestureRef.current || activeToolRef.current) {
+      if (groundPos) {
+        if (lastSwipeGroundPosRef.current) {
+          const prev = lastSwipeGroundPosRef.current;
+          // Interpolate 5 sub-steps between frames to guarantee no skipped fields
+          for (let i = 1; i <= 5; i++) {
+            const t = i / 5;
+            const ix = prev.x + (groundPos.x - prev.x) * t;
+            const iz = prev.z + (groundPos.z - prev.z) * t;
+            executeSwipeAtGroundPos(ix, iz);
+          }
+        } else {
+          executeSwipeAtGroundPos(groundPos.x, groundPos.z);
+        }
+        lastSwipeGroundPosRef.current = groundPos;
+      }
       return;
     }
 
+    // 3. Normal Map Pan (Only when dragging empty ground)
     if (!placingRef.current.configId && !movingRef.current.id && containerRef.current) {
       const viewportHeight = containerRef.current.clientHeight;
       const zoom = currentZoomRef.current;
@@ -2400,7 +2448,9 @@ export const GameScene: React.FC = () => {
   const onPointerUp = (e: React.PointerEvent) => {
     isDraggingRef.current = false;
     touchDistanceRef.current = null;
-    swipedEntitiesRef.current.clear();
+    const wasSwiping = isSwipingGestureRef.current;
+    isSwipingGestureRef.current = false;
+    lastSwipeGroundPosRef.current = null;
 
     if (longPressTimerRef.current) {
       clearTimeout(longPressTimerRef.current);
@@ -2412,8 +2462,14 @@ export const GameScene: React.FC = () => {
       return;
     }
 
+    // If this gesture was a swipe action (planting/harvesting), don't open inspector
+    if (wasSwiping && hasMovedRef.current) {
+      return;
+    }
+
     if (!hasMovedRef.current) {
-      const tile = getTileIntersection(e.clientX, e.clientY);
+      const groundPos = getGroundIntersectionFromScreen(e.clientX, e.clientY);
+      const tile = groundPos ? { x: Math.floor(groundPos.x), z: Math.floor(groundPos.z) } : null;
       if (!tile) return;
 
       if (placingBuildingConfigId) {
@@ -2431,10 +2487,7 @@ export const GameScene: React.FC = () => {
         return;
       }
 
-      const clickedEntity = entities.find(ent => 
-        tile.x >= ent.x && tile.x < ent.x + ent.width &&
-        tile.z >= ent.z && tile.z < ent.z + ent.depth
-      );
+      const clickedEntity = findEntityAtGroundPos(groundPos?.x ?? tile.x, groundPos?.z ?? tile.z, 0.45);
 
       if (clickedEntity) {
         setSelectedEntity(clickedEntity.id);
