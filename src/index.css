@@ -151,99 +151,103 @@ body, html {
   border-radius: 9999px;
 }
 
-/* ── High-Production Casual Game HUD Styles (Hay Day / Supercell aesthetic) ── */
+/* ═══════════════════════════════════════════════
+   UNIFIED WARM & BRIGHT CASUAL FARM GAME DESIGN SYSTEM
+   ═══════════════════════════════════════════════ */
+
+/* ── Top Bar & HUD Wood Badge ─────────────────── */
 .game-badge-wood {
-  background: linear-gradient(180deg, #2D1A0C 0%, #1B0F07 100%);
-  border: 1.5px solid #A16207;
+  background: linear-gradient(180deg, #78350F 0%, #542407 100%);
+  border: 2px solid #F59E0B;
   border-radius: 16px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.75), inset 0 1px 1px rgba(254, 240, 138, 0.35), inset 0 -2px 0 rgba(0, 0, 0, 0.6);
+  box-shadow: 0 4px 10px rgba(69, 26, 3, 0.45), inset 0 1px 1px rgba(254, 240, 138, 0.7), inset 0 -2px 0 rgba(41, 15, 2, 0.6);
   position: relative;
 }
 
 .game-badge-slot {
-  background: rgba(10, 5, 2, 0.65);
-  border: 1px solid rgba(161, 98, 7, 0.3);
+  background: rgba(45, 18, 4, 0.55);
+  border: 1px solid rgba(251, 191, 36, 0.45);
   border-radius: 10px;
-  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.8), 0 1px 0 rgba(255, 255, 255, 0.08);
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.45), 0 1px 0 rgba(255, 255, 255, 0.15);
 }
 
 .game-btn-plus {
   background: linear-gradient(180deg, #22C55E 0%, #15803D 100%);
   border: 1.5px solid #86EFAC;
   border-radius: 9px;
-  box-shadow: 0 2.5px 0 #14532D, 0 4px 8px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.6);
+  box-shadow: 0 2.5px 0 #14532D, 0 3px 6px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.7);
   transition: all 0.1s ease;
   cursor: pointer;
 }
 .game-btn-plus:active {
   transform: translateY(1.5px);
-  box-shadow: 0 1px 0 #14532D, 0 2px 4px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.4);
+  box-shadow: 0 1px 0 #14532D, 0 2px 4px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.5);
 }
 
 .game-level-star {
-  background: radial-gradient(circle at 35% 35%, #FDE047 0%, #EAB308 50%, #B45309 100%);
-  border: 1.5px solid #FEF08A;
-  border-radius: 8px;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.65), inset 0 1px 1px rgba(255, 255, 255, 0.8);
+  background: radial-gradient(circle at 35% 35%, #FDE047 0%, #F59E0B 55%, #D97706 100%);
+  border: 2px solid #FEF08A;
+  border-radius: 10px;
+  box-shadow: 0 3px 8px rgba(120, 53, 15, 0.55), inset 0 1.5px 1.5px rgba(255, 255, 255, 0.9);
 }
 
 .game-side-medal {
-  background: linear-gradient(180deg, #381E0D 0%, #1F0F06 100%);
-  border: 2px solid #D97706;
+  background: linear-gradient(180deg, #92400E 0%, #652507 100%);
+  border: 2px solid #FBBF24;
   border-radius: 20px;
-  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.8), inset 0 1px 1.5px rgba(254, 240, 138, 0.4), inset 0 -2px 0 rgba(0, 0, 0, 0.7);
+  box-shadow: 0 5px 14px rgba(69, 26, 3, 0.5), inset 0 1.5px 1.5px rgba(254, 240, 138, 0.65), inset 0 -2px 0 rgba(41, 15, 2, 0.6);
 }
 
 .game-ribbon-tag {
   background: linear-gradient(180deg, #EF4444 0%, #B91C1C 100%);
-  border: 1px solid #FCA5A5;
+  border: 1.5px solid #FCA5A5;
   border-radius: 9999px;
-  box-shadow: 0 2px 6px rgba(185, 28, 28, 0.8), inset 0 1px 0 rgba(255, 255, 255, 0.6);
+  box-shadow: 0 2px 6px rgba(185, 28, 28, 0.7), inset 0 1px 0 rgba(255, 255, 255, 0.7);
 }
 
 .game-text-shadow {
-  text-shadow: 0 1.5px 3px rgba(0, 0, 0, 0.9), 0 0 2px #000;
+  text-shadow: 0 1.5px 2px rgba(45, 18, 4, 0.85);
 }
 
 .game-text-gold {
   color: #FEF08A;
-  text-shadow: 0 1.5px 3px #78350F, 0 0 2px #451A03;
+  text-shadow: 0 1.5px 2px #78350F, 0 0 1px #451A03;
 }
 
-/* ── Casual Game Bottom Dock Tray ── */
+/* ── Casual Game Bottom Dock Tray ─────────────── */
 .game-dock-tray {
-  background: linear-gradient(180deg, #3A200D 0%, #201006 100%);
-  border: 2px solid #A16207;
+  background: linear-gradient(180deg, #92400E 0%, #6A2807 50%, #4D1A04 100%);
+  border: 2.5px solid #FBBF24;
   border-radius: 24px;
-  box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.8), inset 0 1.5px 1px rgba(254, 240, 138, 0.4), inset 0 -3px 0 rgba(0, 0, 0, 0.8);
+  box-shadow: 0 -4px 18px rgba(69, 26, 3, 0.55), inset 0 1.5px 1px rgba(254, 240, 138, 0.65), inset 0 -3px 0 rgba(41, 15, 2, 0.7);
 }
 
 .game-dock-btn {
-  background: linear-gradient(180deg, #4A2810 0%, #251205 100%);
-  border: 1.5px solid #854D0E;
+  background: linear-gradient(180deg, #A13E0E 0%, #6E2207 100%);
+  border: 1.5px solid #F59E0B;
   border-radius: 16px;
-  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.6), inset 0 1px 1px rgba(254, 240, 138, 0.25), inset 0 -1.5px 0 rgba(0, 0, 0, 0.6);
+  box-shadow: 0 3px 8px rgba(69, 26, 3, 0.45), inset 0 1px 1px rgba(254, 240, 138, 0.45), inset 0 -1.5px 0 rgba(41, 15, 2, 0.6);
   transition: all 0.15s ease;
 }
 .game-dock-btn:hover {
   filter: brightness(1.1);
-  border-color: #FACC15;
+  border-color: #FDE047;
 }
 .game-dock-btn:active {
   transform: translateY(1.5px) scale(0.96);
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.6);
+  box-shadow: 0 1px 3px rgba(69, 26, 3, 0.5);
 }
 .game-dock-btn-active {
-  background: linear-gradient(180deg, #FACC15 0%, #CA8A04 100%);
-  border: 2px solid #FEF08A;
-  box-shadow: 0 0 12px rgba(250, 204, 21, 0.6), inset 0 2px 2px rgba(255, 255, 255, 0.8);
+  background: linear-gradient(180deg, #FDE047 0%, #EAB308 50%, #CA8A04 100%) !important;
+  border: 2px solid #FFFBEB !important;
+  box-shadow: 0 0 14px rgba(250, 204, 21, 0.75), inset 0 2px 2px rgba(255, 255, 255, 0.9) !important;
 }
 
 .game-center-build-btn {
   background: radial-gradient(circle at 35% 30%, #FEF08A 0%, #FACC15 40%, #D97706 80%, #92400E 100%);
-  border: 2.5px solid #FEF08A;
+  border: 3px solid #FFFBEB;
   border-radius: 20px;
-  box-shadow: 0 6px 20px rgba(234, 179, 8, 0.6), inset 0 2px 3px rgba(255, 255, 255, 0.8), 0 4px 10px rgba(0, 0, 0, 0.7);
+  box-shadow: 0 6px 20px rgba(234, 179, 8, 0.65), inset 0 2px 3px rgba(255, 255, 255, 0.9), 0 4px 10px rgba(69, 26, 3, 0.5);
   transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
 }
 .game-center-build-btn:hover {
@@ -256,62 +260,71 @@ body, html {
 
 .game-center-farm-btn {
   background: radial-gradient(circle at 35% 30%, #86EFAC 0%, #22C55E 40%, #15803D 80%, #14532D 100%);
-  border: 2.5px solid #BBF7D0;
+  border: 3px solid #DCFCE7;
   border-radius: 20px;
-  box-shadow: 0 6px 20px rgba(34, 197, 94, 0.6), inset 0 2px 3px rgba(255, 255, 255, 0.8), 0 4px 10px rgba(0, 0, 0, 0.7);
+  box-shadow: 0 6px 20px rgba(34, 197, 94, 0.65), inset 0 2px 3px rgba(255, 255, 255, 0.9), 0 4px 10px rgba(69, 26, 3, 0.5);
   transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 /* ── Fullscreen Casual Game Modal & Shop Styles ── */
 .game-screen-bg {
-  background: radial-gradient(circle at 50% 25%, #351C0C 0%, #1A0C04 100%);
+  background: radial-gradient(circle at 50% 20%, #78350F 0%, #451A03 55%, #291002 100%);
   color: #FEF08A;
 }
 
 .game-screen-header {
-  background: linear-gradient(180deg, #3D200A 0%, #251205 100%);
-  border-bottom: 2px solid #854D0E;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.7), inset 0 1px 0 rgba(254, 240, 138, 0.3);
+  background: linear-gradient(180deg, #92400E 0%, #712B08 100%);
+  border-bottom: 2.5px solid #F59E0B;
+  box-shadow: 0 4px 12px rgba(69, 26, 3, 0.45), inset 0 1px 0 rgba(254, 240, 138, 0.6);
 }
 
 .game-tab-btn {
-  background: linear-gradient(180deg, #4A2810 0%, #251205 100%);
-  border: 1.5px solid #854D0E;
+  background: linear-gradient(180deg, #78350F 0%, #542407 100%);
+  border: 1.5px solid #D97706;
   border-radius: 14px;
-  color: #FDE68A;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(254, 240, 138, 0.2);
+  color: #FEF08A;
+  box-shadow: 0 2px 6px rgba(69, 26, 3, 0.4), inset 0 1px 0 rgba(254, 240, 138, 0.35);
   transition: all 0.15s ease;
   cursor: pointer;
 }
 .game-tab-btn:hover {
   filter: brightness(1.1);
-  border-color: #EAB308;
+  border-color: #FDE047;
 }
 .game-tab-btn:active {
   transform: scale(0.96);
 }
 .game-tab-btn-active {
   background: linear-gradient(180deg, #FDE047 0%, #EAB308 50%, #CA8A04 100%) !important;
-  border: 2px solid #FEF08A !important;
+  border: 2px solid #FFFBEB !important;
   color: #451A03 !important;
-  box-shadow: 0 4px 12px rgba(234, 179, 8, 0.5), inset 0 2px 2px rgba(255, 255, 255, 0.8) !important;
+  box-shadow: 0 4px 12px rgba(234, 179, 8, 0.6), inset 0 2px 2px rgba(255, 255, 255, 0.9) !important;
 }
 
 .game-card {
-  background: linear-gradient(180deg, #381E0D 0%, #1F0F06 100%);
-  border: 1.5px solid #854D0E;
+  background: linear-gradient(180deg, #854D0E 0%, #5E2606 100%);
+  border: 2px solid #FBBF24;
   border-radius: 18px;
-  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.75), inset 0 1px 1px rgba(254, 240, 138, 0.3), inset 0 -2px 0 rgba(0, 0, 0, 0.7);
+  box-shadow: 0 6px 16px rgba(69, 26, 3, 0.55), inset 0 1.5px 1px rgba(254, 240, 138, 0.5), inset 0 -2px 0 rgba(41, 15, 2, 0.6);
   position: relative;
 }
 
+/* Cream Parchment Inner Card */
+.game-card-parchment {
+  background: linear-gradient(180deg, #FFFDF5 0%, #FEF3C7 100%);
+  border: 2px solid #F59E0B;
+  border-radius: 16px;
+  box-shadow: 0 4px 12px rgba(69, 26, 3, 0.35), inset 0 1px 1px rgba(255, 255, 255, 0.9);
+  color: #451A03;
+}
+
 .game-btn-gold {
-  background: linear-gradient(180deg, #FACC15 0%, #EAB308 50%, #CA8A04 100%);
-  border: 2px solid #FEF08A;
+  background: linear-gradient(180deg, #FDE047 0%, #EAB308 50%, #CA8A04 100%);
+  border: 2px solid #FFFBEB;
   border-radius: 14px;
   color: #451A03;
   font-weight: 900;
-  box-shadow: 0 4px 12px rgba(202, 138, 4, 0.6), inset 0 2px 2px rgba(255, 255, 255, 0.8), 0 2px 0 #78350F;
+  box-shadow: 0 4px 12px rgba(202, 138, 4, 0.6), inset 0 2px 2px rgba(255, 255, 255, 0.9), 0 2.5px 0 #78350F;
   transition: all 0.12s ease;
   cursor: pointer;
 }
@@ -324,7 +337,40 @@ body, html {
   box-shadow: 0 1px 4px rgba(202, 138, 4, 0.6), inset 0 1px 1px rgba(255, 255, 255, 0.6);
 }
 
+.game-btn-green {
+  background: linear-gradient(180deg, #4ADE80 0%, #22C55E 50%, #15803D 100%);
+  border: 2px solid #DCFCE7;
+  border-radius: 14px;
+  color: #FFFFFF;
+  font-weight: 900;
+  box-shadow: 0 4px 12px rgba(34, 197, 94, 0.6), inset 0 2px 2px rgba(255, 255, 255, 0.8), 0 2.5px 0 #14532D;
+  transition: all 0.12s ease;
+  cursor: pointer;
+}
+.game-btn-green:hover {
+  filter: brightness(1.08);
+  transform: translateY(-1px);
+}
+.game-btn-green:active {
+  transform: translateY(1.5px);
+  box-shadow: 0 1px 4px rgba(34, 197, 94, 0.6), inset 0 1px 1px rgba(255, 255, 255, 0.6);
+}
 
-
-
-
+.game-btn-red {
+  background: linear-gradient(180deg, #F87171 0%, #EF4444 50%, #B91C1C 100%);
+  border: 2px solid #FEE2E2;
+  border-radius: 14px;
+  color: #FFFFFF;
+  font-weight: 900;
+  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.6), inset 0 2px 2px rgba(255, 255, 255, 0.8), 0 2.5px 0 #7F1D1D;
+  transition: all 0.12s ease;
+  cursor: pointer;
+}
+.game-btn-red:hover {
+  filter: brightness(1.08);
+  transform: translateY(-1px);
+}
+.game-btn-red:active {
+  transform: translateY(1.5px);
+  box-shadow: 0 1px 4px rgba(239, 68, 68, 0.6), inset 0 1px 1px rgba(255, 255, 255, 0.6);
+}
