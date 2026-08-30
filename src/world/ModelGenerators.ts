@@ -1188,15 +1188,6 @@ export function createMountainWaterfallGroup(season: SeasonType): THREE.Group {
   const group = new THREE.Group();
   group.name = 'mountain_waterfall';
 
-  const rockDarkMat = getCachedColorMaterial(season === 'winter' ? '#64748B' : '#475569', 0.85);
-  const rockMidMat  = getCachedColorMaterial(season === 'winter' ? '#94A3B8' : '#64748B', 0.80);
-  const pineMat     = getCachedColorMaterial(season === 'winter' ? '#94A3B8' : '#14532D', 0.80);
-  const trunkMat    = getCachedColorMaterial('#451A03', 0.90);
-
-  const waterDeepMat = new THREE.MeshStandardMaterial({
-    color: season === 'winter' ? 0x93C5FD : 0x0284C7,
-    roughness: 0.08,
-    metalness: 0.25,
   const rockDarkMat = getCachedColorMaterial(season === 'winter' ? '#475569' : '#3F3F46', 0.85);
   const rockMidMat = getCachedColorMaterial(season === 'winter' ? '#64748B' : '#52525B', 0.80);
   const rockMossMat = getCachedColorMaterial(season === 'winter' ? '#94A3B8' : '#2D6A24', 0.85);
