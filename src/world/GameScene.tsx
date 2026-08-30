@@ -25,6 +25,7 @@ import {
   createStylizedDeliveryTruck,
   createStylizedCargoSemiTruck,
   createStreetLampPostMesh,
+  createAnimatedBirdGroup,
   getCachedColorMaterial
 } from './ModelGenerators';
 import { createLandscapeDetailGroup } from './LandscapeDetails';
@@ -336,6 +337,62 @@ export const GameScene: React.FC = () => {
     let meteorStartX = -35;
     let meteorStartY = 48;
     let meteorStartZ = -28;
+
+    // ── Stylized Animated Farm Birds Flock ─────────────────────────────
+    const birdsGroup = new THREE.Group();
+    birdsGroup.name = 'farm_birds_group';
+    scene.add(birdsGroup);
+
+    interface BirdState {
+      mesh: THREE.Group;
+      wingL: THREE.Mesh | null;
+      wingR: THREE.Mesh | null;
+      behavior: 'soar_circle' | 'river_flyby' | 'field_flutter' | 'tree_perch' | 'night_owl';
+      speed: number;
+      radiusX: number;
+      radiusZ: number;
+      centerX: number;
+      centerZ: number;
+      baseHeight: number;
+      phase: number;
+      seed: number;
+      scale: number;
+    }
+
+    const birdConfigs = [
+      { color: '#F8FAFC', accent: '#E2E8F0', behavior: 'soar_circle' as const, cx: 6, cz: -8, rx: 22, rz: 18, h: 14.5, speed: 0.35, scale: 0.95 }, // White Dove Leader
+      { color: '#F1F5F9', accent: '#CBD5E1', behavior: 'soar_circle' as const, cx: 6, cz: -8, rx: 24, rz: 20, h: 15.2, speed: 0.35, scale: 0.90 }, // White Dove Follower
+      { color: '#38BDF8', accent: '#0284C7', behavior: 'river_flyby' as const, cx: 16, cz: 0, rx: 6, rz: 30, h: 4.8, speed: 0.52, scale: 0.85 }, // Blue Jay over River
+      { color: '#FACC15', accent: '#CA8A04', behavior: 'field_flutter' as const, cx: -12, cz: 8, rx: 14, rz: 12, h: 5.5, speed: 0.65, scale: 0.80 }, // Goldfinch Meadow
+      { color: '#FB923C', accent: '#78350F', behavior: 'tree_perch' as const, cx: -16, cz: -14, rx: 16, rz: 14, h: 7.2, speed: 0.45, scale: 0.82 }, // Tree Robin
+      { color: '#4ADE80', accent: '#15803D', behavior: 'tree_perch' as const, cx: 4, cz: 16, rx: 15, rz: 15, h: 6.8, speed: 0.48, scale: 0.82 }, // Meadow Finch
+      { color: '#94A3B8', accent: '#334155', behavior: 'night_owl' as const, cx: -4, cz: -4, rx: 28, rz: 22, h: 16.0, speed: 0.28, scale: 1.15 }, // Night Owl
+    ];
+
+    const activeBirds: BirdState[] = birdConfigs.map((cfg, idx) => {
+      const mesh = createAnimatedBirdGroup(cfg.color, cfg.accent);
+      mesh.scale.set(cfg.scale, cfg.scale, cfg.scale);
+      birdsGroup.add(mesh);
+
+      const wingL = mesh.getObjectByName('wing_left') as THREE.Mesh | null;
+      const wingR = mesh.getObjectByName('wing_right') as THREE.Mesh | null;
+
+      return {
+        mesh,
+        wingL,
+        wingR,
+        behavior: cfg.behavior,
+        speed: cfg.speed,
+        radiusX: cfg.rx,
+        radiusZ: cfg.rz,
+        centerX: cfg.cx,
+        centerZ: cfg.cz,
+        baseHeight: cfg.h,
+        phase: (idx * Math.PI * 2) / birdConfigs.length,
+        seed: idx * 2.37,
+        scale: cfg.scale,
+      };
+    });
 
     // 5. Terrain Group
     const terrainGroup = new THREE.Group();
@@ -1040,14 +1097,13 @@ export const GameScene: React.FC = () => {
         baseSunIntensity = 1.25 - t * 0.55;
         baseSunX = 38 - t * 15;
         baseSunY = 45 - t * 28;
-        baseSunZ = 28 - t * 16;
       } else {
-        // 🌙 Magical Midnight (21:30 - 05:00)
-        baseSkyColor = '#070B19'; // Deep rich celestial midnight
-        baseAmbientColor = 0x1E1B4B; // Deep royal navy-violet fill
-        baseAmbientIntensity = 0.54;
-        baseSunColor = 0x99C2FE; // Silvery lunar directional moonlight
-        baseSunIntensity = 0.78;
+        // 🌙 Magical Moonlit Night (21:30 - 05:00)
+        baseSkyColor = '#060D1E'; // Deep rich celestial midnight
+        baseAmbientColor = 0x386660; // Luminous cyan-emerald ambient fill (RGB: 56, 102, 96)
+        baseAmbientIntensity = 0.94; // Bright ambient fill so grass is crisp, green, and vibrant!
+        baseSunColor = 0xBAE6FD; // Luminous crisp silver-blue moonlight
+        baseSunIntensity = 1.12; // Bright direct moonlight with soft shadows
         baseSunX = -28;
         baseSunY = 48;
         baseSunZ = -22;
@@ -1065,6 +1121,9 @@ export const GameScene: React.FC = () => {
         sunLight.color.setHex(baseSunColor);
         sunLight.intensity = baseSunIntensity;
         sunLight.position.set(baseSunX, baseSunY, baseSunZ);
+
+        fillLight.color.setHex(isNightMode ? 0x4ADE80 : 0x93C5FD);
+        fillLight.intensity = isNightMode ? 0.45 : 0.40;
       }
 
       // ── Twinkling Starfield Animation ──
@@ -1179,6 +1238,78 @@ export const GameScene: React.FC = () => {
               mat.emissiveIntensity = 0.0;
             }
           }
+        }
+      });
+
+      // ── Animate 3D Birds Flock (Wing Flapping, Gliding, Banking, & Perching) ──
+      activeBirds.forEach((b) => {
+        const time = elapsed * b.speed + b.phase;
+
+        if (b.behavior === 'tree_perch') {
+          // Alternates between 9s of flying and 4.5s of perching on a tree
+          const cycleTime = (elapsed + b.seed * 5) % 13.5;
+          if (cycleTime < 4.5) {
+            // Perched state on branch
+            b.mesh.position.set(b.centerX, b.baseHeight * 0.42, b.centerZ);
+            if (b.wingL) b.wingL.rotation.z = 0.15;
+            if (b.wingR) b.wingR.rotation.z = -0.15;
+            b.mesh.rotation.y = b.seed + Math.sin(elapsed * 1.5) * 0.25;
+            b.mesh.rotation.x = Math.sin(elapsed * 3.5) * 0.12;
+            b.mesh.rotation.z = 0;
+            return;
+          }
+        }
+
+        // 3D Flight paths across the farm
+        let px = b.centerX + Math.cos(time) * b.radiusX;
+        let pz = b.centerZ + Math.sin(time) * b.radiusZ;
+        let py = b.baseHeight + Math.sin(time * 2 + b.seed) * 0.85;
+
+        if (b.behavior === 'river_flyby') {
+          px = 16.0 + Math.sin(time * 1.5) * 4.5;
+          pz = Math.cos(time) * 30.0;
+          py = 4.4 + Math.abs(Math.sin(time * 3)) * 0.6;
+        }
+
+        if (b.behavior === 'field_flutter') {
+          py = 4.8 + Math.sin(time * 4) * 0.75 + Math.cos(time * 2.5) * 0.4;
+        }
+
+        // Tangent heading velocity
+        const dt = 0.05;
+        let nextX = b.centerX + Math.cos(time + dt * b.speed) * b.radiusX;
+        let nextZ = b.centerZ + Math.sin(time + dt * b.speed) * b.radiusZ;
+        if (b.behavior === 'river_flyby') {
+          nextX = 16.0 + Math.sin((time + dt * b.speed) * 1.5) * 4.5;
+          nextZ = Math.cos(time + dt * b.speed) * 30.0;
+        }
+
+        const vx = nextX - px;
+        const vz = nextZ - pz;
+        const heading = Math.atan2(vz, vx);
+
+        b.mesh.position.set(px, py, pz);
+        b.mesh.rotation.y = -heading + Math.PI / 2;
+
+        // Aerodynamic banking roll into turns
+        const turnCurvature = Math.sin(time) * 0.35;
+        b.mesh.rotation.z = -turnCurvature * 0.8;
+        b.mesh.rotation.x = Math.sin(time * 2) * 0.08;
+
+        // Wing Flapping vs Smooth Gliding
+        const flapCycle = (elapsed * 2.2 + b.seed * 3) % 4.0;
+        const isFlapping = flapCycle < 2.3;
+
+        if (isFlapping) {
+          const flapSpeed = b.behavior === 'field_flutter' ? 24 : 17;
+          const flapAngle = Math.sin(elapsed * flapSpeed + b.seed) * 0.65;
+          if (b.wingL) b.wingL.rotation.z = flapAngle;
+          if (b.wingR) b.wingR.rotation.z = -flapAngle;
+        } else {
+          // Smooth glide
+          const glideWobble = Math.sin(elapsed * 3 + b.seed) * 0.04;
+          if (b.wingL) b.wingL.rotation.z = 0.08 + glideWobble;
+          if (b.wingR) b.wingR.rotation.z = -0.08 - glideWobble;
         }
       });
 
