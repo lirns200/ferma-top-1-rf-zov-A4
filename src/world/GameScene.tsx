@@ -2286,10 +2286,9 @@ export const GameScene: React.FC = () => {
     // North Mountain Forest & Footing Groves
     const northTrees: [number, number, 'pine' | 'oak' | 'cherry', number][] = [
       [-16, -24, 'pine', 1.3], [-10, -26, 'pine', 1.2], [-4, -25, 'oak', 1.1],
-      [2, -27, 'pine', 1.4], [8, -25, 'cherry', 1.0], [-20, -22, 'pine', 1.1],
+      [2, -27, 'pine', 1.4], [6, -25, 'cherry', 1.0], [-20, -22, 'pine', 1.1],
       [-14, -28, 'pine', 1.5], [4, -28, 'oak', 1.2], [-8, -22, 'cherry', 0.95],
-      [-26, -22, 'pine', 1.25], [12, -26, 'pine', 1.35], [16, -23, 'oak', 1.1],
-      [-2, -22, 'oak', 1.15], [-24, -27, 'pine', 1.4], [6, -23, 'cherry', 1.0],
+      [-26, -22, 'pine', 1.25], [-2, -22, 'oak', 1.15], [-24, -27, 'pine', 1.4],
     ];
     northTrees.forEach(([tx, tz, type, sc]) => {
       terrainGroup.add(createLandscapeTree(tx, tz, type, sc));

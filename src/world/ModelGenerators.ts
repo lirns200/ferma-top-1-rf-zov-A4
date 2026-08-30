@@ -1266,7 +1266,7 @@ export function createMountainWaterfallGroup(season: SeasonType): THREE.Group {
     map: waterFlowTex,
     color: season === 'winter' ? 0xBAE6FD : 0x38BDF8,
     emissive: season === 'winter' ? 0x60A5FA : 0x0284C7,
-    emissiveIntensity: 0.20,
+    emissiveIntensity: 0.22,
     roughness: 0.08,
     metalness: 0.15,
     transparent: true,
@@ -1278,7 +1278,7 @@ export function createMountainWaterfallGroup(season: SeasonType): THREE.Group {
     map: foamFlowTex,
     color: 0xFFFFFF,
     emissive: 0xFFFFFF,
-    emissiveIntensity: 0.15,
+    emissiveIntensity: 0.18,
     roughness: 0.15,
     metalness: 0.05,
     transparent: true,
@@ -1286,31 +1286,34 @@ export function createMountainWaterfallGroup(season: SeasonType): THREE.Group {
     side: THREE.DoubleSide,
   });
 
-  const solidFoamMat = new THREE.MeshStandardMaterial({
-    color: 0xFFFFFF,
-    emissive: 0xFFFFFF,
-    emissiveIntensity: 0.15,
-    roughness: 0.2,
-    metalness: 0.05,
-    transparent: true,
-    opacity: 0.95,
-  });
+  // ── 1. Mountain Summit Grotto & Cavern Source Arch (Where water surges from) ──
+  const grottoArchGeo = new THREE.TorusGeometry(4.6, 1.8, 5, 8, Math.PI);
+  const grottoArch = new THREE.Mesh(grottoArchGeo, rockDarkMat);
+  grottoArch.position.set(0, 14.5, -9.6);
+  grottoArch.rotation.x = 0.25;
+  grottoArch.castShadow = true;
+  group.add(grottoArch);
 
-  // ── 1. Grand Wide Continuous Cascading Water Mesh (8.5m - 11.2m Wide) ──
-  // Smooth natural parabolic cataract profile (No blocking obstacles!)
+  const grottoBackGeo = new THREE.SphereGeometry(4.2, 6, 6, 0, Math.PI);
+  const grottoBackMat = getCachedColorMaterial('#18181B', 0.95);
+  const grottoBack = new THREE.Mesh(grottoBackGeo, grottoBackMat);
+  grottoBack.position.set(0, 14.8, -10.2);
+  grottoBack.rotation.y = Math.PI / 2;
+  group.add(grottoBack);
+
+  // ── 2. Grand Wide Continuous Cascading Water Torrent (8.2m - 11.0m Wide) ──
   const streamProfile: [number, number, number][] = [
-    [-9.0, 14.5, 8.5],  // Alpine mountain canyon summit cleft
-    [-8.0, 13.6, 8.8],  // Mountain stream acceleration
-    [-7.0, 12.2, 9.0],  // Upper cataract plunge
-    [-6.0, 10.5, 9.3],  // Roaring upper cataract
-    [-5.0, 8.6, 9.6],   // Mid cataract chute
-    [-4.0, 6.7, 9.8],   // Mid cataract surge
-    [-3.0, 4.8, 10.1],  // Lower cataract rush
-    [-2.0, 3.1, 10.4],  // Lower cataract plunge
-    [-1.0, 1.8, 10.7],  // Whitewater apron
-    [0.2, 0.8, 11.0],   // River approach rapids
-    [1.6, 0.2, 11.1],   // River impact zone
-    [3.2, -0.05, 11.2], // Seamlessly merged into river
+    [-9.5, 14.8, 8.2],  // Inside mountain summit grotto
+    [-8.5, 13.8, 8.5],  // Grotto lip surge
+    [-7.2, 12.0, 8.8],  // Upper cataract acceleration
+    [-5.8, 9.8, 9.2],   // Roaring upper cataract
+    [-4.4, 7.5, 9.5],   // Mid cataract chute
+    [-3.0, 5.2, 9.8],   // Mid cataract surge
+    [-1.8, 3.2, 10.1],  // Lower cataract plunge
+    [-0.6, 1.6, 10.4],  // Whitewater apron approach
+    [0.8, 0.6, 10.6],   // Rapids entry into river
+    [2.2, 0.1, 10.8],   // Plunge impact zone
+    [3.6, -0.05, 11.0], // Seamlessly merged into river
   ];
 
   const streamSteps = streamProfile.length;
@@ -1327,10 +1330,10 @@ export function createMountainWaterfallGroup(season: SeasonType): THREE.Group {
     for (let c = 0; c <= crossSegments; c++) {
       const u = c / crossSegments; // 0 to 1
       const px = -halfW + u * w;
-      // Natural parabolic cross-section trough (deeper in middle)
-      const curvatureY = Math.sin(u * Math.PI) * 0.22;
+      // Natural parabolic cross-section trough (deepest in center)
+      const curvatureY = Math.sin(u * Math.PI) * 0.24;
 
-      waterPositions.push(px, py - (0.22 - curvatureY), pz);
+      waterPositions.push(px, py - (0.24 - curvatureY), pz);
       waterUVs.push(u, v * 4.5);
     }
   }
@@ -1370,24 +1373,16 @@ export function createMountainWaterfallGroup(season: SeasonType): THREE.Group {
   foamMesh.name = 'waterfall_foam_mesh';
   group.add(foamMesh);
 
-  // ── 2. Boiling Whitewater Splash Apron at River Entry (y = 0.04, z = 3.2 to 5.5) ──
-  const splashApronGeo = new THREE.PlaneGeometry(12.0, 3.8, 8, 4);
-  splashApronGeo.rotateX(-Math.PI / 2);
-  const splashApronMesh = new THREE.Mesh(splashApronGeo, foamMaterial);
-  splashApronMesh.name = 'waterfall_splash_apron';
-  splashApronMesh.position.set(0, 0.04, 4.2);
-  group.add(splashApronMesh);
-
   // ── 3. Natural Low-Poly Mountain Cliffs Flanking the Gorge (Wide Clearance) ──
   const rockDodec = new THREE.DodecahedronGeometry(1.6, 0);
 
   // Left Canyon Wall Boulders (Pushed wide x <= -7.8 so water is 100% unobstructed)
   const leftRockData = [
-    { x: -7.8, y: 1.5, z: 3.2, s: [2.2, 2.2, 2.2], mat: rockMidMat },
-    { x: -8.4, y: 4.5, z: 0.2, s: [2.5, 2.8, 2.4], mat: rockDarkMat },
-    { x: -8.8, y: 8.0, z: -3.0, s: [2.8, 3.2, 2.6], mat: rockMidMat },
-    { x: -9.2, y: 12.0, z: -6.5, s: [3.2, 3.8, 3.0], mat: rockDarkMat },
-    { x: -7.2, y: 1.0, z: 5.5, s: [1.6, 1.4, 1.7], mat: rockMossMat },
+    { x: -8.0, y: 1.5, z: 3.2, s: [2.2, 2.2, 2.2], mat: rockMidMat },
+    { x: -8.5, y: 4.5, z: 0.2, s: [2.5, 2.8, 2.4], mat: rockDarkMat },
+    { x: -9.0, y: 8.0, z: -3.0, s: [2.8, 3.2, 2.6], mat: rockMidMat },
+    { x: -9.5, y: 12.0, z: -6.5, s: [3.2, 3.8, 3.0], mat: rockDarkMat },
+    { x: -7.5, y: 1.0, z: 5.5, s: [1.6, 1.4, 1.7], mat: rockMossMat },
   ];
   leftRockData.forEach(r => {
     const rock = new THREE.Mesh(rockDodec, r.mat);
@@ -1401,11 +1396,11 @@ export function createMountainWaterfallGroup(season: SeasonType): THREE.Group {
 
   // Right Canyon Wall Boulders (Pushed wide x >= +7.8)
   const rightRockData = [
-    { x: 7.8, y: 1.5, z: 3.2, s: [2.2, 2.2, 2.2], mat: rockMidMat },
-    { x: 8.4, y: 4.5, z: 0.2, s: [2.5, 2.8, 2.4], mat: rockDarkMat },
-    { x: 8.8, y: 8.0, z: -3.0, s: [2.8, 3.2, 2.6], mat: rockMidMat },
-    { x: 9.2, y: 12.0, z: -6.5, s: [3.2, 3.8, 3.0], mat: rockDarkMat },
-    { x: 7.2, y: 1.0, z: 5.5, s: [1.6, 1.4, 1.7], mat: rockMossMat },
+    { x: 8.0, y: 1.5, z: 3.2, s: [2.2, 2.2, 2.2], mat: rockMidMat },
+    { x: 8.5, y: 4.5, z: 0.2, s: [2.5, 2.8, 2.4], mat: rockDarkMat },
+    { x: 9.0, y: 8.0, z: -3.0, s: [2.8, 3.2, 2.6], mat: rockMidMat },
+    { x: 9.5, y: 12.0, z: -6.5, s: [3.2, 3.8, 3.0], mat: rockDarkMat },
+    { x: 7.5, y: 1.0, z: 5.5, s: [1.6, 1.4, 1.7], mat: rockMossMat },
   ];
   rightRockData.forEach(r => {
     const rock = new THREE.Mesh(rockDodec, r.mat);
@@ -1417,11 +1412,11 @@ export function createMountainWaterfallGroup(season: SeasonType): THREE.Group {
     group.add(rock);
   });
 
-  // ── 4. Expanding Sparkling White Foam Ripples on the River Surface ───
+  // ── 4. Expanding Soft White Foam Ripples on the River Surface ────────
   const rippleMat = new THREE.MeshBasicMaterial({
     color: 0xFFFFFF,
     transparent: true,
-    opacity: 0.65,
+    opacity: 0.55,
     side: THREE.DoubleSide,
     depthWrite: false,
   });
@@ -1438,10 +1433,10 @@ export function createMountainWaterfallGroup(season: SeasonType): THREE.Group {
   // River Bank Boulders flanking the pool
   const stoneGeo = new THREE.DodecahedronGeometry(0.65, 0);
   [
-    { x: -5.5, z: 4.2, s: 1.2 },
-    { x: 5.5, z: 4.0, s: 1.1 },
-    { x: -5.0, z: 6.2, s: 0.9 },
-    { x: 5.2, z: 6.5, s: 1.0 },
+    { x: -6.0, z: 4.2, s: 1.2 },
+    { x: 6.0, z: 4.0, s: 1.1 },
+    { x: -5.5, z: 6.2, s: 0.9 },
+    { x: 5.8, z: 6.5, s: 1.0 },
   ].forEach(st => {
     const stone = new THREE.Mesh(stoneGeo, rockMidMat);
     stone.position.set(st.x, 0.2, st.z);
