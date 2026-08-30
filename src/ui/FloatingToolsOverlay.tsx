@@ -39,10 +39,14 @@ export const FloatingToolsOverlay: React.FC = () => {
   const {
     entities, selectedEntityId, placingBuildingConfigId,
     movingEntityId, movingRotation,
-    level, coins, isActionStripOpen, toggleActionStrip, setActionStripOpen,
+    level, coins, gems, inventory,
+    isActionStripOpen, toggleActionStrip, setActionStripOpen,
+    setSelectedEntity,
     setPlacingBuilding, rotatePlacingBuilding,
     startMovingEntity, rotateMovingEntity, confirmMoveEntity, cancelMoveEntity, deleteEntity,
-    harvestCrop, openModal, activeEvent,
+    plantCrop, harvestCrop, speedUpCrop, waterField, harvestTreeBush,
+    feedAllAnimalsInPen, collectAllAnimalProductsInPen, collectProduct,
+    openModal, activeEvent,
     isDesign2026,
   } = useGameStore();
 
