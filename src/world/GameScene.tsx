@@ -1313,19 +1313,17 @@ export const GameScene: React.FC = () => {
         }
       });
 
-      // ── Animate Cascading Mountain Waterfall (Rushing curtains, pulsing foam, expanding spray rings & mist) ──
+      // ── Animate Cascading Mountain Waterfall (Continuous rushing stream, foam crests, expanding splash rings & mist) ──
       terrainGroup.traverse(child => {
-        if (child.name === 'waterfall_curtain_1') {
-          child.position.z = -3.2 + Math.sin(elapsed * 18) * 0.04;
-          child.rotation.x = -Math.PI / 2 + 0.45 + Math.sin(elapsed * 12) * 0.02;
-        } else if (child.name === 'waterfall_curtain_2') {
-          child.position.z = 0.6 + Math.sin(elapsed * 18 + 1.2) * 0.04;
-          child.rotation.x = -Math.PI / 2 + 0.48 + Math.sin(elapsed * 14 + 1.0) * 0.02;
-        } else if (child.name === 'waterfall_curtain_3') {
-          child.position.z = 2.8 + Math.sin(elapsed * 18 + 2.4) * 0.04;
-          child.rotation.x = -Math.PI / 2 + 0.55 + Math.sin(elapsed * 14 + 2.0) * 0.02;
-        } else if (child.name === 'waterfall_foam_1' || child.name === 'waterfall_foam_2' || child.name === 'waterfall_foam_3') {
-          child.scale.set(1.0 + Math.sin(elapsed * 14) * 0.08, 1.0 + Math.cos(elapsed * 16) * 0.2, 1.0);
+        if (child.name === 'waterfall_continuous_mesh') {
+          child.rotation.y = Math.sin(elapsed * 6.0) * 0.005;
+        } else if (child.name?.startsWith('waterfall_foam_crest_')) {
+          const cIdx = parseInt(child.name.replace('waterfall_foam_crest_', '')) || 0;
+          child.scale.set(
+            1.6 + Math.sin(elapsed * 12 + cIdx * 1.5) * 0.15,
+            0.45 + Math.cos(elapsed * 14 + cIdx) * 0.08,
+            0.9 + Math.sin(elapsed * 16 + cIdx) * 0.10
+          );
         } else if (child.name?.startsWith('waterfall_foam_ring_')) {
           const ringIdx = parseInt(child.name.replace('waterfall_foam_ring_', '')) || 0;
           const cycle = (elapsed * 1.6 + ringIdx * 0.65) % 2.0;
@@ -1342,8 +1340,8 @@ export const GameScene: React.FC = () => {
             p[m * 3] += Math.sin(elapsed * 2 + m) * 0.01;
             if (p[m * 3 + 1] > 3.8) {
               p[m * 3 + 1] = 0.2;
-              p[m * 3] = (Math.random() - 0.5) * 4.6;
-              p[m * 3 + 2] = 2.4 + Math.random() * 3.4;
+              p[m * 3] = (Math.random() - 0.5) * 4.8;
+              p[m * 3 + 2] = 2.4 + Math.random() * 3.6;
             }
           }
           (child as THREE.Points).geometry.attributes.position.needsUpdate = true;
