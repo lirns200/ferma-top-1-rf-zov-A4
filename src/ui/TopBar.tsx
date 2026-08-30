@@ -81,6 +81,7 @@ export const TopBar: React.FC = () => {
     coins,
     gems,
     getStorageUsed,
+    getStorageCapacity,
     openModal,
     activeModal,
   } = useGameStore();
@@ -91,6 +92,7 @@ export const TopBar: React.FC = () => {
   const xpNeeded = currentLevelConfig ? currentLevelConfig.xpRequired : 1000;
   const xpPercent = Math.min(100, Math.round((xp / xpNeeded) * 100));
   const barnUsed = getStorageUsed('barn');
+  const barnCap = getStorageCapacity('barn');
 
   return (
     <header className="fixed top-0 left-0 right-0 z-50 pointer-events-none p-1.5 sm:p-3 select-none">
@@ -140,7 +142,7 @@ export const TopBar: React.FC = () => {
               <div className="game-badge-slot w-full h-2 mt-0.5 p-[1px] overflow-hidden">
                 <div 
                   className="h-full bg-gradient-to-r from-emerald-500 via-green-400 to-lime-300 rounded-full transition-all duration-300 shadow-[0_0_6px_rgba(74,222,128,0.6)]"
-                  style={{ width: `${xpPercent}%` }}
+                  style={{ width: `${Math.max(4, xpPercent)}%` }}
                 />
               </div>
             </div>
@@ -176,8 +178,8 @@ export const TopBar: React.FC = () => {
               <div className="w-6 h-6 sm:w-7 sm:h-7 -ml-2.5 sm:-ml-3 filter drop-shadow-[0_2px_4px_rgba(0,0,0,0.6)] shrink-0">
                 <GameBarnIcon />
               </div>
-              <span className="font-black text-[11px] sm:text-xs md:text-sm text-amber-100 font-sans tracking-tight game-text-shadow">
-                {barnUsed}
+              <span className="font-black text-[10.5px] sm:text-xs md:text-sm text-amber-100 font-sans tracking-tight game-text-shadow">
+                {barnUsed}/{barnCap}
               </span>
             </div>
 
