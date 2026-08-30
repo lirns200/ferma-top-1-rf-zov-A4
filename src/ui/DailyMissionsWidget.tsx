@@ -92,37 +92,37 @@ export const DailyMissionsWidget: React.FC = () => {
 
       {/* ── BEAUTIFUL 24H MISSIONS DROPDOWN DIALOG (ON TOP OF ALL WINDOWS z-[110]) ── */}
       {isOpen && (
-        <div className="fixed top-[52px] sm:top-[60px] left-2 sm:left-4 w-[calc(100vw-16px)] max-w-[340px] sm:max-w-[380px] p-3.5 sm:p-4 rounded-3xl bg-[#10141D]/95 backdrop-blur-2xl border border-white/20 shadow-2xl shadow-black/90 text-white flex flex-col gap-3 animate-pop-in z-[110]">
+        <div className="fixed top-[52px] sm:top-[60px] left-2 sm:left-4 w-[calc(100vw-16px)] max-w-[340px] sm:max-w-[380px] p-3.5 sm:p-4 rounded-3xl game-dock-tray border-2 border-amber-500/80 shadow-2xl shadow-black/95 text-white flex flex-col gap-3 animate-pop-in z-[110]">
           
           {/* Header */}
-          <div className="flex items-center justify-between border-b border-white/10 pb-2.5">
+          <div className="flex items-center justify-between border-b border-amber-900/60 pb-2.5">
             <div className="flex items-center gap-2 min-w-0">
-              <div className="w-8 h-8 rounded-xl bg-amber-500/20 border border-amber-400/40 flex items-center justify-center text-base shrink-0">
+              <div className="w-8 h-8 rounded-xl game-side-medal flex items-center justify-center text-base shrink-0 shadow-md">
                 📜
               </div>
               <div className="flex flex-col min-w-0">
-                <span className="font-black text-xs sm:text-sm text-white flex items-center gap-1.5 truncate">
+                <span className="font-black text-xs sm:text-sm text-yellow-300 game-text-gold flex items-center gap-1.5 truncate">
                   <span>Задания дня</span>
-                  <span className="text-[9px] px-1.5 py-0.2 rounded bg-amber-500/20 text-yellow-300 font-bold">
+                  <span className="text-[9px] px-1.5 py-0.2 rounded-full game-ribbon-tag text-white font-black">
                     24ч
                   </span>
                 </span>
-                <span className="text-[10px] text-[#8E939D] flex items-center gap-1 truncate">
-                  <Clock size={11} /> Сброс через {timeLeftStr}
+                <span className="text-[10px] text-amber-200/80 flex items-center gap-1 truncate">
+                  <Clock size={11} className="text-amber-400" /> Сброс через {timeLeftStr}
                 </span>
               </div>
             </div>
 
-            {/* Bright, high-contrast Close Button (Крестик) */}
+            {/* Tactile Close Button (Крестик) */}
             <button
               onClick={() => {
                 sounds.playClick();
                 setIsOpen(false);
               }}
-              className="w-8 h-8 rounded-xl bg-white/15 hover:bg-red-600 border border-white/30 text-white flex items-center justify-center text-sm font-black transition-all cursor-pointer shrink-0 shadow-md active:scale-90 ml-2"
+              className="w-7 h-7 rounded-xl game-dock-btn text-amber-200 hover:text-white hover:border-red-400 flex items-center justify-center text-sm font-black transition-all cursor-pointer shrink-0 shadow-md active:scale-90 ml-2"
               title="Закрыть"
             >
-              <X size={18} strokeWidth={2.5} />
+              <X size={16} strokeWidth={2.5} />
             </button>
           </div>
 
@@ -137,59 +137,59 @@ export const DailyMissionsWidget: React.FC = () => {
                   key={m.id}
                   className={`p-2.5 sm:p-3 rounded-2xl border flex flex-col gap-2 transition-all ${
                     m.isClaimed
-                      ? 'bg-[#12151B]/80 border-white/5 opacity-60'
+                      ? 'bg-black/40 border-amber-950/60 opacity-60'
                       : isFinished
-                      ? 'bg-gradient-to-r from-emerald-950/80 to-[#122E1F]/90 border-emerald-400/70 ring-1 ring-emerald-400/40 shadow-lg'
-                      : 'bg-[#181C24]/90 border-[#283244]'
+                      ? 'bg-gradient-to-r from-amber-950 via-[#2E1A0C] to-[#1F1106] border-emerald-400/80 ring-1 ring-emerald-400/50 shadow-lg'
+                      : 'game-badge-wood'
                   }`}
                 >
                   {/* Top Bar with Difficulty and Reward */}
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-1.5">
                       <span
-                        className="text-[8px] font-black uppercase px-1.5 py-0.2 rounded-md border"
+                        className="text-[8.5px] font-black uppercase px-2 py-0.5 rounded-full border shadow-sm"
                         style={{
-                          backgroundColor: `${m.tierColor}15`,
-                          borderColor: `${m.tierColor}40`,
-                          color: m.tierColor,
+                          backgroundColor: `${m.tierColor}25`,
+                          borderColor: m.tierColor,
+                          color: m.tierColor === '#10B981' ? '#86EFAC' : m.tierColor === '#F59E0B' ? '#FDE047' : '#FCA5A5',
                         }}
                       >
                         {m.tierLabel}
                       </span>
-                      <span className="font-extrabold text-xs text-white">
+                      <span className="font-extrabold text-xs text-amber-100 game-text-shadow">
                         {m.title}
                       </span>
                     </div>
 
                     {/* Reward Badges */}
                     <div className="flex items-center gap-1.5 text-[10px] font-black text-amber-300">
-                      <span className="flex items-center gap-0.5"><CoinSvg /> +{m.rewardCoins}</span>
-                      <span className="text-sky-300 font-bold">+{m.rewardXP} XP</span>
+                      <span className="flex items-center gap-0.5 game-text-gold"><CoinSvg /> +{m.rewardCoins}</span>
+                      <span className="text-sky-300 font-extrabold">+{m.rewardXP} XP</span>
                       {m.rewardGems && (
-                        <span className="text-emerald-400 font-bold">+{m.rewardGems} 💎</span>
+                        <span className="text-emerald-300 font-extrabold">+{m.rewardGems} 💎</span>
                       )}
                     </div>
                   </div>
 
                   {/* Description & Icon */}
                   <div className="flex items-center gap-2 text-[11px] text-white/80">
-                    <span className="text-lg shrink-0">{m.icon}</span>
-                    <span className="text-[10px] text-[#8E939D] leading-tight flex-1">{m.description}</span>
+                    <span className="text-lg shrink-0 filter drop-shadow-[0_1px_2px_rgba(0,0,0,0.6)]">{m.icon}</span>
+                    <span className="text-[10px] text-amber-200/80 leading-tight flex-1 font-medium">{m.description}</span>
                   </div>
 
                   {/* Progress Bar & Claim Button */}
                   <div className="flex items-center gap-2">
                     <div className="flex-1 flex flex-col gap-0.5">
-                      <div className="flex justify-between text-[9px] font-black text-[#8E939D]">
+                      <div className="flex justify-between text-[9px] font-black text-amber-200/90">
                         <span>Прогресс</span>
-                        <span className={isFinished ? 'text-emerald-400 font-black' : 'text-white'}>
+                        <span className={isFinished ? 'text-emerald-300 font-black' : 'text-amber-100'}>
                           {m.currentCount} / {m.targetCount} ({percent}%)
                         </span>
                       </div>
-                      <div className="w-full bg-black/40 h-1.5 rounded-full overflow-hidden border border-white/5">
+                      <div className="game-badge-slot w-full h-2 p-[1px] overflow-hidden">
                         <div
                           className={`h-full rounded-full transition-all duration-300 ${
-                            isFinished ? 'bg-emerald-400' : 'bg-amber-400'
+                            isFinished ? 'bg-gradient-to-r from-emerald-500 to-green-400 shadow-[0_0_6px_rgba(74,222,128,0.8)]' : 'bg-gradient-to-r from-amber-500 to-yellow-400'
                           }`}
                           style={{ width: `${percent}%` }}
                         />
@@ -198,18 +198,18 @@ export const DailyMissionsWidget: React.FC = () => {
 
                     {/* Claim Button */}
                     {m.isClaimed ? (
-                      <span className="px-2 py-1 rounded-xl bg-white/5 text-emerald-400 text-[10px] font-bold flex items-center gap-0.5 shrink-0">
-                        <CheckCircle2 size={11} /> Готово
+                      <span className="px-2.5 py-1 rounded-xl bg-black/40 border border-emerald-600/40 text-emerald-300 text-[10px] font-extrabold flex items-center gap-1 shrink-0">
+                        <CheckCircle2 size={12} /> Готово
                       </span>
                     ) : isFinished ? (
                       <button
                         onClick={() => claimDailyMission(m.id)}
-                        className="px-3 py-1.5 rounded-xl bg-gradient-to-r from-emerald-500 to-green-500 hover:from-emerald-400 text-white font-black text-[10px] shadow-lg shadow-emerald-950/60 transition-transform active:scale-95 cursor-pointer shrink-0 animate-bounce"
+                        className="game-btn-plus px-3 py-1 text-white font-black text-[10px] shadow-lg transition-transform active:scale-95 cursor-pointer shrink-0 animate-bounce"
                       >
                         Забрать!
                       </button>
                     ) : (
-                      <span className="px-2 py-1 rounded-xl bg-black/30 text-[#8E939D] text-[9px] font-bold shrink-0">
+                      <span className="px-2 py-0.5 rounded-lg bg-black/40 border border-amber-900/60 text-amber-400/60 text-[9px] font-bold shrink-0">
                         В процессе
                       </span>
                     )}
