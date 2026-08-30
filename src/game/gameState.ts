@@ -642,7 +642,19 @@ export const useGameStore = create<GameStore>((set, get) => ({
         barnCapacity: saved.barnCapacity,
         inventory: saved.inventory,
         entities: reconciledEntities,
-        expansions: saved.expansions || INITIAL_MAP_EXPANSIONS,
+        expansions: (saved.expansions || INITIAL_MAP_EXPANSIONS).map(chunk => {
+          if (chunk.id === 'chunk_center') {
+            return {
+              ...chunk,
+              x: -24,
+              z: -12,
+              width: 34,
+              depth: 26,
+              isUnlocked: true,
+            };
+          }
+          return chunk;
+        }),
         orders: saved.orders && saved.orders.length > 0 ? saved.orders : generateRandomOrders(saved.level),
         truckState: truck,
         shopSlots: saved.shopSlots || INITIAL_SHOP_SLOTS,
@@ -1142,20 +1154,20 @@ export const useGameStore = create<GameStore>((set, get) => ({
       return true;
     }
 
-    // 3. Prohibit placing directly ON the Main Road or Bridge (z in [-11.5, -7.2])
-    const overlapMainRoad = z < -7.2 && z + depth > -11.5;
+    // 3. Prohibit placing directly ON the Main Road or Bridge (x in [-8.5, 24.0], z in [-11.0, -7.2])
+    const overlapMainRoad = (x + width > -8.5 && x < 24.0) && (z < -7.2 && z + depth > -11.0);
     if (overlapMainRoad) {
       return false;
     }
 
-    // 4. Prohibit placing directly on Driveway 1 path (x in [-8.5, -6.0], z in [-8.8, -1.5])
-    const overlapDriveway1 = (x < -6.0 && x + width > -8.5) && (z < -1.5 && z + depth > -8.8);
+    // 4. Prohibit placing directly on Driveway 1 path (x in [-7.8, -4.8], z in [-7.2, -2.0])
+    const overlapDriveway1 = (x < -4.8 && x + width > -7.8) && (z < -2.0 && z + depth > -7.2);
     if (overlapDriveway1) {
       return false;
     }
 
-    // 5. Prohibit placing directly on Driveway 2 path (x in [1.8, 4.5], z in [-8.8, -3.0])
-    const overlapDriveway2 = (x < 4.5 && x + width > 1.8) && (z < -3.0 && z + depth > -8.8);
+    // 5. Prohibit placing directly on Driveway 2 path (x in [2.0, 4.2], z in [-7.2, -2.5])
+    const overlapDriveway2 = (x < 4.2 && x + width > 2.0) && (z < -2.5 && z + depth > -7.2);
     if (overlapDriveway2) {
       return false;
     }

@@ -9,13 +9,13 @@ import { CROPS } from '../config/crops';
 import { PRODUCTS } from '../config/products';
 
 export const INITIAL_MAP_EXPANSIONS: MapChunkExpansion[] = [
-  // Center main farm territory (Unlocked by default) - 30x30 tiles centered at (-15 to 15)
+  // Center main farm territory (Unlocked by default) - spans entire enclosed farm yard from west fence (x: -24) to river (x: 10), and from road (z: -12) to south fence (z: 14)
   {
     id: 'chunk_center',
-    x: -12,
+    x: -24,
     z: -12,
-    width: 24,
-    depth: 24,
+    width: 34,
+    depth: 26,
     isUnlocked: true,
     costCoins: 0,
     costDeeds: 0,
@@ -23,13 +23,13 @@ export const INITIAL_MAP_EXPANSIONS: MapChunkExpansion[] = [
     costStakes: 0,
     unlockLevel: 1,
   },
-  // Expansion North
+  // Expansion North (Mountain Base)
   {
     id: 'chunk_north',
-    x: -12,
-    z: -24,
-    width: 24,
-    depth: 12,
+    x: -24,
+    z: -28,
+    width: 34,
+    depth: 16,
     isUnlocked: false,
     costCoins: 350,
     costDeeds: 1,
@@ -37,13 +37,13 @@ export const INITIAL_MAP_EXPANSIONS: MapChunkExpansion[] = [
     costStakes: 1,
     unlockLevel: 8,
   },
-  // Expansion South
+  // Expansion South (Southern Wilderness)
   {
     id: 'chunk_south',
-    x: -12,
-    z: 12,
-    width: 24,
-    depth: 12,
+    x: -24,
+    z: 14,
+    width: 34,
+    depth: 16,
     isUnlocked: false,
     costCoins: 500,
     costDeeds: 2,
@@ -51,13 +51,13 @@ export const INITIAL_MAP_EXPANSIONS: MapChunkExpansion[] = [
     costStakes: 2,
     unlockLevel: 10,
   },
-  // Expansion East (Near Fishing River)
+  // Expansion East (Beyond River)
   {
     id: 'chunk_east',
-    x: 12,
+    x: 10,
     z: -12,
-    width: 12,
-    depth: 24,
+    width: 24,
+    depth: 26,
     isUnlocked: false,
     costCoins: 750,
     costDeeds: 3,
@@ -65,13 +65,13 @@ export const INITIAL_MAP_EXPANSIONS: MapChunkExpansion[] = [
     costStakes: 3,
     unlockLevel: 12,
   },
-  // Expansion West
+  // Expansion West (Western Forest Hill)
   {
     id: 'chunk_west',
-    x: -24,
+    x: -34,
     z: -12,
-    width: 12,
-    depth: 24,
+    width: 10,
+    depth: 26,
     isUnlocked: false,
     costCoins: 1000,
     costDeeds: 4,
