@@ -1260,7 +1260,7 @@ export function createMountainWaterfallGroup(season: SeasonType): THREE.Group {
   const trunkMat = getCachedColorMaterial('#78350F', 0.9);
 
   const waterFlowTex = createWaterfallFlowTexture(false);
-  const foamFlowTex = createWaterfallFoamTexture();
+  const foamFlowTex = createWaterfallFlowTexture(true);
 
   const waterMaterial = new THREE.MeshStandardMaterial({
     map: waterFlowTex,
