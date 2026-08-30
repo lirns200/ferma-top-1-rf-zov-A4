@@ -422,11 +422,15 @@ export interface GameStore {
   // Crops & Farming Actions
   plantCrop: (fieldEntityId: string, cropId: string) => boolean;
   harvestCrop: (fieldEntityId: string) => boolean;
+  speedUpCrop: (fieldEntityId: string) => boolean;
+  waterField: (fieldEntityId: string) => boolean;
   harvestTreeBush: (treeEntityId: string) => boolean;
   
   // Animal Actions
   feedAnimal: (penEntityId: string, animalId: string) => boolean;
   collectAnimalProduct: (penEntityId: string, animalId: string) => boolean;
+  feedAllAnimalsInPen: (penEntityId: string) => boolean;
+  collectAllAnimalProductsInPen: (penEntityId: string) => boolean;
   
   // Production Actions
   startProduction: (buildingEntityId: string, recipeId: string) => boolean;
@@ -1510,6 +1514,56 @@ export const useGameStore = create<GameStore>((set, get) => ({
     return true;
   },
 
+  speedUpCrop: (fieldEntityId) => {
+    const state = get();
+    const field = state.entities.find(e => e.id === fieldEntityId && e.type === 'field');
+    if (!field || !field.cropId || !field.plantedAt) return false;
+
+    if (state.gems < 1) {
+      state.addFloatingText('Не хватает алмазов! 💎', 0, 0, '#EF4444');
+      return false;
+    }
+
+    const crop = CROPS[field.cropId];
+    if (!crop) return false;
+
+    const growMs = crop.growTimeSeconds * 1000;
+    set(s => ({
+      gems: s.gems - 1,
+      entities: s.entities.map(e =>
+        e.id === fieldEntityId
+          ? { ...e, plantedAt: Date.now() - (growMs + 1000) }
+          : e
+      ),
+    }));
+
+    sounds.playLevelUp();
+    state.addFloatingText(`⚡ ${crop.name} созрела моментально!`, 0, 0, '#38BDF8');
+    return true;
+  },
+
+  waterField: (fieldEntityId) => {
+    const state = get();
+    const field = state.entities.find(e => e.id === fieldEntityId && e.type === 'field');
+    if (!field || !field.cropId || !field.plantedAt) return false;
+
+    const crop = CROPS[field.cropId];
+    const growMs = crop ? crop.growTimeSeconds * 1000 : 10000;
+    const bonusTime = growMs * 0.35;
+
+    set(s => ({
+      entities: s.entities.map(e =>
+        e.id === fieldEntityId
+          ? { ...e, plantedAt: (e.plantedAt || Date.now()) - bonusTime }
+          : e
+      ),
+    }));
+
+    sounds.playCraftStart();
+    state.addFloatingText('💧 Грядка полита! (+35% к созреванию)', 0, 0, '#38BDF8');
+    return true;
+  },
+
   harvestTreeBush: (treeEntityId) => {
     const state = get();
     const tree = state.entities.find(e => e.id === treeEntityId && e.type === 'fruit_tree');
@@ -1597,6 +1651,26 @@ export const useGameStore = create<GameStore>((set, get) => ({
     return true;
   },
 
+  feedAllAnimalsInPen: (penEntityId) => {
+    const state = get();
+    const pen = state.entities.find(e => e.id === penEntityId && e.type === 'animal_pen');
+    if (!pen || !pen.animals) return false;
+
+    const hungryAnimals = pen.animals.filter(a => a.isHungry);
+    if (hungryAnimals.length === 0) {
+      state.addFloatingText('Все животные уже сыты!', 0, 0, '#F59E0B');
+      return false;
+    }
+
+    let fedCount = 0;
+    for (const animal of hungryAnimals) {
+      if (state.feedAnimal(penEntityId, animal.id)) {
+        fedCount++;
+      }
+    }
+    return fedCount > 0;
+  },
+
   collectAnimalProduct: (penEntityId, animalId) => {
     const state = get();
     const pen = state.entities.find(e => e.id === penEntityId && e.type === 'animal_pen');
@@ -1637,6 +1711,26 @@ export const useGameStore = create<GameStore>((set, get) => ({
     const prod = PRODUCTS[cfg.produceItemId];
     state.addFloatingText(`+1 ${prod?.icon || '🥚'} (+${cfg.xpGain} XP)`, 0, 0, '#22C55E');
     return true;
+  },
+
+  collectAllAnimalProductsInPen: (penEntityId) => {
+    const state = get();
+    const pen = state.entities.find(e => e.id === penEntityId && e.type === 'animal_pen');
+    if (!pen || !pen.animals) return false;
+
+    const readyAnimals = pen.animals.filter(a => a.hasProduct);
+    if (readyAnimals.length === 0) {
+      state.addFloatingText('Продукция ещё зреет...', 0, 0, '#F59E0B');
+      return false;
+    }
+
+    let collectedCount = 0;
+    for (const animal of readyAnimals) {
+      if (state.collectAnimalProduct(penEntityId, animal.id)) {
+        collectedCount++;
+      }
+    }
+    return collectedCount > 0;
   },
 
   startProduction: (buildingEntityId, recipeId) => {

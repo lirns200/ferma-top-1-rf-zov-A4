@@ -178,54 +178,138 @@ export const FloatingToolsOverlay: React.FC = () => {
     );
   }
 
-  // Calculate Growth & Status percentages for selected Field / Crop
-  let cropName = 'Грядка';
+  // ── Calculate State & Context for Selected Entity ──
+  let cropName = 'Объект';
   let cropIcon = '🌱';
+  let statusText = '';
   let growthPercent = 0;
   let waterPercent = 100;
+  let isCropReady = false;
+  let isCropGrowing = false;
+  let isEmptyField = false;
+  let isAnimalPen = false;
+  let hasAnimalProducts = false;
+  let hasHungryAnimals = false;
+  let isProductionBuilding = false;
+  let hasCompletedProducts = false;
+  let isFruitTree = false;
+  let isFruitTreeReady = false;
+  let isSpecialBuilding = false;
+  let isCoreBuilding = false;
+  let entityBuildingConfig = selectedEntity ? (BUILDINGS[selectedEntity.configId] || DECORATIONS[selectedEntity.configId] || TREES_BUSHES[selectedEntity.configId]) : null;
 
-  if (selectedEntity?.type === 'field' && selectedEntity.cropId && selectedEntity.plantedAt) {
-    const crop = CROPS[selectedEntity.cropId];
-    if (crop) {
-      cropName = crop.name;
-      cropIcon = crop.icon;
-      const weatherMult = activeEvent?.growthSpeedMultiplier || 1.0;
-      const growMs = (crop.growTimeSeconds * 1000) / weatherMult;
-      const elapsed = Date.now() - selectedEntity.plantedAt;
-      growthPercent = Math.min(100, Math.round((elapsed / growMs) * 100));
-      waterPercent = Math.max(20, Math.round(100 - (growthPercent * 0.4)));
+  if (selectedEntity) {
+    if (selectedEntity.type === 'field') {
+      if (selectedEntity.cropId && selectedEntity.plantedAt) {
+        const crop = CROPS[selectedEntity.cropId];
+        if (crop) {
+          cropName = crop.name;
+          cropIcon = crop.icon;
+          const weatherMult = activeEvent?.growthSpeedMultiplier || 1.0;
+          const growMs = (crop.growTimeSeconds * 1000) / weatherMult;
+          const elapsed = Date.now() - selectedEntity.plantedAt;
+          growthPercent = Math.min(100, Math.round((elapsed / growMs) * 100));
+          waterPercent = Math.max(20, Math.round(100 - (growthPercent * 0.4)));
+          isCropReady = growthPercent >= 100;
+          isCropGrowing = !isCropReady;
+          const remainSec = Math.max(0, Math.ceil((growMs - elapsed) / 1000));
+          statusText = isCropReady ? 'Урожай созрел! ✨' : `Созреет через ${remainSec}с`;
+        }
+      } else {
+        cropName = 'Свободная грядка';
+        cropIcon = '🟫';
+        isEmptyField = true;
+        statusText = 'Выберите семена для посадки';
+      }
+    } else if (selectedEntity.type === 'animal_pen') {
+      isAnimalPen = true;
+      const b = BUILDINGS[selectedEntity.configId];
+      cropName = b?.name || 'Загон для животных';
+      cropIcon = b?.icon || '🐔';
+      hasAnimalProducts = (selectedEntity.animals || []).some(a => a.hasProduct);
+      hasHungryAnimals = (selectedEntity.animals || []).some(a => a.isHungry);
+      statusText = hasAnimalProducts 
+        ? 'Продукция готова к сбору! 🧺' 
+        : hasHungryAnimals 
+        ? 'Животные хотят есть! 🥣' 
+        : 'Животные сыты и отдыхают 💤';
+    } else if (selectedEntity.type === 'production') {
+      isProductionBuilding = true;
+      const b = BUILDINGS[selectedEntity.configId];
+      cropName = b?.name || 'Производство';
+      cropIcon = b?.icon || '🏭';
+      const completedCount = selectedEntity.completedProducts?.length || 0;
+      const queueCount = selectedEntity.productionQueue?.length || 0;
+      hasCompletedProducts = completedCount > 0;
+      statusText = hasCompletedProducts
+        ? `Готово к сбору: ${completedCount} шт. 🧺`
+        : queueCount > 0
+        ? `В процессе: ${queueCount} в очереди ⏳`
+        : 'Производство ожидает заказов';
+    } else if (selectedEntity.type === 'fruit_tree') {
+      isFruitTree = true;
+      const cfg = TREES_BUSHES[selectedEntity.configId];
+      cropName = cfg?.name || 'Дерево';
+      cropIcon = cfg?.icon || '🌳';
+      const growMs = (cfg?.growTimeSeconds || 60) * 1000;
+      isFruitTreeReady = selectedEntity.treePlantedAt ? Date.now() >= selectedEntity.treePlantedAt + growMs : true;
+      statusText = isFruitTreeReady ? 'Плоды созрели! 🍎' : 'Плоды ещё наливаются...';
+    } else if (selectedEntity.type === 'storage' || selectedEntity.type === 'special') {
+      isSpecialBuilding = true;
+      isCoreBuilding = true;
+      const b = BUILDINGS[selectedEntity.configId];
+      cropName = b?.name || 'Постройка';
+      cropIcon = b?.icon || '🏡';
+      statusText = 'Нажмите, чтобы открыть меню здания';
+    } else {
+      cropName = entityBuildingConfig?.name || 'Декорация';
+      cropIcon = entityBuildingConfig?.icon || '⛲';
+      statusText = 'Уютное украшение вашей фермы';
     }
-  } else if (selectedEntity?.type === 'animal_pen') {
-    cropName = selectedEntity.configId === 'chicken_coop' ? 'Курятник' : 'Загон';
-    cropIcon = '🐔';
-    growthPercent = 75;
-    waterPercent = 85;
-  } else if (selectedEntity?.type === 'special' || selectedEntity?.type === 'storage') {
-    const b = BUILDINGS[selectedEntity.configId];
-    cropName = b?.name || 'Постройка';
-    cropIcon = b?.icon || '🏡';
-    growthPercent = 100;
   }
+
+  const availableCropsList = Object.values(CROPS);
 
   return (
     <div className="fixed bottom-20 sm:bottom-24 left-0 right-0 z-30 pointer-events-none select-none flex flex-col items-center gap-2 p-2 max-w-lg mx-auto">
       
-      {/* ── 1. SELECTED ENTITY INFO CARD ── */}
+      {/* ── 1. SELECTED ENTITY INTERACTIVE HUB ── */}
       {selectedEntity && (
-        <div className="pointer-events-auto w-full p-2.5 sm:p-3.5 flex items-center justify-between gap-2.5 sm:gap-3 rounded-2xl game-dock-tray border-2 border-amber-500/80 shadow-2xl shadow-black/90 text-amber-100 animate-pop-in">
+        <div className="pointer-events-auto w-full p-3 sm:p-3.5 rounded-3xl game-dock-tray border-2 border-amber-500/80 shadow-2xl shadow-black/95 text-amber-100 flex flex-col gap-2.5 animate-pop-in">
           
-          {/* Crop / Entity Icon */}
-          <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-xl bg-black/40 border border-amber-700/60 flex items-center justify-center text-2xl sm:text-3xl shadow-inner shrink-0">
-            {cropIcon}
-          </div>
-
-          {/* Title and Dual Progress Bars (Рост & Вода) */}
-          <div className="flex flex-col flex-1 gap-1 min-w-0">
-            <div className="font-black text-xs sm:text-sm text-yellow-300 game-text-gold truncate">
-              {cropName}
+          {/* Header Row: Icon, Title, Status & Close */}
+          <div className="flex items-center justify-between gap-2.5 border-b border-amber-900/60 pb-2 px-0.5">
+            <div className="flex items-center gap-2.5 min-w-0">
+              <div className="w-10 h-10 rounded-xl bg-black/40 border border-amber-700/60 flex items-center justify-center text-2xl shadow-inner shrink-0">
+                {cropIcon}
+              </div>
+              <div className="flex flex-col min-w-0">
+                <div className="font-black text-xs sm:text-sm text-yellow-300 game-text-gold truncate">
+                  {cropName}
+                </div>
+                <div className="text-[10.5px] font-bold text-amber-200/80 truncate">
+                  {statusText}
+                </div>
+              </div>
             </div>
 
-            <div className="flex items-center gap-3">
+            {/* Deselect / Close Button */}
+            <button
+              onClick={() => {
+                sounds.playClick();
+                triggerTelegramHaptic('light');
+                setSelectedEntity(null);
+              }}
+              className="w-7 h-7 rounded-xl game-dock-btn text-amber-200 hover:text-white flex items-center justify-center text-xs font-bold cursor-pointer active:scale-90 transition-all shadow shrink-0"
+              title="Снять выделение"
+            >
+              <X size={15} strokeWidth={2.5} />
+            </button>
+          </div>
+
+          {/* Progress Bars (For Growing Field Crop) */}
+          {selectedEntity.type === 'field' && selectedEntity.cropId && (
+            <div className="flex items-center gap-3 px-0.5">
               {/* Growth Progress Bar (Green) */}
               <div className="flex flex-col gap-0.5 flex-1">
                 <span className="text-[10px] font-black text-emerald-300 game-text-shadow">
@@ -252,24 +336,220 @@ export const FloatingToolsOverlay: React.FC = () => {
                 </div>
               </div>
             </div>
-          </div>
+          )}
 
-          {/* Quick Action / Info Button */}
-          <button
-            onClick={() => {
-              sounds.playClick();
-              triggerTelegramHaptic('light');
-              if (selectedEntity.type === 'field' && selectedEntity.cropId && growthPercent >= 100) {
-                harvestCrop(selectedEntity.id);
-              } else {
+          {/* Contextual Action Buttons Row */}
+          <div className="flex items-center gap-2 pt-0.5 overflow-x-auto scrollbar-none snap-x">
+            
+            {/* ── 1. Empty Field -> Quick Seeds Plant Row ── */}
+            {isEmptyField && (
+              <div className="flex items-center gap-1.5 w-full overflow-x-auto pb-0.5 scrollbar-none">
+                <span className="text-[10px] font-black text-yellow-300 uppercase tracking-tight shrink-0 mr-0.5 game-text-gold">Посадить:</span>
+                {availableCropsList.map(crop => {
+                  const seedCount = inventory[crop.id] || 0;
+                  const isUnlocked = level >= crop.unlockLevel;
+                  const canPlant = seedCount > 0 && isUnlocked;
+
+                  return (
+                    <button
+                      key={crop.id}
+                      onClick={() => {
+                        if (canPlant) {
+                          sounds.playClick();
+                          triggerTelegramHaptic('medium');
+                          plantCrop(selectedEntity.id, crop.id);
+                        } else if (!isUnlocked) {
+                          sounds.playClick();
+                          triggerTelegramHaptic('warning');
+                        } else {
+                          sounds.playClick();
+                          openModal('shop');
+                        }
+                      }}
+                      className={`flex items-center gap-1 px-2.5 py-1.5 rounded-xl game-dock-btn text-xs font-black shrink-0 transition-all cursor-pointer ${
+                        canPlant 
+                          ? 'hover:border-yellow-400 active:scale-95 text-amber-100' 
+                          : 'opacity-55 grayscale cursor-not-allowed'
+                      }`}
+                      title={!isUnlocked ? `Открывается на ${crop.unlockLevel} уровне` : seedCount === 0 ? 'Купить семена в магазине' : `Посадить ${crop.name}`}
+                    >
+                      <span className="text-base">{crop.icon}</span>
+                      <span className="text-yellow-300 game-text-gold">{crop.name}</span>
+                      <span className="text-[9.5px] bg-black/50 border border-amber-800/60 px-1.5 py-0.5 rounded text-amber-200 font-black">
+                        {isUnlocked ? `x${seedCount}` : `Ур.${crop.unlockLevel}`}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+
+            {/* ── 2. Ready Field -> Big Harvest Button ── */}
+            {isCropReady && (
+              <button
+                onClick={() => {
+                  sounds.playClick();
+                  triggerTelegramHaptic('success');
+                  harvestCrop(selectedEntity.id);
+                }}
+                className="flex-1 py-2.5 px-4 rounded-xl game-btn-plus text-white font-black text-xs sm:text-sm flex items-center justify-center gap-2 shadow-lg animate-pulse cursor-pointer shrink-0"
+              >
+                <span>🌾 Собрать урожай</span>
+              </button>
+            )}
+
+            {/* ── 3. Growing Field -> Speed Up & Water Buttons ── */}
+            {isCropGrowing && (
+              <>
+                <button
+                  onClick={() => {
+                    sounds.playClick();
+                    triggerTelegramHaptic('medium');
+                    speedUpCrop(selectedEntity.id);
+                  }}
+                  className="flex-1 py-2 px-3 rounded-xl game-btn-gold text-xs font-black flex items-center justify-center gap-1.5 shadow active:scale-95 cursor-pointer shrink-0"
+                >
+                  <span>⚡ Ускорить (1 💎)</span>
+                </button>
+                
+                <button
+                  onClick={() => {
+                    sounds.playClick();
+                    triggerTelegramHaptic('light');
+                    waterField(selectedEntity.id);
+                  }}
+                  className="py-2 px-3 rounded-xl game-dock-btn text-sky-300 hover:text-white text-xs font-black flex items-center justify-center gap-1.5 shadow active:scale-95 cursor-pointer shrink-0"
+                >
+                  <span>💧 Полить (+35%)</span>
+                </button>
+              </>
+            )}
+
+            {/* ── 4. Animal Pen -> Feed & Collect Buttons ── */}
+            {isAnimalPen && (
+              <>
+                {hasAnimalProducts && (
+                  <button
+                    onClick={() => {
+                      sounds.playClick();
+                      triggerTelegramHaptic('success');
+                      collectAllAnimalProductsInPen(selectedEntity.id);
+                    }}
+                    className="flex-1 py-2.5 px-3 rounded-xl game-btn-plus text-white font-black text-xs flex items-center justify-center gap-1.5 shadow-lg animate-pulse cursor-pointer shrink-0"
+                  >
+                    <span>🧺 Собрать продукцию</span>
+                  </button>
+                )}
+
+                {hasHungryAnimals && (
+                  <button
+                    onClick={() => {
+                      sounds.playClick();
+                      triggerTelegramHaptic('medium');
+                      feedAllAnimalsInPen(selectedEntity.id);
+                    }}
+                    className="flex-1 py-2 px-3 rounded-xl game-btn-gold text-xs font-black flex items-center justify-center gap-1.5 shadow active:scale-95 cursor-pointer shrink-0"
+                  >
+                    <span>🥣 Покормить животных</span>
+                  </button>
+                )}
+              </>
+            )}
+
+            {/* ── 5. Production Building -> Collect & Open Recipes ── */}
+            {isProductionBuilding && (
+              <>
+                {hasCompletedProducts && (
+                  <button
+                    onClick={() => {
+                      sounds.playClick();
+                      triggerTelegramHaptic('success');
+                      if (selectedEntity.completedProducts) {
+                        selectedEntity.completedProducts.forEach((_, idx) => collectProduct(selectedEntity.id, 0));
+                      }
+                    }}
+                    className="flex-1 py-2 px-3 rounded-xl game-btn-plus text-white font-black text-xs flex items-center justify-center gap-1.5 shadow-lg animate-pulse cursor-pointer shrink-0"
+                  >
+                    <span>🧺 Забрать готовое ({selectedEntity.completedProducts?.length})</span>
+                  </button>
+                )}
+
+                <button
+                  onClick={() => {
+                    sounds.playClick();
+                    triggerTelegramHaptic('medium');
+                    openModal('shop');
+                  }}
+                  className="flex-1 py-2 px-3 rounded-xl game-btn-gold text-xs font-black flex items-center justify-center gap-1.5 shadow active:scale-95 cursor-pointer shrink-0"
+                >
+                  <span>👨‍🍳 Рецепты</span>
+                </button>
+              </>
+            )}
+
+            {/* ── 6. Fruit Tree -> Harvest ── */}
+            {isFruitTree && (
+              <button
+                onClick={() => {
+                  sounds.playClick();
+                  triggerTelegramHaptic('success');
+                  harvestTreeBush(selectedEntity.id);
+                }}
+                className="flex-1 py-2.5 px-3 rounded-xl game-btn-plus text-white font-black text-xs flex items-center justify-center gap-1.5 shadow-lg animate-pulse cursor-pointer shrink-0"
+              >
+                <span>🍎 Собрать плоды ({selectedEntity.harvestsLeft || 4} сборов)</span>
+              </button>
+            )}
+
+            {/* ── 7. Special Buildings (Silo, Barn, Orders, Market, Dock) ── */}
+            {isSpecialBuilding && (
+              <button
+                onClick={() => {
+                  sounds.playClick();
+                  triggerTelegramHaptic('medium');
+                  if (selectedEntity.configId === 'silo') openModal('silo');
+                  else if (selectedEntity.configId === 'barn') openModal('barn');
+                  else if (selectedEntity.configId === 'order_board') openModal('orders');
+                  else if (selectedEntity.configId === 'roadside_shop') openModal('roadside');
+                  else if (selectedEntity.configId === 'fishing_dock') openModal('fishing');
+                  else openModal('settings');
+                }}
+                className="flex-1 py-2.5 px-4 rounded-xl game-btn-gold text-xs font-black flex items-center justify-center gap-1.5 shadow active:scale-95 cursor-pointer shrink-0"
+              >
+                <span>🚪 Открыть меню</span>
+              </button>
+            )}
+
+            {/* Move Button (Available for all placable entities) */}
+            <button
+              onClick={() => {
+                sounds.playClick();
+                triggerTelegramHaptic('light');
                 startMovingEntity(selectedEntity.id);
-              }
-            }}
-            className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl game-dock-btn text-amber-200 hover:text-white flex items-center justify-center font-serif font-black text-sm shadow cursor-pointer active:scale-90"
-            title="Действие с объектом"
-          >
-            <Info size={16} />
-          </button>
+              }}
+              className="py-2 px-2.5 rounded-xl game-dock-btn text-amber-200 hover:text-white text-xs font-black flex items-center justify-center gap-1 shadow active:scale-95 cursor-pointer shrink-0"
+              title="Переместить объект"
+            >
+              <RotateCw size={13} />
+              <span className="hidden sm:inline">Переместить</span>
+            </button>
+
+            {/* Delete / Clear Button (for non-essential structures) */}
+            {!isCoreBuilding && (
+              <button
+                onClick={() => {
+                  sounds.playClick();
+                  triggerTelegramHaptic('warning');
+                  deleteEntity(selectedEntity.id);
+                }}
+                className="w-8 h-8 rounded-xl game-dock-btn text-rose-300 hover:text-white hover:border-rose-500 flex items-center justify-center text-xs font-bold active:scale-90 transition-all shadow shrink-0"
+                title="Удалить / снести"
+              >
+                <Trash2 size={14} />
+              </button>
+            )}
+
+          </div>
         </div>
       )}
 
