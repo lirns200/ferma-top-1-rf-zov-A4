@@ -122,11 +122,11 @@ export const TutorialOverlay: React.FC = () => {
   };
 
   return (
-    <div className="fixed top-16 left-3 sm:left-5 z-40 max-w-sm sm:max-w-md pointer-events-auto select-none animate-fade-in">
+    <div className="fixed bottom-20 left-2 right-2 sm:left-4 sm:right-auto sm:max-w-md z-40 pointer-events-auto select-none animate-fade-in">
       <div 
-        className="rounded-2xl p-4 sm:p-5 shadow-2xl border-4 border-amber-600 flex flex-col gap-3 text-white"
+        className="rounded-2xl p-3.5 sm:p-4 shadow-2xl border-2 sm:border-3 border-amber-500/80 flex flex-col gap-2.5 text-white"
         style={{
-          background: 'linear-gradient(180deg, rgba(61, 34, 8, 0.96) 0%, rgba(35, 18, 6, 0.98) 100%)',
+          background: 'linear-gradient(180deg, rgba(45, 24, 6, 0.96) 0%, rgba(25, 12, 4, 0.98) 100%)',
           boxShadow: '0 16px 40px rgba(0,0,0,0.85), inset 0 2px 4px rgba(255,255,255,0.15)',
         }}
       >
