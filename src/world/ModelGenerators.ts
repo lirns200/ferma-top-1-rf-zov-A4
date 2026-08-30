@@ -1370,35 +1370,24 @@ export function createMountainWaterfallGroup(season: SeasonType): THREE.Group {
   foamMesh.name = 'waterfall_foam_mesh';
   group.add(foamMesh);
 
-  // ── 2. 3D Frothing Foam Lip Crests & River Entry Whitewater ──────────
-  const foamLipGeo = new THREE.DodecahedronGeometry(0.45, 0);
-  const foamLips = [
-    // Summit Cleft Foam (y = 13.6)
-    { x: -3.5, y: 13.7, z: -8.0 }, { x: -1.2, y: 13.8, z: -8.1 }, { x: 1.2, y: 13.8, z: -8.1 }, { x: 3.5, y: 13.7, z: -8.0 },
-    // Mid Cataract Chute Foam (y = 7.5)
-    { x: -3.8, y: 7.6, z: -4.5 }, { x: -1.3, y: 7.7, z: -4.6 }, { x: 1.3, y: 7.7, z: -4.6 }, { x: 3.8, y: 7.6, z: -4.5 },
-    // River Entry Whitewater Foam (y = 0.2)
-    { x: -4.5, y: 0.25, z: 2.2 }, { x: -2.2, y: 0.28, z: 2.5 }, { x: 0, y: 0.30, z: 2.6 }, { x: 2.2, y: 0.28, z: 2.5 }, { x: 4.5, y: 0.25, z: 2.2 },
-  ];
-  foamLips.forEach((fl, idx) => {
-    const fMesh = new THREE.Mesh(foamLipGeo, solidFoamMat);
-    fMesh.name = `waterfall_foam_crest_${idx}`;
-    fMesh.position.set(fl.x, fl.y, fl.z);
-    fMesh.scale.set(1.8, 0.45, 0.95);
-    group.add(fMesh);
-  });
+  // ── 2. Boiling Whitewater Splash Apron at River Entry (y = 0.04, z = 3.2 to 5.5) ──
+  const splashApronGeo = new THREE.PlaneGeometry(12.0, 3.8, 8, 4);
+  splashApronGeo.rotateX(-Math.PI / 2);
+  const splashApronMesh = new THREE.Mesh(splashApronGeo, foamMaterial);
+  splashApronMesh.name = 'waterfall_splash_apron';
+  splashApronMesh.position.set(0, 0.04, 4.2);
+  group.add(splashApronMesh);
 
-  // ── 3. Natural Low-Poly Flanking Boulders & Mountain Cliffs ──────────
+  // ── 3. Natural Low-Poly Mountain Cliffs Flanking the Gorge (Wide Clearance) ──
   const rockDodec = new THREE.DodecahedronGeometry(1.6, 0);
 
-  // Left Canyon Wall Boulders (Pushed wide so water is 100% visible)
+  // Left Canyon Wall Boulders (Pushed wide x <= -7.8 so water is 100% unobstructed)
   const leftRockData = [
-    { x: -7.0, y: 1.5, z: 3.2, s: [2.2, 2.2, 2.2], mat: rockMidMat },
-    { x: -7.6, y: 4.5, z: 0.2, s: [2.5, 2.8, 2.4], mat: rockDarkMat },
-    { x: -8.2, y: 8.0, z: -3.0, s: [2.8, 3.2, 2.6], mat: rockMidMat },
-    { x: -8.8, y: 12.0, z: -6.5, s: [3.2, 3.8, 3.0], mat: rockDarkMat },
-    { x: -6.0, y: 1.0, z: 4.5, s: [1.6, 1.4, 1.7], mat: rockMossMat },
-    { x: -6.6, y: 6.5, z: -1.2, s: [1.8, 2.0, 1.7], mat: rockMossMat },
+    { x: -7.8, y: 1.5, z: 3.2, s: [2.2, 2.2, 2.2], mat: rockMidMat },
+    { x: -8.4, y: 4.5, z: 0.2, s: [2.5, 2.8, 2.4], mat: rockDarkMat },
+    { x: -8.8, y: 8.0, z: -3.0, s: [2.8, 3.2, 2.6], mat: rockMidMat },
+    { x: -9.2, y: 12.0, z: -6.5, s: [3.2, 3.8, 3.0], mat: rockDarkMat },
+    { x: -7.2, y: 1.0, z: 5.5, s: [1.6, 1.4, 1.7], mat: rockMossMat },
   ];
   leftRockData.forEach(r => {
     const rock = new THREE.Mesh(rockDodec, r.mat);
@@ -1410,14 +1399,13 @@ export function createMountainWaterfallGroup(season: SeasonType): THREE.Group {
     group.add(rock);
   });
 
-  // Right Canyon Wall Boulders (Pushed wide so water is 100% visible)
+  // Right Canyon Wall Boulders (Pushed wide x >= +7.8)
   const rightRockData = [
-    { x: 7.0, y: 1.5, z: 3.2, s: [2.2, 2.2, 2.2], mat: rockMidMat },
-    { x: 7.6, y: 4.5, z: 0.2, s: [2.5, 2.8, 2.4], mat: rockDarkMat },
-    { x: 8.2, y: 8.0, z: -3.0, s: [2.8, 3.2, 2.6], mat: rockMidMat },
-    { x: 8.8, y: 12.0, z: -6.5, s: [3.2, 3.8, 3.0], mat: rockDarkMat },
-    { x: 6.0, y: 1.0, z: 4.5, s: [1.6, 1.4, 1.7], mat: rockMossMat },
-    { x: 6.6, y: 6.5, z: -1.2, s: [1.8, 2.0, 1.7], mat: rockMossMat },
+    { x: 7.8, y: 1.5, z: 3.2, s: [2.2, 2.2, 2.2], mat: rockMidMat },
+    { x: 8.4, y: 4.5, z: 0.2, s: [2.5, 2.8, 2.4], mat: rockDarkMat },
+    { x: 8.8, y: 8.0, z: -3.0, s: [2.8, 3.2, 2.6], mat: rockMidMat },
+    { x: 9.2, y: 12.0, z: -6.5, s: [3.2, 3.8, 3.0], mat: rockDarkMat },
+    { x: 7.2, y: 1.0, z: 5.5, s: [1.6, 1.4, 1.7], mat: rockMossMat },
   ];
   rightRockData.forEach(r => {
     const rock = new THREE.Mesh(rockDodec, r.mat);
@@ -1429,11 +1417,11 @@ export function createMountainWaterfallGroup(season: SeasonType): THREE.Group {
     group.add(rock);
   });
 
-  // ── 5. Expanding Sparkling White Foam Ripples on the River Surface ───
+  // ── 4. Expanding Sparkling White Foam Ripples on the River Surface ───
   const rippleMat = new THREE.MeshBasicMaterial({
     color: 0xFFFFFF,
     transparent: true,
-    opacity: 0.55,
+    opacity: 0.65,
     side: THREE.DoubleSide,
     depthWrite: false,
   });
@@ -1443,18 +1431,17 @@ export function createMountainWaterfallGroup(season: SeasonType): THREE.Group {
     ringGeo.rotateX(-Math.PI / 2);
     const ring = new THREE.Mesh(ringGeo, rippleMat.clone());
     ring.name = `waterfall_foam_ring_${r}`;
-    ring.position.set(0, 0.02 + r * 0.005, 3.8);
+    ring.position.set(0, 0.02 + r * 0.005, 4.0);
     group.add(ring);
   }
 
-  // Submerged Granite River Stones in the Rapids
+  // River Bank Boulders flanking the pool
   const stoneGeo = new THREE.DodecahedronGeometry(0.65, 0);
   [
-    { x: -4.5, z: 3.8, s: 1.2 },
-    { x: 4.5, z: 3.5, s: 1.1 },
-    { x: -2.6, z: 5.8, s: 0.8 },
-    { x: 2.7, z: 6.0, s: 0.9 },
-    { x: 0.1, z: 6.5, s: 0.7 },
+    { x: -5.5, z: 4.2, s: 1.2 },
+    { x: 5.5, z: 4.0, s: 1.1 },
+    { x: -5.0, z: 6.2, s: 0.9 },
+    { x: 5.2, z: 6.5, s: 1.0 },
   ].forEach(st => {
     const stone = new THREE.Mesh(stoneGeo, rockMidMat);
     stone.position.set(st.x, 0.2, st.z);
@@ -1463,21 +1450,21 @@ export function createMountainWaterfallGroup(season: SeasonType): THREE.Group {
     group.add(stone);
   });
 
-  // ── 6. Dynamic Water Mist Spray Particle Cloud ───────────────────────
-  const mistCount = 50;
+  // ── 5. Dynamic Water Mist Spray Particle Cloud ───────────────────────
+  const mistCount = 60;
   const mistGeo = new THREE.BufferGeometry();
   const mistPos = new Float32Array(mistCount * 3);
   for (let m = 0; m < mistCount; m++) {
-    mistPos[m * 3] = (Math.random() - 0.5) * 8.5;
-    mistPos[m * 3 + 1] = 0.2 + Math.random() * 4.5;
-    mistPos[m * 3 + 2] = 2.0 + Math.random() * 4.5;
+    mistPos[m * 3] = (Math.random() - 0.5) * 10.0;
+    mistPos[m * 3 + 1] = 0.2 + Math.random() * 5.0;
+    mistPos[m * 3 + 2] = 1.8 + Math.random() * 5.0;
   }
   mistGeo.setAttribute('position', new THREE.BufferAttribute(mistPos, 3));
   const mistMat = new THREE.PointsMaterial({
     color: 0xE0F2FE,
     size: 0.65,
     transparent: true,
-    opacity: 0.70,
+    opacity: 0.75,
     blending: THREE.AdditiveBlending,
     depthWrite: false,
   });
@@ -1485,13 +1472,13 @@ export function createMountainWaterfallGroup(season: SeasonType): THREE.Group {
   mistPoints.name = 'waterfall_mist_particles';
   group.add(mistPoints);
 
-  // ── 7. Alpine Pine Trees & Lush Mountain Foliage ──────────────────────
+  // ── 6. Alpine Pine Trees along Upper Canyon Cliffs ────────────────────
   const pineTrunkGeo = new THREE.CylinderGeometry(0.12, 0.16, 1.4, 5);
   [
-    { x: -7.5, y: 5.5, z: 1.5, s: 1.3 },
-    { x: -8.8, y: 10.5, z: -2.5, s: 1.5 },
-    { x: 7.5, y: 5.2, z: 1.2, s: 1.2 },
-    { x: 8.8, y: 10.2, z: -2.8, s: 1.4 },
+    { x: -8.8, y: 6.5, z: 1.5, s: 1.3 },
+    { x: -9.5, y: 11.5, z: -2.5, s: 1.5 },
+    { x: 8.8, y: 6.2, z: 1.2, s: 1.2 },
+    { x: 9.5, y: 11.2, z: -2.8, s: 1.4 },
   ].forEach(pt => {
     const pGroup = new THREE.Group();
     pGroup.position.set(pt.x, pt.y, pt.z);

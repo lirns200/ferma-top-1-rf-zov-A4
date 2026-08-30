@@ -1320,7 +1320,7 @@ export const GameScene: React.FC = () => {
           if (mat && mat.map) {
             mat.map.offset.y -= delta * 1.85;
           }
-        } else if (child.name === 'waterfall_foam_mesh') {
+        } else if (child.name === 'waterfall_foam_mesh' || child.name === 'waterfall_splash_apron') {
           const mat = (child as THREE.Mesh).material as THREE.MeshStandardMaterial;
           if (mat && mat.map) {
             mat.map.offset.y -= delta * 3.4;
