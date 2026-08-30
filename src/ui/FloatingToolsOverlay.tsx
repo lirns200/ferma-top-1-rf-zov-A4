@@ -40,6 +40,7 @@ export const FloatingToolsOverlay: React.FC = () => {
     entities, selectedEntityId, placingBuildingConfigId,
     movingEntityId, movingRotation,
     level, coins, gems, inventory,
+    activeTool, setActiveTool,
     isActionStripOpen, toggleActionStrip, setActionStripOpen,
     setSelectedEntity,
     setPlacingBuilding, rotatePlacingBuilding,
@@ -362,6 +363,8 @@ export const FloatingToolsOverlay: React.FC = () => {
                           sounds.playClick();
                           triggerTelegramHaptic('medium');
                           plantCrop(selectedEntity.id, crop.id);
+                          setActiveTool({ type: 'plant', configId: crop.id });
+                          setSelectedEntity(null);
                         } else if (!isUnlocked) {
                           sounds.playClick();
                           triggerTelegramHaptic('warning');
@@ -395,6 +398,8 @@ export const FloatingToolsOverlay: React.FC = () => {
                   sounds.playClick();
                   triggerTelegramHaptic('success');
                   harvestCrop(selectedEntity.id);
+                  setActiveTool({ type: 'harvest' });
+                  setSelectedEntity(null);
                 }}
                 className="flex-1 py-2.5 px-4 rounded-xl game-btn-plus text-white font-black text-xs sm:text-sm flex items-center justify-center gap-2 shadow-lg animate-pulse cursor-pointer shrink-0"
               >
@@ -649,6 +654,34 @@ export const FloatingToolsOverlay: React.FC = () => {
               </span>
             </button>
           </div>
+        </div>
+      )}
+
+      {/* ── 3. ACTIVE CONTINUOUS SWIPE TOOL BANNER ── */}
+      {activeTool && !selectedEntity && !isActionStripOpen && (
+        <div className="pointer-events-auto px-4 py-2 rounded-2xl game-dock-tray border-2 border-amber-500/90 shadow-2xl shadow-black/80 flex items-center gap-3 text-amber-100 animate-pop-in">
+          <span className="text-2xl animate-bounce filter drop-shadow">
+            {activeTool.type === 'harvest' ? '🌾' : CROPS[activeTool.configId || '']?.icon || '🌱'}
+          </span>
+          <div className="flex flex-col">
+            <span className="text-xs font-black text-yellow-300 game-text-gold">
+              {activeTool.type === 'harvest' ? 'Режим сбора урожая' : `Посадка: ${CROPS[activeTool.configId || '']?.name || 'Семена'}`}
+            </span>
+            <span className="text-[10px] text-amber-200/90 font-bold">
+              Проведите пальцем / мышкой по грядкам
+            </span>
+          </div>
+          <button
+            onClick={() => {
+              sounds.playClick();
+              triggerTelegramHaptic('light');
+              setActiveTool(null);
+            }}
+            className="w-7 h-7 rounded-xl game-dock-btn text-amber-200 hover:text-white flex items-center justify-center text-xs font-bold cursor-pointer active:scale-90 shadow ml-1"
+            title="Завершить режим"
+          >
+            <X size={14} strokeWidth={2.5} />
+          </button>
         </div>
       )}
 

@@ -71,11 +71,15 @@ export const GameScene: React.FC = () => {
     confirmMoveEntity,
     cancelMoveEntity,
     rotateMovingEntity,
+    setActiveTool,
     showClouds,
   } = useGameStore();
 
   const showCloudsRef = useRef(showClouds);
   showCloudsRef.current = showClouds;
+
+  const activeToolRef = useRef(activeTool);
+  activeToolRef.current = activeTool;
 
   // Smooth Camera Coordinates & Target
   const targetCamPosRef = useRef({ x: 0, z: 1 });
@@ -2243,33 +2247,59 @@ export const GameScene: React.FC = () => {
     if (!hitEntity) return;
     if (swipedEntitiesRef.current.has(hitEntity.id)) return;
 
-    if (activeTool?.type === 'plant' && hitEntity.type === 'field' && activeTool.configId) {
+    const curTool = activeToolRef.current;
+    if (!curTool) return;
+
+    if (curTool.type === 'plant' && hitEntity.type === 'field' && curTool.configId) {
       if (!hitEntity.cropId) {
-        plantCrop(hitEntity.id, activeTool.configId);
-        swipedEntitiesRef.current.add(hitEntity.id);
+        const crop = CROPS[curTool.configId];
+        const state = useGameStore.getState();
+        const invCount = state.inventory[curTool.configId] || 0;
+        if (invCount > 0 && crop) {
+          plantCrop(hitEntity.id, curTool.configId);
+          swipedEntitiesRef.current.add(hitEntity.id);
+          triggerTelegramHaptic('light');
+        } else {
+          state.addFloatingText(`Закончились семена: ${crop?.name || 'семена'}`, 0, 0, '#EF4444');
+        }
       }
-    } else if (activeTool?.type === 'harvest') {
-      if (hitEntity.type === 'field' && hitEntity.cropId) {
-        harvestCrop(hitEntity.id);
-        swipedEntitiesRef.current.add(hitEntity.id);
-      } else if (hitEntity.type === 'fruit_tree') {
-        harvestTreeBush(hitEntity.id);
-        swipedEntitiesRef.current.add(hitEntity.id);
+    } else if (curTool.type === 'harvest') {
+      if (hitEntity.type === 'field' && hitEntity.cropId && hitEntity.plantedAt) {
+        const crop = CROPS[hitEntity.cropId];
+        const weatherMult = activeEventRef.current?.growthSpeedMultiplier || 1.0;
+        const growMs = crop ? (crop.growTimeSeconds * 1000) / weatherMult : 10000;
+        const isReady = Date.now() >= hitEntity.plantedAt + growMs;
+        if (isReady) {
+          harvestCrop(hitEntity.id);
+          swipedEntitiesRef.current.add(hitEntity.id);
+          triggerTelegramHaptic('medium');
+        }
+      } else if (hitEntity.type === 'fruit_tree' && !hitEntity.isDead) {
+        const cfg = TREES_BUSHES[hitEntity.configId];
+        const growMs = (cfg ? cfg.growTimeSeconds : 60) * 1000;
+        const isReady = hitEntity.treePlantedAt ? Date.now() >= hitEntity.treePlantedAt + growMs : true;
+        if (isReady) {
+          harvestTreeBush(hitEntity.id);
+          swipedEntitiesRef.current.add(hitEntity.id);
+          triggerTelegramHaptic('medium');
+        }
       }
-    } else if (activeTool?.type === 'feed' && hitEntity.type === 'animal_pen' && hitEntity.animals) {
+    } else if (curTool.type === 'feed' && hitEntity.type === 'animal_pen' && hitEntity.animals) {
       const hungryAnimal = hitEntity.animals.find(a => a.isHungry);
       if (hungryAnimal) {
         feedAnimal(hitEntity.id, hungryAnimal.id);
         swipedEntitiesRef.current.add(hitEntity.id);
+        triggerTelegramHaptic('light');
       }
-    } else if (activeTool?.type === 'collect' && hitEntity.type === 'animal_pen' && hitEntity.animals) {
+    } else if (curTool.type === 'collect' && hitEntity.type === 'animal_pen' && hitEntity.animals) {
       const readyAnimal = hitEntity.animals.find(a => a.hasProduct);
       if (readyAnimal) {
         collectAnimalProduct(hitEntity.id, readyAnimal.id);
         swipedEntitiesRef.current.add(hitEntity.id);
+        triggerTelegramHaptic('light');
       }
     }
-  }, [entities, activeTool, plantCrop, harvestCrop, harvestTreeBush, feedAnimal, collectAnimalProduct]);
+  }, [entities, plantCrop, harvestCrop, harvestTreeBush, feedAnimal, collectAnimalProduct]);
 
   // -------------------------------------------------------------------
   // 4. ULTRA-FAST ZERO-ALLOCATION POINTER EVENTS
@@ -2282,15 +2312,33 @@ export const GameScene: React.FC = () => {
     swipedEntitiesRef.current.clear();
 
     const tile = getTileIntersection(e.clientX, e.clientY);
-    if (tile && activeTool) {
-      executeSwipeActionOnTile(tile.x, tile.z);
-    } else if (tile && !placingBuildingConfigId && !movingEntityId) {
-      // Long-press detection to trigger building move/relocate mode!
+    if (tile) {
       const hitEntity = entities.find(ent => 
         tile.x >= ent.x && tile.x < ent.x + ent.width &&
         tile.z >= ent.z && tile.z < ent.z + ent.depth
       );
-      if (hitEntity) {
+
+      // If active tool exists, execute on initial touch
+      if (activeToolRef.current) {
+        executeSwipeActionOnTile(tile.x, tile.z);
+      } else if (hitEntity && !placingBuildingConfigId && !movingEntityId) {
+        // Smart direct harvest auto-detect: if touching ready field, start harvest swipe immediately!
+        if (hitEntity.type === 'field' && hitEntity.cropId && hitEntity.plantedAt) {
+          const crop = CROPS[hitEntity.cropId];
+          const weatherMult = activeEventRef.current?.growthSpeedMultiplier || 1.0;
+          const growMs = crop ? (crop.growTimeSeconds * 1000) / weatherMult : 10000;
+          const isReady = Date.now() >= hitEntity.plantedAt + growMs;
+          if (isReady) {
+            setActiveTool({ type: 'harvest' });
+            activeToolRef.current = { type: 'harvest' };
+            harvestCrop(hitEntity.id);
+            swipedEntitiesRef.current.add(hitEntity.id);
+            triggerTelegramHaptic('medium');
+            return;
+          }
+        }
+
+        // Long-press detection to trigger building move/relocate mode
         if (longPressTimerRef.current) clearTimeout(longPressTimerRef.current);
         longPressTimerRef.current = window.setTimeout(() => {
           startMovingEntity(hitEntity.id);
@@ -2329,9 +2377,13 @@ export const GameScene: React.FC = () => {
       return;
     }
 
-    if (activeTool && tile) {
+    // Continuous swipe tool farming without camera jitter
+    if (activeToolRef.current && tile) {
       executeSwipeActionOnTile(tile.x, tile.z);
-    } else if (!placingRef.current.configId && !movingRef.current.id && containerRef.current) {
+      return;
+    }
+
+    if (!placingRef.current.configId && !movingRef.current.id && containerRef.current) {
       const viewportHeight = containerRef.current.clientHeight;
       const zoom = currentZoomRef.current;
       
