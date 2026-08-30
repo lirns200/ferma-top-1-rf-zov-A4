@@ -57,20 +57,14 @@ export const FloatingToolsOverlay: React.FC = () => {
     const rotDeg = (movingRotation || 0) * 90;
 
     return (
-      <div
-        className={`fixed bottom-20 sm:bottom-28 left-1/2 -translate-x-1/2 z-40 flex items-center gap-1.5 sm:gap-3 px-3 py-2 sm:px-4 sm:py-2.5 rounded-2xl shadow-2xl animate-pop-in max-w-[95vw] ${
-          isDesign2026
-            ? 'hud-ios26-dock bg-[#0F1115]/90 border border-white/20 text-white'
-            : 'hud-parchment'
-        }`}
-      >
+      <div className="fixed bottom-20 sm:bottom-28 left-1/2 -translate-x-1/2 z-40 flex items-center gap-1.5 sm:gap-3 px-3.5 py-2 sm:px-4 sm:py-2.5 rounded-2xl game-dock-tray border-2 border-amber-500/80 shadow-2xl shadow-black/90 text-amber-100 animate-pop-in max-w-[95vw]">
         <div className="flex items-center gap-2">
-          <span className="text-2xl animate-bounce">{bConfig?.icon || '📦'}</span>
+          <span className="text-2xl animate-bounce filter drop-shadow-md">{bConfig?.icon || '📦'}</span>
           <div>
-            <div className={`text-xs sm:text-sm font-extrabold ${isDesign2026 ? 'text-white' : 'text-[#3B1F0D]'}`}>
+            <div className="text-xs sm:text-sm font-black text-yellow-300 game-text-gold">
               {bConfig?.name || 'Перемещение'}
             </div>
-            <div className={`text-[10px] ${isDesign2026 ? 'text-zinc-300' : 'text-[#78350F]'}`}>
+            <div className="text-[10px] text-amber-200/80 font-bold">
               Перетащите на зеленую клетку
             </div>
           </div>
@@ -83,9 +77,7 @@ export const FloatingToolsOverlay: React.FC = () => {
             triggerTelegramHaptic('light');
             rotateMovingEntity();
           }}
-          className={`flex items-center gap-1 px-3 py-2 text-xs font-black shadow rounded-xl ${
-            isDesign2026 ? 'bg-white/15 border border-white/20 text-white' : 'hud-tool-btn'
-          }`}
+          className="flex items-center gap-1 px-3 py-2 text-xs font-black game-dock-btn text-amber-200 hover:text-white transition-all cursor-pointer shadow"
           title="Повернуть на 90 градусов"
         >
           <RotateCw size={14} />
@@ -100,7 +92,7 @@ export const FloatingToolsOverlay: React.FC = () => {
               triggerTelegramHaptic('warning');
               deleteEntity(movingEntityId);
             }}
-            className="flex items-center gap-1 px-3 py-2 rounded-xl font-bold text-xs text-white shadow border border-red-700 bg-red-700 hover:bg-red-600 cursor-pointer"
+            className="flex items-center gap-1 px-3 py-2 rounded-xl font-black text-xs text-white shadow-md border border-rose-400 bg-gradient-to-b from-red-600 to-rose-700 hover:brightness-110 cursor-pointer active:scale-90"
             title={refundCoins > 0 ? `Удалить и вернуть 🪙 ${refundCoins}` : 'Удалить'}
           >
             <Trash2 size={14} />
@@ -115,9 +107,9 @@ export const FloatingToolsOverlay: React.FC = () => {
             triggerTelegramHaptic('success');
             confirmMoveEntity();
           }}
-          className="flex items-center gap-1 px-4 py-2 rounded-xl font-black text-xs text-white shadow border-2 border-green-300 bg-green-600 hover:bg-green-500 cursor-pointer animate-pulse"
+          className="flex items-center gap-1 px-4 py-2 rounded-xl font-black text-xs text-white shadow-lg border-2 border-green-300 game-btn-plus cursor-pointer animate-pulse"
         >
-          <Check size={16} />
+          <Check size={16} strokeWidth={2.5} />
           <span>Поставить</span>
         </button>
 
@@ -128,7 +120,7 @@ export const FloatingToolsOverlay: React.FC = () => {
             triggerTelegramHaptic('light');
             cancelMoveEntity();
           }}
-          className="w-8 h-8 rounded-xl bg-amber-950/80 text-amber-200 flex items-center justify-center cursor-pointer active:scale-90"
+          className="w-8 h-8 rounded-xl game-dock-btn text-amber-200 hover:text-rose-400 flex items-center justify-center cursor-pointer active:scale-90"
         >
           <X size={16} />
         </button>
@@ -143,20 +135,14 @@ export const FloatingToolsOverlay: React.FC = () => {
     const rotDegrees = (placingRotation || 0) * 90;
 
     return (
-      <div
-        className={`fixed bottom-24 sm:bottom-28 left-1/2 -translate-x-1/2 z-40 flex items-center gap-3 px-4 py-2.5 rounded-2xl shadow-2xl animate-pop-in ${
-          isDesign2026
-            ? 'hud-ios26-dock bg-[#0F1115]/90 border border-white/20 text-white'
-            : 'hud-parchment'
-        }`}
-      >
+      <div className="fixed bottom-24 sm:bottom-28 left-1/2 -translate-x-1/2 z-40 flex items-center gap-3 px-4 py-2.5 rounded-2xl game-dock-tray border-2 border-amber-500/80 shadow-2xl shadow-black/90 text-amber-100 animate-pop-in">
         <div className="flex items-center gap-2">
-          <span className="text-2xl animate-bounce">{bConfig?.icon || '🔨'}</span>
+          <span className="text-2xl animate-bounce filter drop-shadow-md">{bConfig?.icon || '🔨'}</span>
           <div>
-            <div className={`text-xs sm:text-sm font-extrabold ${isDesign2026 ? 'text-white' : 'text-[#3B1F0D]'}`}>
+            <div className="text-xs sm:text-sm font-black text-yellow-300 game-text-gold">
               {bConfig?.name || 'Строительство'}
             </div>
-            <div className={`text-[10px] ${isDesign2026 ? 'text-zinc-300' : 'text-[#78350F]'}`}>
+            <div className="text-[10px] text-amber-200/80 font-bold">
               Кликните на газон
             </div>
           </div>
@@ -169,9 +155,7 @@ export const FloatingToolsOverlay: React.FC = () => {
             triggerTelegramHaptic('light');
             rotatePlacingBuilding();
           }}
-          className={`flex items-center gap-1.5 px-3 py-2 text-xs font-black shadow rounded-xl ${
-            isDesign2026 ? 'bg-white/15 border border-white/20 text-white' : 'hud-tool-btn border border-amber-600'
-          }`}
+          className="flex items-center gap-1.5 px-3 py-2 text-xs font-black game-dock-btn text-amber-200 hover:text-white transition-all cursor-pointer shadow"
           title="Повернуть объект на 90 градусов (Клавиша R)"
         >
           <RotateCw size={14} />
@@ -185,7 +169,7 @@ export const FloatingToolsOverlay: React.FC = () => {
             triggerTelegramHaptic('light');
             setPlacingBuilding(null);
           }}
-          className="flex items-center gap-1 px-3.5 py-2 rounded-xl font-bold text-xs text-white shadow border border-red-700 bg-red-700 hover:bg-red-600 cursor-pointer"
+          className="flex items-center gap-1 px-3.5 py-2 rounded-xl font-black text-xs text-white shadow border border-rose-400 bg-gradient-to-b from-red-600 to-rose-700 hover:brightness-110 cursor-pointer active:scale-90"
         >
           <X size={14} />
           <span>Готово</span>
@@ -228,32 +212,28 @@ export const FloatingToolsOverlay: React.FC = () => {
       
       {/* ── 1. SELECTED ENTITY INFO CARD ── */}
       {selectedEntity && (
-        <div className={`pointer-events-auto w-full p-2 sm:p-3 flex items-center justify-between gap-2.5 sm:gap-3 shadow-xl animate-pop-in ${
-          isDesign2026
-            ? 'hud-ios26-dock bg-[#0F1115]/90 border border-white/20 text-white rounded-2xl'
-            : 'hud-parchment'
-        }`}>
+        <div className="pointer-events-auto w-full p-2.5 sm:p-3.5 flex items-center justify-between gap-2.5 sm:gap-3 rounded-2xl game-dock-tray border-2 border-amber-500/80 shadow-2xl shadow-black/90 text-amber-100 animate-pop-in">
           
           {/* Crop / Entity Icon */}
-          <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-xl bg-amber-100/90 border border-[#5C3718] flex items-center justify-center text-2xl sm:text-3xl shadow-inner shrink-0">
+          <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-xl bg-black/40 border border-amber-700/60 flex items-center justify-center text-2xl sm:text-3xl shadow-inner shrink-0">
             {cropIcon}
           </div>
 
           {/* Title and Dual Progress Bars (Рост & Вода) */}
-          <div className="flex flex-col flex-1 gap-1">
-            <div className={`font-black text-xs sm:text-sm ${isDesign2026 ? 'text-white' : 'text-[#3B1F0D]'}`}>
+          <div className="flex flex-col flex-1 gap-1 min-w-0">
+            <div className="font-black text-xs sm:text-sm text-yellow-300 game-text-gold truncate">
               {cropName}
             </div>
 
             <div className="flex items-center gap-3">
               {/* Growth Progress Bar (Green) */}
               <div className="flex flex-col gap-0.5 flex-1">
-                <span className={`text-[10px] font-bold ${isDesign2026 ? 'text-emerald-300' : 'text-[#78350F]'}`}>
+                <span className="text-[10px] font-black text-emerald-300 game-text-shadow">
                   рост {growthPercent}%
                 </span>
-                <div className="w-full h-2 bg-[#4A2810] rounded-full overflow-hidden border border-[#5C3718]">
+                <div className="w-full h-2.5 game-badge-slot p-[1px] overflow-hidden">
                   <div 
-                    className="h-full bg-gradient-to-r from-green-600 to-green-400 rounded-full transition-all duration-300"
+                    className="h-full bg-gradient-to-r from-emerald-500 via-green-400 to-lime-300 rounded-full transition-all duration-300 shadow-[0_0_6px_rgba(74,222,128,0.6)]"
                     style={{ width: `${growthPercent}%` }}
                   />
                 </div>
@@ -261,12 +241,12 @@ export const FloatingToolsOverlay: React.FC = () => {
 
               {/* Water / Feed Progress Bar (Blue) */}
               <div className="flex flex-col gap-0.5 flex-1">
-                <span className={`text-[10px] font-bold ${isDesign2026 ? 'text-cyan-300' : 'text-[#78350F]'}`}>
+                <span className="text-[10px] font-black text-sky-300 game-text-shadow">
                   вода {waterPercent}%
                 </span>
-                <div className="w-full h-2 bg-[#4A2810] rounded-full overflow-hidden border border-[#5C3718]">
+                <div className="w-full h-2.5 game-badge-slot p-[1px] overflow-hidden">
                   <div 
-                    className="h-full bg-gradient-to-r from-blue-600 to-cyan-400 rounded-full transition-all duration-300"
+                    className="h-full bg-gradient-to-r from-blue-500 via-sky-400 to-cyan-300 rounded-full transition-all duration-300 shadow-[0_0_6px_rgba(56,189,248,0.6)]"
                     style={{ width: `${waterPercent}%` }}
                   />
                 </div>
@@ -285,7 +265,7 @@ export const FloatingToolsOverlay: React.FC = () => {
                 startMovingEntity(selectedEntity.id);
               }
             }}
-            className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-gradient-to-b from-amber-200 to-amber-400 border border-[#5C3718] text-[#3B1F0D] flex items-center justify-center font-serif font-black text-sm shadow cursor-pointer active:scale-90"
+            className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl game-dock-btn text-amber-200 hover:text-white flex items-center justify-center font-serif font-black text-sm shadow cursor-pointer active:scale-90"
             title="Действие с объектом"
           >
             <Info size={16} />
@@ -293,26 +273,17 @@ export const FloatingToolsOverlay: React.FC = () => {
         </div>
       )}
 
-      {/* ── 2. QUICK BUILD STRIP (Квадратное меню с закругленными углами из стекла) ── */}
+      {/* ── 2. QUICK BUILD DRAWER (Тёплая деревянная мастерская строительства) ── */}
       {isActionStripOpen && (
-        <div
-          className={`pointer-events-auto w-full p-3.5 shadow-2xl flex flex-col gap-2.5 animate-pop-in ${
-            isDesign2026
-              ? 'hud-ios26-card text-white'
-              : 'hud-parchment'
-          }`}
-        >
+        <div className="pointer-events-auto w-full p-3.5 sm:p-4 rounded-3xl game-dock-tray border-2 border-amber-500/80 shadow-2xl shadow-black/95 text-amber-100 flex flex-col gap-2.5 animate-pop-in">
+          
           {/* Header */}
-          <div className="flex items-center justify-between px-1">
+          <div className="flex items-center justify-between border-b border-amber-900/60 pb-2 px-0.5">
             <div className="flex items-center gap-2">
-              <div className={`w-6 h-6 rounded-lg flex items-center justify-center text-xs ${
-                isDesign2026 ? 'bg-amber-400/20 border border-amber-400/40' : 'bg-amber-950/40'
-              }`}>
+              <div className="w-7 h-7 rounded-xl game-side-medal flex items-center justify-center text-sm shadow">
                 🔨
               </div>
-              <span className={`text-xs font-extrabold tracking-wide uppercase ${
-                isDesign2026 ? 'text-white' : 'text-[#3B1F0D]'
-              }`}>
+              <span className="text-xs font-black tracking-wide uppercase text-yellow-300 game-text-gold">
                 Строительство
               </span>
             </div>
@@ -322,18 +293,15 @@ export const FloatingToolsOverlay: React.FC = () => {
                 triggerTelegramHaptic('light');
                 setActionStripOpen(false);
               }}
-              className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold cursor-pointer active:scale-90 transition-transform ${
-                isDesign2026
-                  ? 'bg-white/10 hover:bg-white/20 text-white/80 hover:text-white border border-white/15'
-                  : 'bg-amber-950 text-amber-200'
-              }`}
+              className="w-7 h-7 rounded-xl game-dock-btn text-amber-200 hover:text-white hover:border-red-400 flex items-center justify-center text-xs font-bold cursor-pointer active:scale-90 transition-all shadow"
+              title="Закрыть"
             >
-              ✕
+              <X size={15} strokeWidth={2.5} />
             </button>
           </div>
 
           {/* Horizontal Scrollable Building Cards */}
-          <div className="flex items-center gap-2.5 overflow-x-auto py-2.5 px-1">
+          <div className="flex items-center gap-2.5 overflow-x-auto py-1 px-0.5 scrollbar-none snap-x">
             {QUICK_BUILD_ITEMS.map(item => {
               const isUnlocked = level >= item.level;
               const canAfford = coins >= item.cost;
@@ -350,36 +318,30 @@ export const FloatingToolsOverlay: React.FC = () => {
                     }
                   }}
                   disabled={!isUnlocked || !canAfford}
-                  className={`group flex flex-col items-center justify-center gap-1 p-2.5 sm:p-3 min-w-[84px] sm:min-w-[90px] shrink-0 relative rounded-2xl transition-all duration-150 cursor-pointer ${
-                    isDesign2026
-                      ? 'bg-[#181C24]/80 border border-[#242A35] hover:border-amber-400/60 hover:bg-[#202530] text-white shadow-lg'
-                      : 'hud-tool-btn text-[#3B1F0D] hover:brightness-105'
-                  } ${!isUnlocked || !canAfford ? 'opacity-50 grayscale' : 'active:scale-95'}`}
+                  className={`group flex flex-col items-center justify-center gap-1 p-2.5 sm:p-3 min-w-[86px] sm:min-w-[92px] shrink-0 relative rounded-2xl game-dock-btn transition-all duration-150 cursor-pointer snap-start ${
+                    !isUnlocked || !canAfford ? 'opacity-55 grayscale cursor-not-allowed' : 'active:scale-95 hover:border-yellow-400 hover:scale-105'
+                  }`}
                 >
                   <Building3DThumbnail
                     buildingId={item.id}
                     fallbackEmoji={item.icon}
                     size={48}
-                    className="my-0.5 group-hover:scale-105 transition-transform duration-150"
+                    className="my-0.5 group-hover:scale-110 transition-transform duration-150 filter drop-shadow-md"
                   />
-                  <span className={`text-[11px] font-bold truncate max-w-[76px] tracking-tight ${
-                    isDesign2026 ? 'text-slate-100' : 'text-[#3B1F0D]'
-                  }`}>
+                  <span className="text-[11px] font-black truncate max-w-[78px] tracking-tight text-amber-100 game-text-shadow">
                     {item.name}
                   </span>
                   
                   {/* Price with crisp Vector Coin */}
-                  <div className="flex items-center gap-1 mt-0.5">
+                  <div className="flex items-center gap-1 mt-0.5 game-badge-slot px-2 py-0.5 rounded-md">
                     <CoinSvg />
-                    <span className={`text-xs font-extrabold ${
-                      isDesign2026 ? 'text-amber-300' : 'text-amber-900'
-                    }`}>
+                    <span className="text-xs font-black text-yellow-300 game-text-gold">
                       {item.cost}
                     </span>
                   </div>
 
                   {!isUnlocked && (
-                    <div className="absolute inset-0 bg-black/75 rounded-2xl flex items-center justify-center text-[10px] font-black text-yellow-300 backdrop-blur-sm">
+                    <div className="absolute inset-0 bg-black/80 rounded-2xl flex items-center justify-center text-[10px] font-black text-yellow-300 backdrop-blur-sm border border-amber-900">
                       Ур. {item.level}
                     </div>
                   )}
@@ -395,14 +357,10 @@ export const FloatingToolsOverlay: React.FC = () => {
                 setActionStripOpen(false);
                 openModal('shop');
               }}
-              className={`group flex flex-col items-center justify-center gap-1 p-2.5 sm:p-3 min-w-[86px] sm:min-w-[94px] shrink-0 rounded-2xl transition-all duration-150 cursor-pointer ${
-                isDesign2026
-                  ? 'bg-purple-900/60 border border-purple-400/50 hover:bg-purple-800/80 hover:border-purple-300 text-white shadow-lg'
-                  : 'hud-tool-btn bg-amber-200 hover:brightness-110 text-[#3B1F0D]'
-              } active:scale-95`}
+              className="group flex flex-col items-center justify-center gap-1 p-2.5 sm:p-3 min-w-[86px] sm:min-w-[92px] shrink-0 rounded-2xl game-dock-btn hover:border-yellow-400 hover:scale-105 active:scale-95 transition-all cursor-pointer snap-start"
             >
-              <span className="text-3xl my-1 group-hover:scale-105 transition-transform">📑</span>
-              <span className="text-[10px] font-black text-center leading-tight">
+              <span className="text-3xl my-1 group-hover:scale-110 transition-transform filter drop-shadow-md">📑</span>
+              <span className="text-[10.5px] font-black text-center leading-tight text-yellow-300 game-text-gold">
                 Все здания...
               </span>
             </button>
