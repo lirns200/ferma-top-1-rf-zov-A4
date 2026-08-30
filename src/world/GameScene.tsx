@@ -1316,12 +1316,15 @@ export const GameScene: React.FC = () => {
       // ── Animate Cascading Mountain Waterfall (Rushing curtains, pulsing foam, expanding spray rings & mist) ──
       terrainGroup.traverse(child => {
         if (child.name === 'waterfall_curtain_1') {
-          child.position.z = -3.0 + Math.sin(elapsed * 18) * 0.04;
-          child.rotation.x = -Math.PI / 2 + 0.35 + Math.sin(elapsed * 12) * 0.02;
+          child.position.z = -3.2 + Math.sin(elapsed * 18) * 0.04;
+          child.rotation.x = -Math.PI / 2 + 0.45 + Math.sin(elapsed * 12) * 0.02;
         } else if (child.name === 'waterfall_curtain_2') {
-          child.position.z = 1.5 + Math.sin(elapsed * 18 + 1.2) * 0.04;
-          child.rotation.x = -Math.PI / 2 + 0.42 + Math.sin(elapsed * 14 + 1.0) * 0.02;
-        } else if (child.name === 'waterfall_foam_1' || child.name === 'waterfall_foam_2') {
+          child.position.z = 0.6 + Math.sin(elapsed * 18 + 1.2) * 0.04;
+          child.rotation.x = -Math.PI / 2 + 0.48 + Math.sin(elapsed * 14 + 1.0) * 0.02;
+        } else if (child.name === 'waterfall_curtain_3') {
+          child.position.z = 2.8 + Math.sin(elapsed * 18 + 2.4) * 0.04;
+          child.rotation.x = -Math.PI / 2 + 0.55 + Math.sin(elapsed * 14 + 2.0) * 0.02;
+        } else if (child.name === 'waterfall_foam_1' || child.name === 'waterfall_foam_2' || child.name === 'waterfall_foam_3') {
           child.scale.set(1.0 + Math.sin(elapsed * 14) * 0.08, 1.0 + Math.cos(elapsed * 16) * 0.2, 1.0);
         } else if (child.name?.startsWith('waterfall_foam_ring_')) {
           const ringIdx = parseInt(child.name.replace('waterfall_foam_ring_', '')) || 0;
