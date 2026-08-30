@@ -4,387 +4,145 @@ import { getCachedColorMaterial } from '../shared/materials';
 import { createStylizedDeliveryTruck } from './DeliveryTruck';
 
 /**
- * Creates a rugged Off-Road 4x4 Farm SUV
+ * 1. Classic American Heavy-Duty Semi-Truck (Peterbilt / Kenworth Big-Rig)
  */
-function createOffroad4x4(): THREE.Group {
+function createAmericanSemi(): THREE.Group {
   const group = new THREE.Group();
-  group.name = 'vehicle_offroad_4x4';
+  group.name = 'vehicle_american_semi';
 
-  const bodyMat = getCachedColorMaterial('#15803D', 0.4, 0.1);
-  const darkMat = getCachedColorMaterial('#1E293B', 0.8, 0.2);
-  const metalMat = getCachedColorMaterial('#475569', 0.5, 0.6);
-  const glassMat = getCachedColorMaterial('#7DD3FC', 0.1, 0.7);
-  const tireMat = getCachedColorMaterial('#0F172A', 0.95);
-  const rimMat = getCachedColorMaterial('#94A3B8', 0.2, 0.8);
-  const lightMat = new THREE.MeshBasicMaterial({ color: 0xFFFBEB });
-  const spotMat = new THREE.MeshBasicMaterial({ color: 0xFEF08A });
-  const redMat = getCachedColorMaterial('#DC2626', 0.3);
-  const orangeMat = getCachedColorMaterial('#D97706', 0.8);
-
-  // Chassis
-  const chassis = new THREE.Mesh(new THREE.BoxGeometry(2.3, 0.2, 1.1), darkMat);
-  chassis.position.set(0, 0.38, 0);
-  group.add(chassis);
-
-  // Body Main
-  const body = new THREE.Mesh(new THREE.BoxGeometry(2.1, 0.65, 1.15), bodyMat);
-  body.position.set(0, 0.75, 0);
-  body.castShadow = true;
-  group.add(body);
-
-  // Cabin / Roof
-  const cabin = new THREE.Mesh(new THREE.BoxGeometry(1.2, 0.55, 1.1), bodyMat);
-  cabin.position.set(-0.25, 1.2, 0);
-  cabin.castShadow = true;
-  group.add(cabin);
-
-  // Windows
-  const windshield = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.44, 1.02), glassMat);
-  windshield.position.set(0.36, 1.2, 0);
-  windshield.rotation.z = -0.22;
-  group.add(windshield);
-
-  const sideGlass = new THREE.Mesh(new THREE.BoxGeometry(1.1, 0.38, 1.12), glassMat);
-  sideGlass.position.set(-0.25, 1.2, 0);
-  group.add(sideGlass);
-
-  // Heavy Front Bull-bar
-  const bullBar = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.45, 1.18), darkMat);
-  bullBar.position.set(1.15, 0.55, 0);
-  group.add(bullBar);
-
-  // Roof Rack with Spotlights & Spare Tire
-  const rack = new THREE.Mesh(new THREE.BoxGeometry(1.15, 0.08, 1.05), metalMat);
-  rack.position.set(-0.25, 1.52, 0);
-  group.add(rack);
-
-  // 4 Roof Spotlights
-  [-0.35, -0.12, 0.12, 0.35].forEach(z => {
-    const spot = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.07, 0.08, 8), darkMat);
-    spot.position.set(0.28, 1.58, z);
-    spot.rotation.z = Math.PI / 2;
-    const lens = new THREE.Mesh(new THREE.CircleGeometry(0.065, 8), spotMat);
-    lens.position.set(0.045, 0, 0);
-    lens.rotation.y = Math.PI / 2;
-    spot.add(lens);
-    group.add(spot);
-  });
-
-  // Spare Tire on Roof Rack
-  const spareTire = new THREE.Mesh(new THREE.CylinderGeometry(0.28, 0.28, 0.18, 12), tireMat);
-  spareTire.position.set(-0.45, 1.62, 0);
-  spareTire.rotation.x = Math.PI / 2;
-  const spareRim = new THREE.Mesh(new THREE.CylinderGeometry(0.16, 0.16, 0.19, 8), rimMat);
-  spareTire.add(spareRim);
-  group.add(spareTire);
-
-  // Front Headlights
-  [-0.42, 0.42].forEach(z => {
-    const hl = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.18, 0.22), lightMat);
-    hl.position.set(1.08, 0.72, z);
-    group.add(hl);
-  });
-
-  // Rear Tail Lights
-  [-0.45, 0.45].forEach(z => {
-    const tl = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.16, 0.12), redMat);
-    tl.position.set(-1.08, 0.72, z);
-    group.add(tl);
-  });
-
-  // 4 Chunky Off-Road Wheels
-  const wheelPositions = [
-    [0.72, 0.34, 0.65],
-    [0.72, 0.34, -0.65],
-    [-0.72, 0.34, 0.65],
-    [-0.72, 0.34, -0.65],
-  ];
-  wheelPositions.forEach(([x, y, z]) => {
-    const wheelGroup = new THREE.Group();
-    wheelGroup.name = 'truck_wheel';
-    wheelGroup.position.set(x, y, z);
-    const tire = new THREE.Mesh(new THREE.CylinderGeometry(0.34, 0.34, 0.24, 14), tireMat);
-    tire.rotation.x = Math.PI / 2;
-    tire.castShadow = true;
-    const rim = new THREE.Mesh(new THREE.CylinderGeometry(0.18, 0.18, 0.25, 8), rimMat);
-    tire.add(rim);
-    wheelGroup.add(tire);
-    group.add(wheelGroup);
-  });
-
-  return group;
-}
-
-/**
- * Creates a Retro Vintage 2-Tone Farm Delivery Van
- */
-function createRetroVan(): THREE.Group {
-  const group = new THREE.Group();
-  group.name = 'vehicle_retro_van';
-
-  const bodyTurquoise = getCachedColorMaterial('#0284C7', 0.3, 0.1);
-  const bodyCream = getCachedColorMaterial('#FFFBEB', 0.3);
-  const darkMat = getCachedColorMaterial('#1E293B', 0.85);
-  const glassMat = getCachedColorMaterial('#7DD3FC', 0.1, 0.7);
-  const chromeMat = getCachedColorMaterial('#E2E8F0', 0.2, 0.85);
-  const tireMat = getCachedColorMaterial('#0F172A', 0.95);
+  const cabBlue = getCachedColorMaterial('#1E3A8A', 0.35, 0.2);
+  const darkSteel = getCachedColorMaterial('#0F172A', 0.85);
+  const chromeMat = getCachedColorMaterial('#E2E8F0', 0.15, 0.95);
+  const glassMat = getCachedColorMaterial('#38BDF8', 0.1, 0.8);
+  const tireMat = getCachedColorMaterial('#020617', 0.95);
   const lightMat = new THREE.MeshBasicMaterial({ color: 0xFFFFFF });
-  const redMat = getCachedColorMaterial('#DC2626', 0.3);
-  const woodMat = getCachedColorMaterial('#B45309', 0.7);
+  const amberMat = getCachedColorMaterial('#F59E0B', 0.2, 0.8);
+  const redMat = getCachedColorMaterial('#EF4444', 0.2, 0.8);
 
-  // Chassis
-  const chassis = new THREE.Mesh(new THREE.BoxGeometry(2.2, 0.16, 1.05), darkMat);
-  chassis.position.set(0, 0.28, 0);
+  // Heavy Chassis Frame (Longer for Semi-Truck)
+  const chassis = new THREE.Mesh(new THREE.BoxGeometry(3.0, 0.22, 1.15), darkSteel);
+  chassis.position.set(-0.2, 0.36, 0);
   group.add(chassis);
 
-  // Lower Body (Turquoise)
-  const lowerBody = new THREE.Mesh(new THREE.BoxGeometry(2.2, 0.55, 1.1), bodyTurquoise);
-  lowerBody.position.set(0, 0.60, 0);
-  lowerBody.castShadow = true;
-  group.add(lowerBody);
-
-  // Upper Body (Cream)
-  const upperBody = new THREE.Mesh(new THREE.BoxGeometry(2.15, 0.60, 1.08), bodyCream);
-  upperBody.position.set(-0.02, 1.15, 0);
-  upperBody.castShadow = true;
-  group.add(upperBody);
-
-  // Rounded Front Nose
-  const frontNose = new THREE.Mesh(new THREE.CylinderGeometry(0.55, 0.55, 1.08, 12, 1, false, 0, Math.PI), bodyTurquoise);
-  frontNose.rotation.z = -Math.PI / 2;
-  frontNose.position.set(1.08, 0.60, 0);
-  group.add(frontNose);
-
-  // Panoramic Curved Windshield
-  const windshield = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.45, 1.0), glassMat);
-  windshield.position.set(1.05, 1.15, 0);
-  windshield.rotation.z = -0.15;
-  group.add(windshield);
-
-  // Side Windows
-  const sideWindows = new THREE.Mesh(new THREE.BoxGeometry(1.7, 0.36, 1.1), glassMat);
-  sideWindows.position.set(-0.15, 1.18, 0);
-  group.add(sideWindows);
-
-  // Chrome Bumpers
-  const frontBumper = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.14, 1.25), chromeMat);
-  frontBumper.position.set(1.18, 0.34, 0);
-  const rearBumper = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.14, 1.2), chromeMat);
-  rearBumper.position.set(-1.14, 0.34, 0);
-  group.add(frontBumper, rearBumper);
-
-  // Vintage Big Round Headlights
-  [-0.38, 0.38].forEach(z => {
-    const hlBezel = new THREE.Mesh(new THREE.CylinderGeometry(0.14, 0.14, 0.08, 12), chromeMat);
-    hlBezel.rotation.z = Math.PI / 2;
-    hlBezel.position.set(1.12, 0.65, z);
-    const hlLens = new THREE.Mesh(new THREE.CircleGeometry(0.11, 10), lightMat);
-    hlLens.rotation.y = Math.PI / 2;
-    hlLens.position.set(0.045, 0, 0);
-    hlBezel.add(hlLens);
-    group.add(hlBezel);
-  });
-
-  // Roof Luggage Rack with Wooden Slats
-  const roofRack = new THREE.Mesh(new THREE.BoxGeometry(1.4, 0.06, 0.95), chromeMat);
-  roofRack.position.set(-0.1, 1.50, 0);
-  const woodSlat = new THREE.Mesh(new THREE.BoxGeometry(1.3, 0.04, 0.85), woodMat);
-  woodSlat.position.set(-0.1, 1.53, 0);
-  group.add(roofRack, woodSlat);
-
-  // Tail lights
-  [-0.42, 0.42].forEach(z => {
-    const tl = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.14, 0.1), redMat);
-    tl.position.set(-1.12, 0.65, z);
-    group.add(tl);
-  });
-
-  // 4 Wheels with Big Chrome Hubcaps & Whitewall Tiers
-  const wheelPositions = [
-    [0.72, 0.28, 0.58],
-    [0.72, 0.28, -0.58],
-    [-0.72, 0.28, 0.58],
-    [-0.72, 0.28, -0.58],
-  ];
-  wheelPositions.forEach(([x, y, z]) => {
-    const wheelGroup = new THREE.Group();
-    wheelGroup.name = 'truck_wheel';
-    wheelGroup.position.set(x, y, z);
-    const tire = new THREE.Mesh(new THREE.CylinderGeometry(0.28, 0.28, 0.18, 14), tireMat);
-    tire.rotation.x = Math.PI / 2;
-    tire.castShadow = true;
-    const whitewall = new THREE.Mesh(new THREE.CylinderGeometry(0.20, 0.20, 0.19, 12), bodyCream);
-    const hubcap = new THREE.Mesh(new THREE.SphereGeometry(0.13, 8, 6), chromeMat);
-    hubcap.scale.set(1, 0.4, 1);
-    hubcap.position.y = 0.06 * Math.sign(z);
-    tire.add(whitewall, hubcap);
-    wheelGroup.add(tire);
-    group.add(wheelGroup);
-  });
-
-  return group;
-}
-
-/**
- * Creates an Authentic Agricultural Farm Tractor
- */
-function createFarmTractor(): THREE.Group {
-  const group = new THREE.Group();
-  group.name = 'vehicle_farm_tractor';
-
-  const tractorGreen = getCachedColorMaterial('#15803D', 0.4, 0.1);
-  const tractorYellow = getCachedColorMaterial('#EAB308', 0.3, 0.2);
-  const darkMat = getCachedColorMaterial('#1E293B', 0.9);
-  const metalMat = getCachedColorMaterial('#64748B', 0.3, 0.7);
-  const tireMat = getCachedColorMaterial('#0F172A', 0.95);
-  const lightMat = new THREE.MeshBasicMaterial({ color: 0xFFFBEB });
-
-  // Tractor Engine Hood & Body
-  const hood = new THREE.Mesh(new THREE.BoxGeometry(1.25, 0.55, 0.75), tractorGreen);
-  hood.position.set(0.35, 0.75, 0);
+  // Long Front Engine Hood / Bonnet
+  const hood = new THREE.Mesh(new THREE.BoxGeometry(1.25, 0.68, 1.05), cabBlue);
+  hood.position.set(0.75, 0.82, 0);
   hood.castShadow = true;
   group.add(hood);
 
-  // Front Yellow Radiator Grille
-  const grille = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.48, 0.68), tractorYellow);
-  grille.position.set(0.98, 0.73, 0);
+  // Massive Chrome Front Radiator Grille
+  const grille = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.62, 0.85), chromeMat);
+  grille.position.set(1.4, 0.82, 0);
+  grille.castShadow = true;
   group.add(grille);
 
-  // Twin Front Headlights
-  [-0.26, 0.26].forEach(z => {
-    const hl = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.08, 0.06, 8), lightMat);
-    hl.rotation.z = Math.PI / 2;
-    hl.position.set(1.0, 0.85, z);
-    group.add(hl);
-  });
+  // Heavy Chrome Front Bumper with Fog Lights
+  const frontBumper = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.25, 1.35), chromeMat);
+  frontBumper.position.set(1.42, 0.38, 0);
+  frontBumper.castShadow = true;
+  group.add(frontBumper);
 
-  // Vertical Exhaust Smokestack Pipe
-  const pipe = new THREE.Mesh(new THREE.CylinderGeometry(0.045, 0.055, 0.95, 8), darkMat);
-  pipe.position.set(0.65, 1.35, 0.25);
-  const pipeCap = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.04, 0.15, 8), darkMat);
-  pipeCap.position.set(0.65, 1.85, 0.25);
-  group.add(pipe, pipeCap);
-
-  // Driver Platform, Rear Fenders, Seat & Steering Wheel
-  const platform = new THREE.Mesh(new THREE.BoxGeometry(0.9, 0.15, 0.85), darkMat);
-  platform.position.set(-0.55, 0.45, 0);
-  group.add(platform);
-
-  const seat = new THREE.Mesh(new THREE.BoxGeometry(0.38, 0.35, 0.45), tractorYellow);
-  seat.position.set(-0.65, 0.85, 0);
-  group.add(seat);
-
-  const steeringCol = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.03, 0.4, 6), darkMat);
-  steeringCol.position.set(-0.32, 0.95, 0);
-  steeringCol.rotation.z = -0.4;
-  const steeringWheel = new THREE.Mesh(new THREE.TorusGeometry(0.12, 0.02, 6, 12), darkMat);
-  steeringWheel.position.set(-0.4, 1.12, 0);
-  steeringWheel.rotation.y = Math.PI / 2;
-  group.add(steeringCol, steeringWheel);
-
-  // Big Curved Rear Mudguards / Fenders (Yellow)
-  [-0.58, 0.58].forEach(z => {
-    const fender = new THREE.Mesh(new THREE.BoxGeometry(0.95, 0.42, 0.25), tractorGreen);
-    fender.position.set(-0.55, 0.88, z);
-    group.add(fender);
-  });
-
-  // 2 Giant Rear Tractor Tires with Deep Cleats (Yellow Rims)
-  [-0.62, 0.62].forEach(z => {
-    const rWheel = new THREE.Group();
-    rWheel.name = 'truck_wheel';
-    rWheel.position.set(-0.55, 0.58, z);
-    const rTire = new THREE.Mesh(new THREE.CylinderGeometry(0.58, 0.58, 0.32, 16), tireMat);
-    rTire.rotation.x = Math.PI / 2;
-    rTire.castShadow = true;
-    const rRim = new THREE.Mesh(new THREE.CylinderGeometry(0.35, 0.35, 0.34, 12), tractorYellow);
-    rTire.add(rRim);
-    rWheel.add(rTire);
-    group.add(rWheel);
-  });
-
-  // 2 Smaller Front Wheels
+  // Front Quad Chrome Headlight Pods
   [-0.45, 0.45].forEach(z => {
-    const fWheel = new THREE.Group();
-    fWheel.name = 'truck_wheel';
-    fWheel.position.set(0.68, 0.30, z);
-    const fTire = new THREE.Mesh(new THREE.CylinderGeometry(0.30, 0.30, 0.18, 12), tireMat);
-    fTire.rotation.x = Math.PI / 2;
-    fTire.castShadow = true;
-    const fRim = new THREE.Mesh(new THREE.CylinderGeometry(0.18, 0.18, 0.19, 8), tractorYellow);
-    fTire.add(fRim);
-    fWheel.add(fTire);
-    group.add(fWheel);
+    const pod = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.28, 0.2), chromeMat);
+    pod.position.set(1.36, 0.65, z);
+    const hl1 = new THREE.Mesh(new THREE.CircleGeometry(0.08, 10), lightMat);
+    hl1.rotation.y = Math.PI / 2;
+    hl1.position.set(0.06, 0.05, 0);
+    const hl2 = hl1.clone();
+    hl2.position.y = -0.05;
+    pod.add(hl1, hl2);
+    group.add(pod);
   });
 
-  return group;
-}
+  // Tall Sleeper Cabin
+  const sleeperCab = new THREE.Mesh(new THREE.BoxGeometry(1.4, 1.05, 1.18), cabBlue);
+  sleeperCab.position.set(-0.35, 1.02, 0);
+  sleeperCab.castShadow = true;
+  group.add(sleeperCab);
 
-/**
- * Creates an Angular Futuristic Cyber Truck
- */
-function createCyberTruck(): THREE.Group {
-  const group = new THREE.Group();
-  group.name = 'vehicle_cyber_truck';
+  // Chrome Sun Visor over Windshield
+  const sunVisor = new THREE.Mesh(new THREE.BoxGeometry(0.25, 0.08, 1.22), chromeMat);
+  sunVisor.position.set(0.38, 1.52, 0);
+  sunVisor.rotation.z = -0.3;
+  group.add(sunVisor);
 
-  const titaniumMat = getCachedColorMaterial('#94A3B8', 0.25, 0.85);
-  const darkTitaniumMat = getCachedColorMaterial('#334155', 0.35, 0.75);
-  const cyberGlassMat = getCachedColorMaterial('#0F172A', 0.1, 0.9);
-  const tireMat = getCachedColorMaterial('#020617', 0.95);
-  const neonCyanMat = new THREE.MeshBasicMaterial({ color: 0x06B6D4 });
-  const neonRedMat = new THREE.MeshBasicMaterial({ color: 0xEF4444 });
+  // Split Windshield (Classic 2-piece)
+  const windshieldL = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.42, 0.5), glassMat);
+  windshieldL.position.set(0.36, 1.28, -0.28);
+  const windshieldR = windshieldL.clone();
+  windshieldR.position.z = 0.28;
+  group.add(windshieldL, windshieldR);
 
-  // Angular Wedge Body (Lower)
-  const lowerBody = new THREE.Mesh(new THREE.BoxGeometry(2.4, 0.45, 1.18), titaniumMat);
-  lowerBody.position.set(0, 0.45, 0);
-  lowerBody.castShadow = true;
-  group.add(lowerBody);
+  // Side Windows & Chrome Mirrors
+  [-0.62, 0.62].forEach(z => {
+    const mirrorArm = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.02, 0.35, 6), chromeMat);
+    mirrorArm.position.set(0.2, 1.25, z);
+    mirrorArm.rotation.x = Math.PI / 2;
+    const mirrorHead = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.24, 0.1), chromeMat);
+    mirrorHead.position.set(0.2, 1.25, z + (z > 0 ? 0.08 : -0.08));
+    group.add(mirrorArm, mirrorHead);
+  });
 
-  // Angular Peak Cabin
-  const cabinGeo = new THREE.ConeGeometry(0.85, 0.75, 4);
-  cabinGeo.rotateY(Math.PI / 4);
-  const cabin = new THREE.Mesh(cabinGeo, darkTitaniumMat);
-  cabin.scale.set(1.4, 1.0, 0.95);
-  cabin.position.set(-0.1, 1.0, 0);
-  cabin.castShadow = true;
-  group.add(cabin);
+  // Twin Tall Chrome Vertical Exhaust Smokestacks
+  [-0.62, 0.62].forEach(z => {
+    const stack = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 1.65, 12), chromeMat);
+    stack.position.set(-0.32, 1.45, z);
+    const curvedTop = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 0.25, 12), chromeMat);
+    curvedTop.position.set(-0.06, 0.88, 0);
+    curvedTop.rotation.z = -0.55;
+    stack.add(curvedTop);
+    group.add(stack);
+  });
 
-  // Dark Cyber Glass Canopy
-  const glass = new THREE.Mesh(new THREE.BoxGeometry(1.2, 0.42, 0.95), cyberGlassMat);
-  glass.position.set(-0.05, 0.95, 0);
-  group.add(glass);
+  // Roof Chrome Air Horns & Amber Marker Lights
+  [-0.25, 0.25].forEach(z => {
+    const horn = new THREE.Mesh(new THREE.ConeGeometry(0.06, 0.38, 8), chromeMat);
+    horn.rotation.z = -Math.PI / 2;
+    horn.position.set(0.05, 1.62, z);
+    group.add(horn);
+  });
 
-  // Full-Width Front Neon Cyan Light Strip
-  const frontLightStrip = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.08, 1.15), neonCyanMat);
-  frontLightStrip.position.set(1.21, 0.62, 0);
-  group.add(frontLightStrip);
+  [-0.38, -0.18, 0, 0.18, 0.38].forEach(z => {
+    const marker = new THREE.Mesh(new THREE.SphereGeometry(0.035, 6, 4), amberMat);
+    marker.position.set(0.25, 1.58, z);
+    group.add(marker);
+  });
 
-  // Full-Width Rear Neon Red Light Strip
-  const rearLightStrip = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.08, 1.15), neonRedMat);
-  rearLightStrip.position.set(-1.21, 0.62, 0);
-  group.add(rearRedMat(group, neonRedMat));
+  // Cylindrical Chrome Fuel Tanks (Under Doors)
+  [-0.62, 0.62].forEach(z => {
+    const tank = new THREE.Mesh(new THREE.CylinderGeometry(0.22, 0.22, 0.9, 14), chromeMat);
+    tank.rotation.z = Math.PI / 2;
+    tank.position.set(0.45, 0.42, z);
+    const step = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.05, 0.18), darkSteel);
+    step.position.set(0.45, 0.58, z + (z > 0 ? 0.12 : -0.12));
+    group.add(tank, step);
+  });
 
-  // Angular Cyber Bed Cover
-  const bedCover = new THREE.Mesh(new THREE.BoxGeometry(0.9, 0.1, 1.12), titaniumMat);
-  bedCover.position.set(-0.7, 0.68, 0);
-  group.add(bedCover);
+  // 5th Wheel Trailer Hitch Plate on Rear Deck
+  const hitch = new THREE.Mesh(new THREE.CylinderGeometry(0.26, 0.26, 0.08, 12), darkSteel);
+  hitch.position.set(-1.25, 0.52, 0);
+  group.add(hitch);
 
-  // 4 Low-Poly Aerodynamic Wheels
+  // 6 Heavy Wheels (1 front axle + 2 rear drive axles)
   const wheelPositions = [
-    [0.78, 0.32, 0.62],
-    [0.78, 0.32, -0.62],
-    [-0.78, 0.32, 0.62],
-    [-0.78, 0.32, -0.62],
+    [0.95, 0.34, 0.62],
+    [0.95, 0.34, -0.62],
+    [-0.95, 0.34, 0.62],
+    [-0.95, 0.34, -0.62],
+    [-1.45, 0.34, 0.62],
+    [-1.45, 0.34, -0.62],
   ];
+
   wheelPositions.forEach(([x, y, z]) => {
     const wGroup = new THREE.Group();
     wGroup.name = 'truck_wheel';
     wGroup.position.set(x, y, z);
-    const tire = new THREE.Mesh(new THREE.CylinderGeometry(0.32, 0.32, 0.22, 10), tireMat);
+    const tire = new THREE.Mesh(new THREE.CylinderGeometry(0.34, 0.34, 0.22, 14), tireMat);
     tire.rotation.x = Math.PI / 2;
     tire.castShadow = true;
-    const aeroDisc = new THREE.Mesh(new THREE.CylinderGeometry(0.22, 0.22, 0.23, 6), titaniumMat);
-    tire.add(aeroDisc);
+    const rim = new THREE.Mesh(new THREE.CylinderGeometry(0.22, 0.22, 0.24, 10), chromeMat);
+    tire.add(rim);
     wGroup.add(tire);
     group.add(wGroup);
   });
@@ -392,99 +150,377 @@ function createCyberTruck(): THREE.Group {
   return group;
 }
 
-function rearRedMat(group: THREE.Group, mat: THREE.Material): THREE.Object3D {
-  const mesh = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.08, 1.15), mat);
-  mesh.position.set(-1.21, 0.62, 0);
-  return mesh;
-}
-
 /**
- * Creates a Luxurious Pure Golden Tycoon Truck
+ * 2. High-Performance Racing Supercar (Ferrari / Lambo Low-Slung GT)
  */
-function createGoldenTruck(): THREE.Group {
+function createSuperSportscar(): THREE.Group {
   const group = new THREE.Group();
-  group.name = 'vehicle_golden_truck';
+  group.name = 'vehicle_super_sportscar';
 
-  const goldBody = getCachedColorMaterial('#F59E0B', 0.15, 0.95);
-  const goldTrim = getCachedColorMaterial('#FDE047', 0.1, 0.98);
-  const obsidianMat = getCachedColorMaterial('#0F172A', 0.2, 0.9);
-  const crystalGlass = getCachedColorMaterial('#E0F2FE', 0.05, 0.9);
-  const diamondMat = new THREE.MeshBasicMaterial({ color: 0xFFFFFF });
-  const rubyMat = getCachedColorMaterial('#E11D48', 0.1, 0.9);
-  const goldCoinMat = getCachedColorMaterial('#FACC15', 0.2, 0.9);
+  const rossoRed = getCachedColorMaterial('#DC2626', 0.2, 0.3);
+  const carbonMat = getCachedColorMaterial('#0F172A', 0.5, 0.85);
+  const darkMat = getCachedColorMaterial('#020617', 0.9);
+  const glassMat = getCachedColorMaterial('#0284C7', 0.1, 0.95);
+  const chromeMat = getCachedColorMaterial('#F8FAFC', 0.1, 0.9);
+  const brakeCaliper = getCachedColorMaterial('#EF4444', 0.3);
+  const ledHeadlight = new THREE.MeshBasicMaterial({ color: 0xE0F2FE });
+  const ledTail = new THREE.MeshBasicMaterial({ color: 0xFF0033 });
+  const tireMat = getCachedColorMaterial('#090D16', 0.95);
 
-  // Chassis
-  const chassis = new THREE.Mesh(new THREE.BoxGeometry(2.3, 0.18, 1.05), obsidianMat);
-  chassis.position.set(0, 0.32, 0);
-  group.add(chassis);
+  // Ultra-Low Aerodynamic Belly Pan
+  const belly = new THREE.Mesh(new THREE.BoxGeometry(2.3, 0.1, 1.1), darkMat);
+  belly.position.set(0, 0.2, 0);
+  group.add(belly);
 
-  // Gold Body & Hood
-  const hood = new THREE.Mesh(new THREE.BoxGeometry(0.8, 0.54, 1.08), goldBody);
-  hood.position.set(0.72, 0.67, 0);
-  hood.castShadow = true;
+  // Sleek Aerodynamic Body Shell
+  const bodyMain = new THREE.Mesh(new THREE.BoxGeometry(2.25, 0.36, 1.15), rossoRed);
+  bodyMain.position.set(0, 0.38, 0);
+  bodyMain.castShadow = true;
+  group.add(bodyMain);
 
-  const cabin = new THREE.Mesh(new THREE.BoxGeometry(0.8, 0.74, 1.12), goldBody);
-  cabin.position.set(0.05, 0.78, 0);
-  cabin.castShadow = true;
+  // Slanted Aggressive Nose / Hood
+  const nose = new THREE.Mesh(new THREE.BoxGeometry(0.75, 0.22, 1.1), rossoRed);
+  nose.position.set(0.85, 0.33, 0);
+  nose.rotation.z = -0.15;
+  nose.castShadow = true;
+  group.add(nose);
 
-  const roof = new THREE.Mesh(new THREE.BoxGeometry(0.86, 0.1, 1.18), goldTrim);
-  roof.position.set(0.06, 1.18, 0);
-  roof.castShadow = true;
+  // Front Carbon Fiber Splitter
+  const splitter = new THREE.Mesh(new THREE.BoxGeometry(0.35, 0.04, 1.25), carbonMat);
+  splitter.position.set(1.15, 0.18, 0);
+  group.add(splitter);
 
-  const cargoBed = new THREE.Mesh(new THREE.BoxGeometry(1.05, 0.42, 1.08), goldBody);
-  cargoBed.position.set(-0.62, 0.62, 0);
-  cargoBed.castShadow = true;
-  group.add(hood, cabin, roof, cargoBed);
-
-  // Crystal Glass Windows
-  const windshield = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.46, 0.98), crystalGlass);
-  windshield.position.set(0.46, 0.88, 0);
-  windshield.rotation.z = -0.18;
-  group.add(windshield);
-
-  // Royal Golden Front Grille
-  const grille = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.42, 0.72), goldTrim);
-  grille.position.set(1.14, 0.65, 0);
-  group.add(grille);
-
-  // Diamond Crystal Headlights
-  [-0.42, 0.42].forEach(z => {
-    const hl = new THREE.Mesh(new THREE.OctahedronGeometry(0.12, 0), diamondMat);
-    hl.position.set(1.15, 0.68, z);
+  // Angular High-Tech LED Headlight Strips
+  [-0.38, 0.38].forEach(z => {
+    const hl = new THREE.Mesh(new THREE.BoxGeometry(0.24, 0.05, 0.18), ledHeadlight);
+    hl.position.set(1.0, 0.42, z);
+    hl.rotation.y = z > 0 ? -0.25 : 0.25;
     group.add(hl);
   });
 
-  // Ruby Tail Lights
-  [-0.45, 0.45].forEach(z => {
-    const tl = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.12, 0.15), rubyMat);
-    tl.position.set(-1.16, 0.65, z);
-    group.add(tl);
+  // Low-Profile Teardrop Cockpit / Tinted Glass Canopy
+  const canopyGeo = new THREE.BoxGeometry(1.05, 0.34, 0.92);
+  const canopy = new THREE.Mesh(canopyGeo, glassMat);
+  canopy.position.set(-0.1, 0.65, 0);
+  canopy.castShadow = true;
+  group.add(canopy);
+
+  const roof = new THREE.Mesh(new THREE.BoxGeometry(0.8, 0.04, 0.86), carbonMat);
+  roof.position.set(-0.1, 0.83, 0);
+  group.add(roof);
+
+  // Side Air Intake Scoops (Carbon inserts)
+  [-0.58, 0.58].forEach(z => {
+    const scoop = new THREE.Mesh(new THREE.BoxGeometry(0.45, 0.22, 0.05), carbonMat);
+    scoop.position.set(-0.25, 0.42, z);
+    group.add(scoop);
   });
 
-  // Chest Overflowing with Gold Coins in the Cargo Bed
-  const chest = new THREE.Mesh(new THREE.BoxGeometry(0.65, 0.38, 0.75), obsidianMat);
-  chest.position.set(-0.62, 0.72, 0);
-  const goldPile = new THREE.Mesh(new THREE.SphereGeometry(0.32, 8, 6), goldCoinMat);
-  goldPile.scale.set(1, 0.55, 1.1);
-  goldPile.position.set(-0.62, 0.88, 0);
-  group.add(chest, goldPile);
+  // High-Downforce GT Carbon Wing (Rear Spoiler)
+  const wing = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.03, 1.28), carbonMat);
+  wing.position.set(-1.08, 0.76, 0);
+  const pylonL = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.25, 0.04), carbonMat);
+  pylonL.position.set(-1.05, 0.62, -0.35);
+  const pylonR = pylonL.clone();
+  pylonR.position.z = 0.35;
+  group.add(wing, pylonL, pylonR);
 
-  // 4 Golden Chrome Wheels
+  // Rear Carbon Diffuser with Quad Exhaust Pipes
+  const diffuser = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.14, 1.05), carbonMat);
+  diffuser.position.set(-1.12, 0.26, 0);
+  group.add(diffuser);
+
+  [-0.22, -0.1, 0.1, 0.22].forEach(z => {
+    const tip = new THREE.Mesh(new THREE.CylinderGeometry(0.035, 0.035, 0.08, 8), chromeMat);
+    tip.rotation.z = Math.PI / 2;
+    tip.position.set(-1.18, 0.28, z);
+    group.add(tip);
+  });
+
+  // Continuous Full-Width Rear LED Tail Light Bar
+  const tailLight = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.06, 1.05), ledTail);
+  tailLight.position.set(-1.14, 0.5, 0);
+  group.add(tailLight);
+
+  // 4 Low-Profile Racing Alloy Wheels with Visible Red Brake Calipers
   const wheelPositions = [
-    [0.72, 0.32, 0.62],
-    [0.72, 0.32, -0.62],
-    [-0.72, 0.32, 0.62],
-    [-0.72, 0.32, -0.62],
+    [0.72, 0.24, 0.58],
+    [0.72, 0.24, -0.58],
+    [-0.72, 0.24, 0.58],
+    [-0.72, 0.24, -0.58],
   ];
+
   wheelPositions.forEach(([x, y, z]) => {
     const wGroup = new THREE.Group();
     wGroup.name = 'truck_wheel';
     wGroup.position.set(x, y, z);
-    const tire = new THREE.Mesh(new THREE.CylinderGeometry(0.32, 0.32, 0.22, 14), obsidianMat);
+    const tire = new THREE.Mesh(new THREE.CylinderGeometry(0.24, 0.24, 0.18, 16), tireMat);
     tire.rotation.x = Math.PI / 2;
     tire.castShadow = true;
-    const goldRim = new THREE.Mesh(new THREE.CylinderGeometry(0.20, 0.20, 0.24, 8), goldTrim);
-    tire.add(goldRim);
+
+    // Multi-spoke alloy rim
+    const rim = new THREE.Mesh(new THREE.CylinderGeometry(0.17, 0.17, 0.19, 10), chromeMat);
+    const caliper = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.09, 0.05), brakeCaliper);
+    caliper.position.set(0.08, 0.08, 0);
+    tire.add(rim, caliper);
+    wGroup.add(tire);
+    group.add(wGroup);
+  });
+
+  return group;
+}
+
+/**
+ * 3. Tesla Cybertruck (Angular Stainless Steel Titanium Armor)
+ */
+function createTeslaCybertruck(): THREE.Group {
+  const group = new THREE.Group();
+  group.name = 'vehicle_tesla_cybertruck';
+
+  const steelMat = getCachedColorMaterial('#94A3B8', 0.2, 0.85);
+  const darkSteel = getCachedColorMaterial('#334155', 0.4, 0.7);
+  const cyberGlass = getCachedColorMaterial('#0F172A', 0.1, 0.95);
+  const tireMat = getCachedColorMaterial('#020617', 0.95);
+  const laserWhite = new THREE.MeshBasicMaterial({ color: 0xF8FAFC });
+  const laserRed = new THREE.MeshBasicMaterial({ color: 0xEF4444 });
+
+  // Lower Geometric Body
+  const lowerBody = new THREE.Mesh(new THREE.BoxGeometry(2.45, 0.48, 1.2), steelMat);
+  lowerBody.position.set(0, 0.48, 0);
+  lowerBody.castShadow = true;
+  group.add(lowerBody);
+
+  // Sharp Triangular Exoskeleton Roof Apex
+  const peakGeo = new THREE.ConeGeometry(0.95, 0.72, 4);
+  peakGeo.rotateY(Math.PI / 4);
+  const peak = new THREE.Mesh(peakGeo, steelMat);
+  peak.scale.set(1.45, 1.0, 0.98);
+  peak.position.set(-0.12, 1.05, 0);
+  peak.castShadow = true;
+  group.add(peak);
+
+  // Armor Glass Windows
+  const glass = new THREE.Mesh(new THREE.BoxGeometry(1.22, 0.42, 1.02), cyberGlass);
+  glass.position.set(-0.06, 0.98, 0);
+  group.add(glass);
+
+  // Slanted Vault Tonneau Bed Cover
+  const vaultCover = new THREE.Mesh(new THREE.BoxGeometry(0.95, 0.08, 1.15), darkSteel);
+  vaultCover.position.set(-0.72, 0.72, 0);
+  group.add(vaultCover);
+
+  // Full-Width Front Edge LED Light Bar (Signature Cybertruck Light)
+  const frontLight = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.06, 1.18), laserWhite);
+  frontLight.position.set(1.23, 0.68, 0);
+  group.add(frontLight);
+
+  // Full-Width Rear Red LED Blade Light
+  const rearLight = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.06, 1.18), laserRed);
+  rearLight.position.set(-1.23, 0.68, 0);
+  group.add(rearLight);
+
+  // 4 Low-Poly Aerodynamic Cyber Wheels
+  const wheelPositions = [
+    [0.78, 0.32, 0.64],
+    [0.78, 0.32, -0.64],
+    [-0.78, 0.32, 0.64],
+    [-0.78, 0.32, -0.64],
+  ];
+
+  wheelPositions.forEach(([x, y, z]) => {
+    const wGroup = new THREE.Group();
+    wGroup.name = 'truck_wheel';
+    wGroup.position.set(x, y, z);
+    const tire = new THREE.Mesh(new THREE.CylinderGeometry(0.32, 0.32, 0.24, 10), tireMat);
+    tire.rotation.x = Math.PI / 2;
+    tire.castShadow = true;
+    const aeroCap = new THREE.Mesh(new THREE.CylinderGeometry(0.22, 0.22, 0.25, 6), darkSteel);
+    tire.add(aeroCap);
+    wGroup.add(tire);
+    group.add(wGroup);
+  });
+
+  return group;
+}
+
+/**
+ * 4. Tesla Semi (Futuristic Streamlined Electric Semi-Truck)
+ */
+function createTeslaSemi(): THREE.Group {
+  const group = new THREE.Group();
+  group.name = 'vehicle_tesla_semi';
+
+  const pearlWhite = getCachedColorMaterial('#F8FAFC', 0.2, 0.3);
+  const darkGlass = getCachedColorMaterial('#0F172A', 0.1, 0.95);
+  const aeroMat = getCachedColorMaterial('#1E293B', 0.5, 0.7);
+  const tireMat = getCachedColorMaterial('#020617', 0.95);
+  const ledMatrix = new THREE.MeshBasicMaterial({ color: 0x38BDF8 });
+  const ledTail = new THREE.MeshBasicMaterial({ color: 0xEF4444 });
+  const chromeAccent = getCachedColorMaterial('#CBD5E1', 0.2, 0.9);
+
+  // Streamlined Low-Drag Chassis Base & Battery Floor
+  const batteryFloor = new THREE.Mesh(new THREE.BoxGeometry(2.8, 0.22, 1.15), aeroMat);
+  batteryFloor.position.set(-0.1, 0.32, 0);
+  group.add(batteryFloor);
+
+  // Bullet-Shaped Aerodynamic Cab
+  const cabLower = new THREE.Mesh(new THREE.BoxGeometry(1.6, 0.9, 1.18), pearlWhite);
+  cabLower.position.set(0.35, 0.85, 0);
+  cabLower.castShadow = true;
+  group.add(cabLower);
+
+  // Slanted Aerodynamic Roof Deflector Fairing
+  const roofAero = new THREE.Mesh(new THREE.BoxGeometry(1.4, 0.55, 1.15), pearlWhite);
+  roofAero.position.set(0.25, 1.45, 0);
+  roofAero.rotation.z = -0.15;
+  roofAero.castShadow = true;
+  group.add(roofAero);
+
+  // Wraparound Panoramic Cockpit Glass
+  const cockpitGlass = new THREE.Mesh(new THREE.BoxGeometry(0.95, 0.52, 1.12), darkGlass);
+  cockpitGlass.position.set(0.48, 1.18, 0);
+  cockpitGlass.rotation.z = -0.12;
+  group.add(cockpitGlass);
+
+  // Front Smooth Nose with Center Tesla Logo Badge
+  const noseCurved = new THREE.Mesh(new THREE.CylinderGeometry(0.58, 0.58, 1.16, 16, 1, false, 0, Math.PI), pearlWhite);
+  noseCurved.rotation.z = -Math.PI / 2;
+  noseCurved.position.set(1.15, 0.85, 0);
+  group.add(noseCurved);
+
+  // Dual Matrix LED Headlight Bars
+  [-0.42, 0.42].forEach(z => {
+    const hl = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.08, 0.26), ledMatrix);
+    hl.position.set(1.18, 0.62, z);
+    group.add(hl);
+  });
+
+  // Attached Aerodynamic Semi-Trailer Cargo Box
+  const trailer = new THREE.Mesh(new THREE.BoxGeometry(1.3, 1.25, 1.16), chromeAccent);
+  trailer.position.set(-0.95, 1.1, 0);
+  trailer.castShadow = true;
+  group.add(trailer);
+
+  // Rear Tail Lights on Trailer
+  [-0.45, 0.45].forEach(z => {
+    const tl = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.35, 0.08), ledTail);
+    tl.position.set(-1.61, 0.95, z);
+    group.add(tl);
+  });
+
+  // 6 Aerodynamic Wheels
+  const wheelPositions = [
+    [0.85, 0.32, 0.62],
+    [0.85, 0.32, -0.62],
+    [-0.65, 0.32, 0.62],
+    [-0.65, 0.32, -0.62],
+    [-1.15, 0.32, 0.62],
+    [-1.15, 0.32, -0.62],
+  ];
+
+  wheelPositions.forEach(([x, y, z]) => {
+    const wGroup = new THREE.Group();
+    wGroup.name = 'truck_wheel';
+    wGroup.position.set(x, y, z);
+    const tire = new THREE.Mesh(new THREE.CylinderGeometry(0.32, 0.32, 0.22, 14), tireMat);
+    tire.rotation.x = Math.PI / 2;
+    tire.castShadow = true;
+    const disc = new THREE.Mesh(new THREE.CylinderGeometry(0.22, 0.22, 0.23, 12), pearlWhite);
+    tire.add(disc);
+    wGroup.add(tire);
+    group.add(wGroup);
+  });
+
+  return group;
+}
+
+/**
+ * 5. Pure Golden Luxury Hypercar (Bugatti / Koenigsegg Golden Legend)
+ */
+function createGoldenHypercar(): THREE.Group {
+  const group = new THREE.Group();
+  group.name = 'vehicle_golden_hypercar';
+
+  const goldMirror = getCachedColorMaterial('#F59E0B', 0.1, 0.98);
+  const goldTrim = getCachedColorMaterial('#FDE047', 0.05, 1.0);
+  const obsidianCarbon = getCachedColorMaterial('#0F172A', 0.3, 0.9);
+  const crystalGlass = getCachedColorMaterial('#E0F2FE', 0.05, 0.95);
+  const diamondLed = new THREE.MeshBasicMaterial({ color: 0xFFFFFF });
+  const rubyTail = new THREE.MeshBasicMaterial({ color: 0xE11D48 });
+  const tireMat = getCachedColorMaterial('#090D16', 0.95);
+
+  // Carbon Fiber Underbody Tray
+  const tray = new THREE.Mesh(new THREE.BoxGeometry(2.35, 0.1, 1.15), obsidianCarbon);
+  tray.position.set(0, 0.2, 0);
+  group.add(tray);
+
+  // Polished Golden Hypercar Body
+  const body = new THREE.Mesh(new THREE.BoxGeometry(2.3, 0.38, 1.18), goldMirror);
+  body.position.set(0, 0.39, 0);
+  body.castShadow = true;
+  group.add(body);
+
+  // Slanted Golden Front Bonnet
+  const hood = new THREE.Mesh(new THREE.BoxGeometry(0.8, 0.24, 1.12), goldMirror);
+  hood.position.set(0.82, 0.34, 0);
+  hood.rotation.z = -0.15;
+  hood.castShadow = true;
+  group.add(hood);
+
+  // Iconic Horseshoe Front Grille in Gold Trim
+  const grille = new THREE.Mesh(new THREE.CylinderGeometry(0.24, 0.24, 0.1, 16, 1, false, 0, Math.PI), goldTrim);
+  grille.rotation.z = -Math.PI / 2;
+  grille.position.set(1.22, 0.35, 0);
+  group.add(grille);
+
+  // Sparkling Diamond Quad-LED Headlights
+  [-0.38, 0.38].forEach(z => {
+    const hl = new THREE.Mesh(new THREE.OctahedronGeometry(0.12, 0), diamondLed);
+    hl.position.set(1.08, 0.44, z);
+    group.add(hl);
+  });
+
+  // Low Teardrop Crystal Canopy
+  const canopy = new THREE.Mesh(new THREE.BoxGeometry(1.08, 0.35, 0.94), crystalGlass);
+  canopy.position.set(-0.08, 0.68, 0);
+  canopy.castShadow = true;
+  group.add(canopy);
+
+  // Active Carbon & Gold Rear Aero Wing
+  const wing = new THREE.Mesh(new THREE.BoxGeometry(0.32, 0.04, 1.3), obsidianCarbon);
+  wing.position.set(-1.12, 0.78, 0);
+  const wingEndL = new THREE.Mesh(new THREE.BoxGeometry(0.36, 0.12, 0.04), goldTrim);
+  wingEndL.position.set(-1.12, 0.78, -0.65);
+  const wingEndR = wingEndL.clone();
+  wingEndR.position.z = 0.65;
+  const pylonL = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.28, 0.04), obsidianCarbon);
+  pylonL.position.set(-1.08, 0.62, -0.35);
+  const pylonR = pylonL.clone();
+  pylonR.position.z = 0.35;
+  group.add(wing, wingEndL, wingEndR, pylonL, pylonR);
+
+  // Rear Ruby LED Light Strip
+  const tail = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.06, 1.1), rubyTail);
+  tail.position.set(-1.16, 0.52, 0);
+  group.add(tail);
+
+  // 4 Golden Chrome Forged Wheels with Diamond Hubs
+  const wheelPositions = [
+    [0.74, 0.25, 0.6],
+    [0.74, 0.25, -0.6],
+    [-0.74, 0.25, 0.6],
+    [-0.74, 0.25, -0.6],
+  ];
+
+  wheelPositions.forEach(([x, y, z]) => {
+    const wGroup = new THREE.Group();
+    wGroup.name = 'truck_wheel';
+    wGroup.position.set(x, y, z);
+    const tire = new THREE.Mesh(new THREE.CylinderGeometry(0.25, 0.25, 0.2, 16), tireMat);
+    tire.rotation.x = Math.PI / 2;
+    tire.castShadow = true;
+    const rim = new THREE.Mesh(new THREE.CylinderGeometry(0.18, 0.18, 0.21, 10), goldTrim);
+    tire.add(rim);
     wGroup.add(tire);
     group.add(wGroup);
   });
@@ -497,16 +533,16 @@ function createGoldenTruck(): THREE.Group {
  */
 export function createVehicleModel(modelId: VehicleModelId = 'classic_pickup'): THREE.Group {
   switch (modelId) {
-    case 'offroad_4x4':
-      return createOffroad4x4();
-    case 'retro_van':
-      return createRetroVan();
-    case 'farm_tractor':
-      return createFarmTractor();
-    case 'cyber_truck':
-      return createCyberTruck();
-    case 'golden_truck':
-      return createGoldenTruck();
+    case 'american_semi':
+      return createAmericanSemi();
+    case 'super_sportscar':
+      return createSuperSportscar();
+    case 'tesla_cybertruck':
+      return createTeslaCybertruck();
+    case 'tesla_semi':
+      return createTeslaSemi();
+    case 'golden_hypercar':
+      return createGoldenHypercar();
     case 'classic_pickup':
     default:
       return createStylizedDeliveryTruck();

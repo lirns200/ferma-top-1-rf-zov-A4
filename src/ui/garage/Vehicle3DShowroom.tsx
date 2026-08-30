@@ -28,8 +28,8 @@ export const Vehicle3DShowroom: React.FC<Vehicle3DShowroomProps> = ({
     // Scene, Camera & Renderer
     const scene = new THREE.Scene();
     const camera = new THREE.PerspectiveCamera(38, width / height, 0.1, 100);
-    camera.position.set(0, 2.2, 5.0);
-    camera.lookAt(0, 0.65, 0);
+    camera.position.set(0, 2.3, 5.3);
+    camera.lookAt(0, 0.68, 0);
 
     const renderer = new THREE.WebGLRenderer({
       canvas: canvasRef.current,
