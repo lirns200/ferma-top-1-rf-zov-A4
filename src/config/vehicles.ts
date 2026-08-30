@@ -30,7 +30,7 @@ export const VEHICLE_CONFIGS: Record<VehicleModelId, VehicleConfig> = {
     unlockLevel: 1,
     costCoins: 0,
     costGems: 0,
-    icon: '🛻',
+    icon: '🚗',
     perkDescription: 'Базовая скорость доставки',
     speedMultiplier: 1.0,
     bonusCoinPercent: 0,
