@@ -548,7 +548,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
   isActionStripOpen: false,
   toggleActionStrip: () => set(state => ({ isActionStripOpen: !state.isActionStripOpen })),
   setActionStripOpen: (open: boolean) => set({ isActionStripOpen: open }),
-  isDesign2026: typeof localStorage !== 'undefined' ? localStorage.getItem('farm_design_2026') !== 'false' : true,
+  isDesign2026: typeof localStorage !== 'undefined' ? localStorage.getItem('farm_design_2026') === 'true' : false,
   toggleDesign2026: () => set(state => {
     const next = !state.isDesign2026;
     try { localStorage.setItem('farm_design_2026', String(next)); } catch {}
