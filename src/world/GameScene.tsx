@@ -20,7 +20,6 @@ import {
   createObstacleMesh, 
   createDecorationMesh,
   createMountainTunnelGroup,
-  createMountainWaterfallGroup,
   createWindingRiverMesh,
   createStylizedDeliveryTruck,
   createStylizedCargoSemiTruck,
@@ -1313,49 +1312,6 @@ export const GameScene: React.FC = () => {
         }
       });
 
-      // ── Animate Cascading Mountain Waterfall (Continuous rushing stream, parallax foam, splash rings & mist) ──
-      terrainGroup.traverse(child => {
-        if (child.name === 'waterfall_continuous_mesh') {
-          const mat = (child as THREE.Mesh).material as THREE.MeshStandardMaterial;
-          if (mat && mat.map) {
-            mat.map.offset.y -= delta * 1.85;
-          }
-        } else if (child.name === 'waterfall_foam_mesh' || child.name === 'waterfall_splash_apron') {
-          const mat = (child as THREE.Mesh).material as THREE.MeshStandardMaterial;
-          if (mat && mat.map) {
-            mat.map.offset.y -= delta * 3.4;
-          }
-        } else if (child.name?.startsWith('waterfall_foam_crest_')) {
-          const cIdx = parseInt(child.name.replace('waterfall_foam_crest_', '')) || 0;
-          child.scale.set(
-            1.8 + Math.sin(elapsed * 12 + cIdx * 1.5) * 0.2,
-            0.45 + Math.cos(elapsed * 14 + cIdx) * 0.1,
-            0.95 + Math.sin(elapsed * 16 + cIdx) * 0.15
-          );
-        } else if (child.name?.startsWith('waterfall_foam_ring_')) {
-          const ringIdx = parseInt(child.name.replace('waterfall_foam_ring_', '')) || 0;
-          const cycle = (elapsed * 1.5 + ringIdx * 0.5) % 2.0;
-          const scale = 0.75 + cycle * 0.75;
-          child.scale.set(scale, scale, 1);
-          const mat = (child as THREE.Mesh).material as THREE.Material;
-          if (mat && 'opacity' in mat) {
-            (mat as THREE.MeshStandardMaterial).opacity = Math.max(0, 0.88 * (1 - cycle / 2.0));
-          }
-        } else if (child.name === 'waterfall_mist_particles') {
-          const p = (child as THREE.Points).geometry.attributes.position.array as Float32Array;
-          for (let m = 0; m < p.length / 3; m++) {
-            p[m * 3 + 1] += delta * 2.2;
-            p[m * 3] += Math.sin(elapsed * 2.5 + m) * 0.015;
-            if (p[m * 3 + 1] > 4.5) {
-              p[m * 3 + 1] = 0.2;
-              p[m * 3] = (Math.random() - 0.5) * 8.5;
-              p[m * 3 + 2] = 2.0 + Math.random() * 4.5;
-            }
-          }
-          (child as THREE.Points).geometry.attributes.position.needsUpdate = true;
-        }
-      });
-
       // Multi-Pulse Lightning Ambient & Sun Flash
       if (isFlashing) {
         const flashElapsed = clock.getElapsedTime() - flashStartTime;
@@ -1885,11 +1841,6 @@ export const GameScene: React.FC = () => {
 
     // Deterministic low-poly relief, winding roads, dense shorelines and meadow life.
     terrainGroup.add(createLandscapeDetailGroup(activeSeason));
-
-    // ── Cascading Mountain Waterfall plunging from North Mountain at river head ──
-    const mountainWaterfall = createMountainWaterfallGroup(activeSeason);
-    mountainWaterfall.position.set(16.0, 0, -25.5);
-    terrainGroup.add(mountainWaterfall);
 
     // ── Organic Winding River & Riverbed System ─────────────────────────
     const { waterMesh, riverbedMesh } = createWindingRiverMesh(activeSeason);
