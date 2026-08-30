@@ -13,7 +13,7 @@ export const HudSideWidgets: React.FC = () => {
   const isDailyReady = !lastDailyBonusClaimTime || (Date.now() - lastDailyBonusClaimTime >= 60000);
 
   return (
-    <div className="fixed top-[96px] sm:top-[112px] left-2 sm:left-3 z-40 pointer-events-auto select-none flex flex-col gap-2 animate-pop-in">
+    <div className="fixed top-[84px] sm:top-[104px] left-1.5 sm:left-3 z-40 pointer-events-auto select-none flex flex-col gap-1.5 animate-pop-in">
       
       {/* 1. 🎁 Daily Login Bonus Button */}
       <button
@@ -22,7 +22,7 @@ export const HudSideWidgets: React.FC = () => {
           triggerTelegramHaptic('light');
           openModal('daily_bonus');
         }}
-        className={`relative flex items-center gap-2 p-2 sm:p-2.5 rounded-2xl border shadow-2xl backdrop-blur-md transition-all duration-200 active:scale-90 cursor-pointer group ${
+        className={`relative flex items-center gap-1.5 sm:gap-2 p-1.5 sm:p-2.5 rounded-2xl border shadow-2xl backdrop-blur-md transition-all duration-200 active:scale-90 cursor-pointer group ${
           isDailyReady
             ? 'bg-gradient-to-r from-amber-950/90 to-yellow-950/90 border-amber-400 ring-2 ring-amber-400/40 shadow-amber-950/80 animate-pulse'
             : isDesign2026
@@ -37,7 +37,7 @@ export const HudSideWidgets: React.FC = () => {
           </span>
         )}
 
-        <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-gradient-to-tr from-amber-500 to-yellow-400 flex items-center justify-center text-lg sm:text-xl text-amber-950 shadow-md group-hover:scale-105 transition-transform shrink-0">
+        <div className="w-7 h-7 sm:w-9 sm:h-9 rounded-xl bg-gradient-to-tr from-amber-500 to-yellow-400 flex items-center justify-center text-base sm:text-xl text-amber-950 shadow-md group-hover:scale-105 transition-transform shrink-0">
           🎁
         </div>
 
