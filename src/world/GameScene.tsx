@@ -27,6 +27,7 @@ import {
   createAnimatedBirdGroup,
   getCachedColorMaterial
 } from './ModelGenerators';
+import { createVehicleModel } from './models/vehicles/VehicleModels';
 import { createLandscapeDetailGroup } from './LandscapeDetails';
 import { sounds } from '../audio/SoundManager';
 import { triggerTelegramHaptic } from '../utils/telegram';
@@ -44,6 +45,7 @@ export const GameScene: React.FC = () => {
     placingRotation,
     activeSeason,
     activeEvent,
+    selectedVehicleModel = 'classic_pickup',
     truckState,
     cargoTruckState,
     claimCargoTruckUnload,
@@ -540,7 +542,7 @@ export const GameScene: React.FC = () => {
     scene.add(previewGridGroup);
 
     // 11. Stylized Farm Delivery Truck (Наша машинка - паркуется в Заезде 2)
-    const truckGroup = createStylizedDeliveryTruck();
+    const truckGroup = createVehicleModel(selectedVehicleModel);
     truckGroupRef.current = truckGroup;
     truckGroup.position.set(3.2, 0.05, -4.5);
     truckGroup.rotation.y = -1.16;
@@ -2713,6 +2715,25 @@ function createTutorialPointerBadge(label = 'НАЖМИ СЮДА'): THREE.Group 
     });
   }, [entities, selectedEntityId, activeEvent, activeSeason, movingEntityId, movingPos, movingRotation, tutorialStep, tutorialCompleted]);
 
+  // Dynamically replace vehicle model in Driveway 2 when selectedVehicleModel changes
+  useEffect(() => {
+    if (!sceneRef.current || !truckGroupRef.current) return;
+    const scene = sceneRef.current;
+    const oldTruck = truckGroupRef.current;
+    const currentPos = oldTruck.position.clone();
+    const currentRot = oldTruck.rotation.y;
+    const isVisible = oldTruck.visible;
+
+    scene.remove(oldTruck);
+
+    const newTruck = createVehicleModel(selectedVehicleModel);
+    newTruck.position.copy(currentPos);
+    newTruck.rotation.y = currentRot;
+    newTruck.visible = isVisible;
+    scene.add(newTruck);
+    truckGroupRef.current = newTruck;
+  }, [selectedVehicleModel]);
+
   // Update placement preview grid without React re-renders
   const updatePlacementPreview = useCallback((tile: { x: number; z: number } | null) => {
     if (!previewGridGroupRef.current) return;
@@ -3083,6 +3104,10 @@ function createTutorialPointerBadge(label = 'НАЖМИ СЮДА'): THREE.Group 
         } else if (cargoTruckStateRef.current.isParkedWaiting) {
           claimCargoTruckUnload();
         }
+      } else if (tile && Math.abs(tile.x - (3.2)) <= 2.5 && Math.abs(tile.z - (-4.5)) <= 2.5) {
+        // Direct click on player's delivery car in Driveway 2 to open Garage Showroom!
+        sounds.playTruckHonk();
+        openModal('garage');
       } else {
         setSelectedEntity(null);
       }

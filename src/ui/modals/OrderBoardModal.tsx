@@ -5,6 +5,8 @@ import { sounds } from '../../audio/SoundManager';
 import { triggerTelegramHaptic } from '../../utils/telegram';
 import { Trash2, Send, Clock } from 'lucide-react';
 
+import { VEHICLE_CONFIGS } from '../../config/vehicles';
+
 export const OrderBoardModal: React.FC = () => {
   const {
     activeModal,
@@ -14,9 +16,13 @@ export const OrderBoardModal: React.FC = () => {
     fulfillOrder,
     trashOrder,
     isDesign2026,
+    selectedVehicleModel = 'classic_pickup',
+    openModal,
   } = useGameStore();
 
   if (activeModal !== 'orders') return null;
+
+  const currentVehicleCfg = VEHICLE_CONFIGS[selectedVehicleModel] || VEHICLE_CONFIGS.classic_pickup;
 
   return (
     <div className="fixed inset-0 pt-12 sm:pt-14 pb-16 sm:pb-20 z-40 flex flex-col select-none animate-pop-in overflow-hidden game-screen-bg text-amber-100">
@@ -31,13 +37,24 @@ export const OrderBoardModal: React.FC = () => {
             Доска заказов Долины
           </span>
         </div>
+
+        <button
+          onClick={() => {
+            sounds.playClick();
+            openModal('garage');
+          }}
+          className="game-tab-btn px-3 py-1.5 rounded-xl text-xs font-black text-amber-100 flex items-center gap-1.5 cursor-pointer shadow-sm hover:scale-105 active:scale-95 transition-transform"
+        >
+          <span className="text-base">{currentVehicleCfg.icon}</span>
+          <span>Гараж</span>
+        </button>
       </div>
 
       {/* ── TRUCK DELIVERY STATUS BANNER ── */}
       {truckState.isDelivering && (
         <div className="flex items-center justify-center gap-2.5 bg-gradient-to-r from-amber-950 via-amber-900 to-amber-950 px-3 py-2 text-yellow-300 font-black text-xs sm:text-sm border-b-2 border-amber-500/80 animate-pulse shrink-0 game-text-gold shadow-md">
-          <span className="text-lg sm:text-xl">🛻</span>
-          <span>Красный пикап везет заказ в город...</span>
+          <span className="text-lg sm:text-xl">{currentVehicleCfg.icon}</span>
+          <span>{currentVehicleCfg.name} везет заказ в город...</span>
           <div className="flex items-center gap-1 text-amber-200 font-mono bg-black/40 px-2 py-0.5 rounded-md border border-amber-700/60">
             <Clock size={13} className="text-amber-400" />
             <span>{Math.max(0, Math.ceil((truckState.deliveringUntil - Date.now()) / 1000))}с</span>

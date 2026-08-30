@@ -37,6 +37,7 @@ import {
   getGlobalWeatherForSlot,
   WEATHER_SLOT_DURATION_MS
 } from '../config/events';
+import { VEHICLE_CONFIGS, VehicleModelId } from '../config/vehicles';
 import { 
   INITIAL_ENTITIES, 
   INITIAL_MAP_EXPANSIONS, 
@@ -340,11 +341,17 @@ export interface GameStore {
   tutorialStep: number;
   tutorialCompleted: boolean;
   
+  // Vehicles
+  selectedVehicleModel: VehicleModelId;
+  unlockedVehicleModels: VehicleModelId[];
+  equipVehicle: (modelId: VehicleModelId) => void;
+  unlockVehicle: (modelId: VehicleModelId) => boolean;
+
   // UI & Notifications
-  activeModal: 'shop' | 'silo' | 'barn' | 'orders' | 'roadside' | 'market' | 'fishing' | 'events' | 'settings' | 'levelup' | 'expansion' | 'friends' | 'daily_bonus' | 'weather_forecast' | 'production' | null;
+  activeModal: 'shop' | 'silo' | 'barn' | 'orders' | 'roadside' | 'market' | 'fishing' | 'events' | 'settings' | 'levelup' | 'expansion' | 'friends' | 'daily_bonus' | 'weather_forecast' | 'production' | 'garage' | null;
   selectedProductionEntityId: string | null;
   openProductionModal: (buildingEntityId: string) => void;
-  openModal: (modal: 'shop' | 'silo' | 'barn' | 'orders' | 'roadside' | 'market' | 'fishing' | 'events' | 'settings' | 'levelup' | 'expansion' | 'friends' | 'daily_bonus' | 'weather_forecast' | 'production') => void;
+  openModal: (modal: 'shop' | 'silo' | 'barn' | 'orders' | 'roadside' | 'market' | 'fishing' | 'events' | 'settings' | 'levelup' | 'expansion' | 'friends' | 'daily_bonus' | 'weather_forecast' | 'production' | 'garage') => void;
   closeModal: () => void;
   unlockedLevelInfo: LevelConfig | null;
   floatingTexts: FloatingText[];
@@ -540,6 +547,34 @@ export const useGameStore = create<GameStore>((set, get) => ({
   lastDailyBonusClaimTime: 0,
   marketNotifications: [],
 
+  // Vehicles
+  selectedVehicleModel: 'classic_pickup',
+  unlockedVehicleModels: ['classic_pickup'],
+  equipVehicle: (modelId: VehicleModelId) => {
+    set({ selectedVehicleModel: modelId });
+  },
+  unlockVehicle: (modelId: VehicleModelId) => {
+    const state = get();
+    const cfg = VEHICLE_CONFIGS[modelId];
+    if (!cfg) return false;
+    if (state.unlockedVehicleModels.includes(modelId)) {
+      set({ selectedVehicleModel: modelId });
+      return true;
+    }
+
+    if (state.level < cfg.unlockLevel) return false;
+    if (cfg.costCoins > 0 && state.coins < cfg.costCoins) return false;
+    if (cfg.costGems > 0 && state.gems < cfg.costGems) return false;
+
+    set(s => ({
+      coins: s.coins - cfg.costCoins,
+      gems: s.gems - cfg.costGems,
+      unlockedVehicleModels: [...s.unlockedVehicleModels, modelId],
+      selectedVehicleModel: modelId,
+    }));
+    return true;
+  },
+
   activeModal: null,
   selectedProductionEntityId: null,
   unlockedLevelInfo: null,
@@ -659,6 +694,8 @@ export const useGameStore = create<GameStore>((set, get) => ({
         truckState: truck,
         shopSlots: saved.shopSlots || INITIAL_SHOP_SLOTS,
         fishingStats: saved.fishingStats || { fishCaughtCount: 0, biggestCatch: {} },
+        selectedVehicleModel: (saved.selectedVehicleModel as VehicleModelId) || 'classic_pickup',
+        unlockedVehicleModels: (saved.unlockedVehicleModels as VehicleModelId[]) || ['classic_pickup'],
         tutorialStep: saved.tutorialStep || 1,
         tutorialCompleted: saved.tutorialCompleted ?? false,
         introStage: (saved.tutorialCompleted || (saved.tutorialStep && saved.tutorialStep > 1)) ? 'completed' : 'story',
@@ -2028,11 +2065,21 @@ export const useGameStore = create<GameStore>((set, get) => ({
     sounds.playTruckHonk();
     state.updateDailyMissionProgress('order', undefined, 1);
 
+    const vCfg = VEHICLE_CONFIGS[state.selectedVehicleModel] || VEHICLE_CONFIGS.classic_pickup;
+    const coinBonusMult = 1 + (vCfg.bonusCoinPercent || 0) / 100;
+    const xpBonusMult = 1 + (vCfg.bonusXpPercent || 0) / 100;
+    const modifiedOrder: FarmOrder = {
+      ...order,
+      coinReward: Math.round(order.coinReward * coinBonusMult),
+      xpReward: Math.round(order.xpReward * xpBonusMult),
+    };
+    const deliveryDurationMs = Math.round(8000 / (vCfg.speedMultiplier || 1.0));
+
     set({
       truckState: {
         isDelivering: true,
-        deliveringUntil: Date.now() + 8000,
-        deliveredOrder: order,
+        deliveringUntil: Date.now() + deliveryDurationMs,
+        deliveredOrder: modifiedOrder,
       },
       activeModal: null,
     });
@@ -2335,6 +2382,8 @@ export const useGameStore = create<GameStore>((set, get) => ({
       },
       shopSlots: s.shopSlots,
       fishingStats: s.fishingStats,
+      selectedVehicleModel: s.selectedVehicleModel,
+      unlockedVehicleModels: s.unlockedVehicleModels,
       tutorialStep: s.tutorialStep,
       tutorialCompleted: s.tutorialCompleted,
       soundMuted: s.soundMuted,

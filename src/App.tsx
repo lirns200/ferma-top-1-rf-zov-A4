@@ -24,23 +24,26 @@ import { FriendsModal } from './ui/modals/FriendsModal';
 import { DailyBonusModal } from './ui/modals/DailyBonusModal';
 import { WeatherForecastModal } from './ui/modals/WeatherForecastModal';
 import { ProductionModal } from './ui/modals/ProductionModal';
+import { VehicleGarageModal } from './ui/modals/VehicleGarageModal';
 
 export function App() {
-  const { initGame, tickGameLoop, saveCurrentState } = useGameStore();
+  const initGame = useGameStore(state => state.initGame);
+  const tickGameLoop = useGameStore(state => state.tickGameLoop);
+  const saveCurrentState = useGameStore(state => state.saveCurrentState);
+  const isDesign2026 = useGameStore(state => state.isDesign2026);
 
   useEffect(() => {
-    // Initialize saved progress and start simulation
     initGame();
 
-    // Game loop ticks every 1 second (crops, factories, animals, orders)
+    // 10 Hz Game Simulation Loop
     const tickInterval = window.setInterval(() => {
       tickGameLoop();
-    }, 1000);
+    }, 100);
 
-    // Auto-save game state every 15 seconds
+    // Auto-save every 10 seconds
     const saveInterval = window.setInterval(() => {
       saveCurrentState();
-    }, 15000);
+    }, 10000);
 
     return () => {
       clearInterval(tickInterval);
@@ -76,6 +79,7 @@ export function App() {
       <DailyBonusModal />
       <WeatherForecastModal />
       <ProductionModal />
+      <VehicleGarageModal />
     </main>
   );
 }

@@ -47,6 +47,10 @@ export interface SavedGameState {
   tutorialStep: number;
   tutorialCompleted: boolean;
 
+  // Vehicles
+  selectedVehicleModel?: string;
+  unlockedVehicleModels?: string[];
+
   // Settings
   soundMuted: boolean;
 }
