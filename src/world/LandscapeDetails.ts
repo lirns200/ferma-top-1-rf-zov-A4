@@ -297,34 +297,41 @@ function createMeadowDetails(season: SeasonType, random: () => number) {
   const palette = SEASON_PALETTES[season];
   const group = new THREE.Group();
   group.name = 'meadow_details';
-  const positions: Point2[] = [
+
+  // 1. Wild Colorful Flowers (Chamomiles, Poppies, Clovers, Cornflowers, Dandelions, Buttercups)
+  const flowerPositions: Point2[] = [
     [-30, -20], [-29, -15], [-28, -3], [-29, 9], [-27, 20], [-23, 25], [-20, -19],
     [-18, 15], [-15, -22], [-14, 23], [-11, 13], [-9, -16], [-7, 21], [-4, -20],
     [-2, 13], [1, 22], [4, -19], [6, 16], [7, 24], [25, -25], [27, -19], [30, -23],
     [25, -13], [31, -10], [27, 2], [31, 7], [25, 14], [30, 18], [27, 25], [32, 27],
+    [-26, -14], [-24, 6], [-22, 18], [-17, -14], [-13, 16], [-6, 12], [2, 18],
+    [5, -22], [8, 19], [26, -21], [28, -8], [29, 12], [28, 20], [-19, 24],
   ];
 
+  const totalFlowers = flowerPositions.length * 3;
   const stemGeometry = new THREE.CylinderGeometry(0.025, 0.035, 0.42, 5);
-  const stems = new THREE.InstancedMesh(stemGeometry, makeMaterial(0x4d7c0f, 0.95), positions.length * 2);
+  const stems = new THREE.InstancedMesh(stemGeometry, makeMaterial(0x4d7c0f, 0.95), totalFlowers);
   stems.name = 'meadow_flower_stems';
+
   const bloomGeometry = new THREE.OctahedronGeometry(0.095, 0);
-  const blooms = new THREE.InstancedMesh(bloomGeometry, makeMaterial(palette.flower, 0.65), positions.length * 2);
+  const blooms = new THREE.InstancedMesh(bloomGeometry, makeMaterial(palette.flower, 0.65), totalFlowers);
   blooms.name = 'meadow_flower_blooms';
   const flowerInstances: Array<{ x: number; y: number; z: number; scale: number; rotY: number; height: number }> = [];
 
-  positions.forEach(([baseX, baseZ], index) => {
-    for (let offset = 0; offset < 2; offset++) {
-      const i = index * 2 + offset;
-      let x = baseX + (random() - 0.5) * 1.6;
-      let z = baseZ + (random() - 0.5) * 1.6;
+  let flowerIndex = 0;
+  flowerPositions.forEach(([baseX, baseZ]) => {
+    for (let offset = 0; offset < 3; offset++) {
+      const i = flowerIndex++;
+      let x = baseX + (random() - 0.5) * 2.2;
+      let z = baseZ + (random() - 0.5) * 2.2;
       if (isRoadOrBridgeOrWater(x, z)) {
         if (x >= -9.5 && x <= -5.5) x = -13.0 - random() * 3.0;
         else if (x >= -0.2 && x <= 5.8) x = 7.5 + random() * 2.0;
         else z = z > -9.3 ? -5.0 : -13.5;
       }
-      const height = 0.7 + random() * 0.55;
+      const height = 0.65 + random() * 0.60;
       const rotY = random() * Math.PI * 2;
-      const scale = 0.72 + random() * 0.45;
+      const scale = 0.70 + random() * 0.50;
       setInstance(stems, i, x, height * 0.2, z, new THREE.Vector3(1, height, 1), rotY);
       setInstance(blooms, i, x, 0.41 + height * 0.18, z, scale, rotY);
       flowerInstances.push({ x, y: 0, z, scale, rotY, height });
@@ -333,8 +340,9 @@ function createMeadowDetails(season: SeasonType, random: () => number) {
   stems.userData.instances = flowerInstances;
   blooms.userData.instances = flowerInstances;
 
+  // 2. Ultra Dense Lush Grass Clusters (1200 tufts)
   const grassGeometry = createGrassTuftGeometry();
-  const grassCount = 680;
+  const grassCount = 1200;
   const grass = new THREE.InstancedMesh(grassGeometry, makeMaterial(palette.grassDark, 0.88), grassCount);
   grass.name = 'meadow_grass_tufts';
   const grassInstances: Array<{ x: number; y: number; z: number; scale: THREE.Vector3; rotY: number }> = [];
@@ -346,39 +354,39 @@ function createMeadowDetails(season: SeasonType, random: () => number) {
     const zone = i % 5;
     if (zone === 0) {
       // West meadows & hillsides
-      x = -32 + random() * 18;
+      x = -33 + random() * 20;
       z = -28 + random() * 56;
     } else if (zone === 1) {
       // East hills beyond river
-      x = 24.5 + random() * 11;
+      x = 24.0 + random() * 12;
       z = -28 + random() * 56;
     } else if (zone === 2) {
-      // River banks (west and east bank fringes, outside water)
+      // River banks (west and east bank fringes)
       const isWestBank = i % 2 === 0;
-      x = isWestBank ? (8.8 - random() * 2.2) : (22.8 + random() * 2.2);
+      x = isWestBank ? (8.9 - random() * 2.5) : (22.7 + random() * 2.5);
       z = -26 + random() * 52;
     } else if (zone === 3) {
       // North and South mountain footings
       const isNorth = i % 2 === 0;
-      x = -26 + random() * 52;
+      x = -27 + random() * 54;
       z = isNorth ? (-22 - random() * 8) : (20 + random() * 8);
     } else {
       // Farm yard fringes, borders, and lawn clearings
-      x = -13 + random() * 24;
-      z = -13 + random() * 24;
+      x = -14 + random() * 26;
+      z = -14 + random() * 26;
     }
 
-    // Strictly ensure grass NEVER spawns on the road, bridge, farmhouse/shop paths, or inside water
+    // Strictly ensure grass NEVER spawns on the road, bridge, driveway paths, or inside water
     let safetyTries = 0;
     while (isRoadOrBridgeOrWater(x, z) && safetyTries < 20) {
       if (z >= -12.2 && z <= -6.5) {
         z = (random() > 0.5) ? (-5.0 - random() * 2.5) : (-13.5 - random() * 2.5);
       }
       if (x >= -9.5 && x <= -5.5 && z >= -9.2 && z <= 0.0) {
-        x = -13.0 - random() * 4.0; // move to west pasture
+        x = -13.0 - random() * 4.0;
       }
       if (x >= -0.2 && x <= 5.8 && z >= -9.2 && z <= 0.0) {
-        x = 7.5 + random() * 2.0; // move to east yard
+        x = 7.5 + random() * 2.0;
       }
       if (x >= 10.0 && x <= 22.0) {
         x = (i % 2 === 0) ? (7.5 - random() * 2.5) : (24.0 + random() * 2.5);
@@ -386,9 +394,9 @@ function createMeadowDetails(season: SeasonType, random: () => number) {
       safetyTries++;
     }
 
-    const scX = 0.75 + random() * 0.55;
-    const scY = 0.70 + random() * 0.75;
-    const scZ = 0.75 + random() * 0.55;
+    const scX = 0.70 + random() * 0.60;
+    const scY = 0.65 + random() * 0.85;
+    const scZ = 0.70 + random() * 0.60;
     const scale = new THREE.Vector3(scX, scY, scZ);
     const rotY = random() * Math.PI * 2;
     setInstance(grass, i, x, 0.02, z, scale, rotY);
@@ -396,6 +404,7 @@ function createMeadowDetails(season: SeasonType, random: () => number) {
   }
   grass.userData.instances = grassInstances;
 
+  // 3. Fences
   const fenceSegments: Array<readonly [number, number, number, number]> = [
     [-24, -12.1, 5.2, -0.05], [-18.4, -11.7, 5.2, -0.08], [-12.8, -11.25, 4.6, -0.08],
     [-23.5, 12.6, 4.5, 0.04], [-18.5, 12.8, 4.4, 0.04],
@@ -418,6 +427,7 @@ function createMeadowDetails(season: SeasonType, random: () => number) {
   });
   fenceRails.castShadow = true;
   fencePosts.castShadow = true;
+
   group.add(stems, blooms, grass, fenceRails, fencePosts);
   return group;
 }
@@ -426,20 +436,22 @@ function createForestDetails(season: SeasonType, random: () => number) {
   const palette = SEASON_PALETTES[season];
   const group = new THREE.Group();
   group.name = 'forest_details';
+
+  // 1. Forest Shrubs & Bushes
   const shrubGeometry = new THREE.IcosahedronGeometry(0.72, 1);
-  const shrubs = new THREE.InstancedMesh(shrubGeometry, makeMaterial(palette.foliage, 0.86), 32);
+  const shrubs = new THREE.InstancedMesh(shrubGeometry, makeMaterial(palette.foliage, 0.86), 36);
   shrubs.name = 'forest_shrubs';
   for (let i = 0; i < shrubs.count; i++) {
     const edge = i % 2 === 0;
     const x = edge ? -31 + random() * 10 : 25 + random() * 8;
     let z = -27 + random() * 54;
-    // Keep road corridors completely clear of shrubs
     if (z >= -12.2 && z <= -7.2) {
       z = z > -9.7 ? -6.2 : -13.2;
     }
     setInstance(shrubs, i, x, 0.48, z, new THREE.Vector3(0.75 + random() * 0.8, 0.65 + random() * 0.7, 0.75 + random() * 0.8), random() * Math.PI);
   }
 
+  // 2. Scenery Trees
   const treePoints: Point2[] = [
     [-30, -25], [-27, -19], [-31, 14], [-25, 27], [-20, -27], [-12, 28],
     [25, -29], [29, -25], [32, -18], [26, 10], [31, 15], [26, 28], [32, 25],
@@ -456,12 +468,65 @@ function createForestDetails(season: SeasonType, random: () => number) {
   trunks.castShadow = true;
   crowns.castShadow = true;
 
-  const stumps = new THREE.InstancedMesh(new THREE.CylinderGeometry(0.32, 0.42, 0.35, 8), makeMaterial(0x875027, 0.96), 8);
+  // 3. Tree Stumps ("Пеньки") with Growth Rings & Moss
+  const stumpPoints: Point2[] = [
+    [-24, -12], [-21, 20], [-16, 26], [4, 24], [27, -15], [30, 3], [25, 21], [-29, 4],
+    [-26, -17], [-19, 13], [-14, -20], [-8, 22], [2, -23], [6, 21], [28, -22], [31, 19],
+    [-27, 23], [26, -5]
+  ];
+  const stumps = new THREE.InstancedMesh(new THREE.CylinderGeometry(0.32, 0.42, 0.35, 8), makeMaterial(0x875027, 0.96), stumpPoints.length);
   stumps.name = 'forest_stumps';
-  [[-24, -12], [-21, 20], [-16, 26], [4, 24], [27, -15], [30, 3], [25, 21], [-29, 4]].forEach(([x, z], i) => {
-    setInstance(stumps, i, x, 0.18, z, 0.75 + random() * 0.5, random() * Math.PI);
+  stumpPoints.forEach(([x, z], i) => {
+    const sc = 0.8 + random() * 0.45;
+    setInstance(stumps, i, x, 0.18 * sc, z, new THREE.Vector3(sc, sc, sc), random() * Math.PI);
   });
-  group.add(shrubs, trunks, crowns, stumps);
+  stumps.castShadow = true;
+  stumps.receiveShadow = true;
+
+  // 4. Fallen Mossy Trees & Logs ("Деревья которые лежат")
+  const fallenLogPoints: Array<{ pos: Point2; length: number; rotY: number }> = [
+    { pos: [-25, -16], length: 2.8, rotY: 0.4 },
+    { pos: [-22, 16], length: 3.2, rotY: -0.7 },
+    { pos: [-15, 26], length: 2.6, rotY: 1.1 },
+    { pos: [6, 25], length: 3.0, rotY: -0.3 },
+    { pos: [28, -20], length: 3.4, rotY: 0.8 },
+    { pos: [27, 8], length: 2.5, rotY: -1.2 },
+    { pos: [31, 22], length: 3.1, rotY: 0.2 },
+    { pos: [-28, 6], length: 2.9, rotY: 0.9 },
+    { pos: [-18, -25], length: 2.7, rotY: -0.5 },
+    { pos: [26, 27], length: 3.3, rotY: 1.4 },
+  ];
+  const logGeo = new THREE.CylinderGeometry(0.22, 0.28, 1, 8);
+  logGeo.rotateZ(Math.PI / 2); // Lay horizontal
+  const fallenLogs = new THREE.InstancedMesh(logGeo, makeMaterial(0x653b1b, 0.92), fallenLogPoints.length);
+  fallenLogs.name = 'forest_fallen_logs';
+  fallenLogPoints.forEach((log, i) => {
+    const scY = 0.85 + random() * 0.3;
+    setInstance(fallenLogs, i, log.pos[0], 0.18, log.pos[1], new THREE.Vector3(1, log.length, scY), log.rotY);
+  });
+  fallenLogs.castShadow = true;
+  fallenLogs.receiveShadow = true;
+
+  // 5. Natural Granite Boulders, Stones & Mossy Rocks ("Камни")
+  const rockPoints: Point2[] = [
+    [-26, -19], [-23, -13], [-21, 5], [-27, 18], [-19, 21], [-14, -17], [-10, 20],
+    [-5, 23], [3, 21], [7, -19], [25, -23], [28, -13], [30, 0], [27, 12],
+    [31, 24], [26, 26], [-30, -5], [-22, 27], [5, -24], [29, -6], [-17, -22],
+    [-28, 12], [25, -17], [32, 14], [-12, 25], [7, 23], [-24, 2], [28, 18]
+  ];
+  const rockGeo = new THREE.DodecahedronGeometry(0.38, 0);
+  const boulders = new THREE.InstancedMesh(rockGeo, makeMaterial(0x718096, 0.94), rockPoints.length);
+  boulders.name = 'forest_boulders';
+  rockPoints.forEach(([x, z], i) => {
+    const scX = 0.7 + random() * 0.7;
+    const scY = 0.5 + random() * 0.5;
+    const scZ = 0.7 + random() * 0.7;
+    setInstance(boulders, i, x, 0.12 * scY, z, new THREE.Vector3(scX, scY, scZ), random() * Math.PI);
+  });
+  boulders.castShadow = true;
+  boulders.receiveShadow = true;
+
+  group.add(shrubs, trunks, crowns, stumps, fallenLogs, boulders);
   return group;
 }
 

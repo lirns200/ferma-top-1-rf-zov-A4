@@ -2536,12 +2536,26 @@ function createOverheadCheckmarkBadge(count = 1): THREE.Group {
             const progress = Math.min(1.0, elapsed / growMs);
             const stage = (progress >= 1.0 ? 4 : Math.min(3, Math.floor(progress * 4))) as 0 | 1 | 2 | 3 | 4;
             entGroup.add(createCropStageMesh(crop.id, stage, crop.color));
+
+            // Glowing overhead checkmark when crop is ripe and ready to harvest!
+            if (progress >= 1.0) {
+              const checkmarkBadge = createOverheadCheckmarkBadge(1);
+              checkmarkBadge.position.set(0, 1.35, 0);
+              entGroup.add(checkmarkBadge);
+            }
           }
         }
       } else if (ent.type === 'fruit_tree') {
         const cfg = TREES_BUSHES[ent.configId];
         const hasFruit = !ent.isDead && (ent.treePlantedAt ? now >= ent.treePlantedAt + (cfg ? cfg.growTimeSeconds * 1000 : 60000) : true);
         entGroup.add(createTreeBushMesh(ent.configId, activeSeason, hasFruit));
+
+        // Glowing overhead checkmark when fruit is ripe and ready!
+        if (hasFruit && !ent.isDead) {
+          const checkmarkBadge = createOverheadCheckmarkBadge(1);
+          checkmarkBadge.position.set(0, 3.2, 0);
+          entGroup.add(checkmarkBadge);
+        }
       } else if (ent.type === 'obstacle') {
         entGroup.add(createObstacleMesh(ent.configId));
       } else if (ent.type === 'decoration') {
