@@ -1,4 +1,4 @@
-﻿import React, { useState } from 'react';
+import React, { useState } from 'react';
 import { useGameStore } from '../../game/gameState';
 import { sounds } from '../../audio/SoundManager';
 import { triggerTelegramHaptic, getTelegramUserProfile } from '../../utils/telegram';
@@ -21,6 +21,20 @@ const INITIAL_NEIGHBORS: Neighbor[] = [
   { id: '4', name: 'Алиса Садовод', avatar: '🌱', level: 15, isOnline: true, helpedToday: false, score: 36100 },
   { id: '5', name: 'Михаил Пасечник', avatar: '🐝', level: 11, isOnline: false, helpedToday: false, score: 24700 },
 ];
+
+const CoinSvg = () => (
+  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" className="shrink-0 inline-block">
+    <circle cx="12" cy="12" r="10" fill="url(#coin_fm_g)" stroke="#92400E" strokeWidth="1.5" />
+    <circle cx="12" cy="12" r="7.5" stroke="#FEF08A" strokeWidth="1" strokeDasharray="2.5 1" />
+    <text x="12" y="16" fontSize="11" fontWeight="900" fill="#78350F" textAnchor="middle" fontFamily="sans-serif">🪙</text>
+    <defs>
+      <linearGradient id="coin_fm_g" x1="0" y1="0" x2="24" y2="24">
+        <stop offset="0%" stopColor="#FDE047" />
+        <stop offset="100%" stopColor="#D97706" />
+      </linearGradient>
+    </defs>
+  </svg>
+);
 
 export const FriendsModal: React.FC = () => {
   const {
@@ -147,7 +161,9 @@ export const FriendsModal: React.FC = () => {
                   <div className="flex flex-col">
                     <h3 className="font-extrabold text-sm sm:text-base flex items-center gap-2">
                       <span>Приглашайте друзей в Telegram</span>
-                      <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500 text-black font-black uppercase">+250 🪙</span>
+                      <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500 text-black font-black uppercase inline-flex items-center gap-1">
+                        +250 <CoinSvg />
+                      </span>
                     </h3>
                     <p className={`text-xs ${isDesign2026 ? 'text-[#8E939D]' : 'text-[#5C3718]'}`}>
                       Получайте 250 монет и 5 энергии за каждого приглашенного фермера!
