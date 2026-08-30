@@ -6,10 +6,11 @@ import { Building3DThumbnail } from '../Building3DThumbnail';
 import { Zap, Gift, Crown, Check, Star, Sparkles, ChevronLeft, ChevronRight } from 'lucide-react';
 
 const CoinSvg = () => (
-  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" className="shrink-0 inline-block">
+  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" className="shrink-0 inline-block align-middle">
     <circle cx="12" cy="12" r="10" fill="url(#coin_s_g)" stroke="#92400E" strokeWidth="1.5" />
     <circle cx="12" cy="12" r="7.5" stroke="#FEF08A" strokeWidth="1" strokeDasharray="2.5 1" />
-    <text x="12" y="16" fontSize="11" fontWeight="900" fill="#78350F" textAnchor="middle" fontFamily="sans-serif">🪙</text>
+    <path d="M12 6.5L13.2 10.2H17L14 12.5L15.2 16.2L12 13.8L8.8 16.2L10 12.5L7 10.2H10.8L12 6.5Z" fill="#FFFBEB" stroke="#B45309" strokeWidth="0.6" />
+    <ellipse cx="9.5" cy="8" rx="4" ry="2" fill="rgba(255,255,255,0.45)" transform="rotate(-25 9.5 8)" />
     <defs>
       <linearGradient id="coin_s_g" x1="0" y1="0" x2="24" y2="24">
         <stop offset="0%" stopColor="#FDE047" />
