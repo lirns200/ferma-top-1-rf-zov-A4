@@ -388,6 +388,7 @@ export function createItem3DModel(itemId: string): THREE.Group {
       break;
     }
 
+    case 'tnt':
     case 'dynamite': {
       const tntMat = new THREE.MeshStandardMaterial({ color: 0xDC2626, roughness: 0.4 });
       const bandMat = new THREE.MeshStandardMaterial({ color: 0x1E293B, roughness: 0.6 });
@@ -400,6 +401,126 @@ export function createItem3DModel(itemId: string): THREE.Group {
       const band = new THREE.Mesh(new THREE.BoxGeometry(0.65, 0.14, 0.3), bandMat);
       band.position.y = 0.5;
       grp.add(band);
+      break;
+    }
+
+    case 'duct_tape': {
+      const tapeMat = new THREE.MeshStandardMaterial({ color: 0xCBD5E1, roughness: 0.3, metalness: 0.4 });
+      const coreMat = new THREE.MeshStandardMaterial({ color: 0x78350F, roughness: 0.8 });
+
+      const ring = new THREE.Mesh(new THREE.CylinderGeometry(0.45, 0.45, 0.35, 24), tapeMat);
+      ring.position.y = 0.45;
+      grp.add(ring);
+
+      const hole = new THREE.Mesh(new THREE.CylinderGeometry(0.24, 0.24, 0.36, 16), coreMat);
+      hole.position.y = 0.45;
+      grp.add(hole);
+      break;
+    }
+
+    case 'shovel': {
+      const handleMat = new THREE.MeshStandardMaterial({ color: 0x78350F, roughness: 0.7 });
+      const metalMat = new THREE.MeshStandardMaterial({ color: 0x94A3B8, metalness: 0.85, roughness: 0.25 });
+
+      const shaft = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.05, 1.1, 8), handleMat);
+      shaft.position.y = 0.65;
+      shaft.rotation.z = -0.2;
+      grp.add(shaft);
+
+      const scoop = new THREE.Mesh(new THREE.BoxGeometry(0.32, 0.38, 0.06), metalMat);
+      scoop.position.set(0.15, 0.25, 0);
+      scoop.rotation.z = -0.2;
+      grp.add(scoop);
+      break;
+    }
+
+    case 'mallet':
+    case 'hammer': {
+      const handleMat = new THREE.MeshStandardMaterial({ color: 0x78350F, roughness: 0.7 });
+      const headMat = new THREE.MeshStandardMaterial({ color: 0x64748B, metalness: 0.8, roughness: 0.3 });
+
+      const shaft = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.06, 1.0, 8), handleMat);
+      shaft.position.y = 0.55;
+      shaft.rotation.z = -0.25;
+      grp.add(shaft);
+
+      const head = new THREE.Mesh(new THREE.BoxGeometry(0.45, 0.24, 0.24), headMat);
+      head.position.set(0.15, 0.95, 0);
+      grp.add(head);
+      break;
+    }
+
+    case 'marking_stake': {
+      const stakeMat = new THREE.MeshStandardMaterial({ color: 0x92400E, roughness: 0.7 });
+      const flagMat = new THREE.MeshStandardMaterial({ color: 0xEF4444, roughness: 0.3 });
+
+      const stake = new THREE.Mesh(new THREE.ConeGeometry(0.1, 1.1, 8), stakeMat);
+      stake.position.y = 0.55;
+      grp.add(stake);
+
+      const flag = new THREE.Mesh(new THREE.BoxGeometry(0.35, 0.22, 0.04), flagMat);
+      flag.position.set(0.18, 0.95, 0);
+      grp.add(flag);
+      break;
+    }
+
+    case 'land_deed': {
+      const paperMat = new THREE.MeshStandardMaterial({ color: 0xFEF3C7, roughness: 0.6 });
+      const ribbonMat = new THREE.MeshStandardMaterial({ color: 0xDC2626, roughness: 0.3 });
+
+      const scroll = new THREE.Mesh(new THREE.CylinderGeometry(0.14, 0.14, 0.9, 16), paperMat);
+      scroll.position.y = 0.5;
+      scroll.rotation.z = Math.PI / 4;
+      grp.add(scroll);
+
+      const seal = new THREE.Mesh(new THREE.CylinderGeometry(0.16, 0.16, 0.18, 12), ribbonMat);
+      seal.position.y = 0.5;
+      seal.rotation.z = Math.PI / 4;
+      grp.add(seal);
+      break;
+    }
+
+    case 'fountain': {
+      const stoneMat = new THREE.MeshStandardMaterial({ color: 0x94A3B8, roughness: 0.5 });
+      const waterMat = new THREE.MeshStandardMaterial({ color: 0x38BDF8, roughness: 0.1, metalness: 0.4 });
+
+      const base = new THREE.Mesh(new THREE.CylinderGeometry(0.5, 0.6, 0.25, 16), stoneMat);
+      base.position.y = 0.2;
+      grp.add(base);
+
+      const pillar = new THREE.Mesh(new THREE.CylinderGeometry(0.18, 0.22, 0.6, 12), stoneMat);
+      pillar.position.y = 0.55;
+      grp.add(pillar);
+
+      const water = new THREE.Mesh(new THREE.SphereGeometry(0.25, 12, 12), waterMat);
+      water.position.y = 0.9;
+      grp.add(water);
+      break;
+    }
+
+    case 'golden_egg': {
+      const goldMat = new THREE.MeshStandardMaterial({ color: 0xF59E0B, metalness: 0.85, roughness: 0.15 });
+      const egg = new THREE.Mesh(new THREE.SphereGeometry(0.4, 16, 16), goldMat);
+      egg.scale.set(1.0, 1.4, 1.0);
+      egg.position.y = 0.55;
+      grp.add(egg);
+      break;
+    }
+
+    case 'golden_statue':
+    case 'royal_pavilion': {
+      const goldMat = new THREE.MeshStandardMaterial({ color: 0xFACC15, metalness: 0.9, roughness: 0.2 });
+      const base = new THREE.Mesh(new THREE.BoxGeometry(0.7, 0.2, 0.7), goldMat);
+      base.position.y = 0.15;
+      grp.add(base);
+
+      const cup = new THREE.Mesh(new THREE.CylinderGeometry(0.38, 0.15, 0.55, 12), goldMat);
+      cup.position.y = 0.6;
+      grp.add(cup);
+
+      const star = new THREE.Mesh(new THREE.OctahedronGeometry(0.2), goldMat);
+      star.position.y = 1.0;
+      grp.add(star);
       break;
     }
 

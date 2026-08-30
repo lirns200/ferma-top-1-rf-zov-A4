@@ -3,6 +3,7 @@ import { useGameStore, DAILY_REWARDS_SCHEDULE } from '../../game/gameState';
 import { sounds } from '../../audio/SoundManager';
 import { triggerTelegramHaptic } from '../../utils/telegram';
 import { Gift, Check, Sparkles, Award, Zap, X, Calendar, Crown } from 'lucide-react';
+import { Item3DThumbnail } from '../Item3DThumbnail';
 
 const CoinSvg = () => (
   <svg width="12" height="12" viewBox="0 0 24 24" fill="none" className="shrink-0 inline-block">
@@ -133,7 +134,11 @@ export const DailyBonusModal: React.FC = () => {
                   <div className={`w-8 h-8 sm:w-9 sm:h-9 rounded-xl flex items-center justify-center text-lg sm:text-xl shadow-inner ${
                     isToday ? 'bg-amber-500/20 text-yellow-300 scale-105' : isGrand ? 'bg-yellow-500/20 text-yellow-300' : 'bg-black/25'
                   }`}>
-                    {reward.tool ? reward.tool.icon : '🎁'}
+                    {reward.tool ? (
+                      <Item3DThumbnail itemId={reward.tool.id} size={32} />
+                    ) : (
+                      <span>🎁</span>
+                    )}
                   </div>
 
                   {/* Rewards Breakdown */}
